@@ -69,7 +69,9 @@ api.interceptors.response.use(
 export const eventsApi = {
   list: (params?: Record<string, any>) => api.get('/events', { params }),
   get: (slug: string) => api.get(`/events/${slug}`),
+  getById: (id: string) => api.get(`/events/${id}/manage`),
   create: (data: any) => api.post('/events', data),
+  update: (id: string, data: any) => api.patch(`/events/${id}`, data),
   publish: (id: string) => api.patch(`/events/${id}/publish`),
   cancel: (id: string) => api.patch(`/events/${id}/cancel`),
   myEvents: (params?: any) => api.get('/events/producer/my-events', { params }),

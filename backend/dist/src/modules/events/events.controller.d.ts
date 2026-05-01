@@ -1,5 +1,6 @@
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
+import { UpdateEventDto } from './dto/update-event.dto';
 import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 export declare class EventsController {
     private events;
@@ -98,6 +99,73 @@ export declare class EventsController {
     }>;
     uploadImage(file: Express.Multer.File): Promise<{
         url: string;
+    }>;
+    findForEdit(id: string, user: any): Promise<{
+        batches: {
+            id: string;
+            description: string | null;
+            status: import(".prisma/client").$Enums.BatchStatus;
+            createdAt: Date;
+            updatedAt: Date;
+            price: import("@prisma/client/runtime/library").Decimal;
+            eventId: string;
+            name: string;
+            quantity: number;
+            sold: number;
+            startsAt: Date;
+            endsAt: Date;
+            ticketType: import(".prisma/client").$Enums.TicketType;
+            sortOrder: number;
+        }[];
+    } & {
+        id: string;
+        producerId: string;
+        title: string;
+        description: string;
+        slug: string;
+        coverImage: string | null;
+        bannerImage: string | null;
+        venue: string;
+        address: string;
+        city: string;
+        state: string;
+        zipCode: string | null;
+        latitude: import("@prisma/client/runtime/library").Decimal | null;
+        longitude: import("@prisma/client/runtime/library").Decimal | null;
+        startDate: Date;
+        endDate: Date;
+        doorsOpen: Date | null;
+        ageRating: number;
+        category: string | null;
+        tags: string[];
+        status: import(".prisma/client").$Enums.EventStatus;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    update(id: string, dto: UpdateEventDto, user: any): Promise<{
+        id: string;
+        producerId: string;
+        title: string;
+        description: string;
+        slug: string;
+        coverImage: string | null;
+        bannerImage: string | null;
+        venue: string;
+        address: string;
+        city: string;
+        state: string;
+        zipCode: string | null;
+        latitude: import("@prisma/client/runtime/library").Decimal | null;
+        longitude: import("@prisma/client/runtime/library").Decimal | null;
+        startDate: Date;
+        endDate: Date;
+        doorsOpen: Date | null;
+        ageRating: number;
+        category: string | null;
+        tags: string[];
+        status: import(".prisma/client").$Enums.EventStatus;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     myEvents(user: any, page: number, limit: number): Promise<{
         data: ({

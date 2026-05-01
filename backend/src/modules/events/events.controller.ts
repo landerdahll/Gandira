@@ -18,6 +18,7 @@ import { Role } from '@prisma/client';
 import { memoryStorage } from 'multer';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
+import { UpdateEventDto } from './dto/update-event.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
@@ -90,6 +91,22 @@ export class EventsController {
     if (!file) throw new BadRequestException('Nenhum arquivo enviado');
     const result = await this.cloudinary.uploadBuffer(file.buffer, file.mimetype, 'outrahora/events');
     return { url: result.secure_url };
+  }
+
+  @Get(':id/manage')
+  @Roles(Role.PRODUCER, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Buscar evento por ID (edição)' })
+  findForEdit(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.events.findByIdForProducer(id, user.id);
+  }
+
+  @Patch(':id')
+  @Roles(Role.PRODUCER, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Editar evento' })
+  update(@Param('id') id: string, @Body() dto: UpdateEventDto, @CurrentUser() user: any) {
+    return this.events.update(id, user.id, dto);
   }
 
   @Get('producer/my-events')

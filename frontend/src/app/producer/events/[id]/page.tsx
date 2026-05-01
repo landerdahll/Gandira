@@ -91,16 +91,28 @@ export default function EventAnalyticsPage() {
         <Link href="/producer/dashboard" style={{ color: '#555', display: 'flex' }}>
           <ArrowLeft size={20} />
         </Link>
-        <div>
+        <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>{event.title}</h1>
           <p style={{ fontSize: '13px', color: '#555' }}>
-            {new Date(event.startDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+            {new Date(event.startDate).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: 'long', year: 'numeric' })}
             {' · '}
             <span style={{ color: event.status === 'PUBLISHED' ? '#67bed9' : '#666' }}>
               {event.status === 'PUBLISHED' ? 'Publicado' : event.status}
             </span>
           </p>
         </div>
+        <Link href={`/producer/events/${id}/edit`} style={{
+          display: 'inline-flex', alignItems: 'center', gap: '6px',
+          padding: '8px 14px', borderRadius: '10px',
+          border: '1px solid #252525', background: 'transparent',
+          color: '#888', fontSize: '13px', fontWeight: 600,
+          textDecoration: 'none', flexShrink: 0,
+        }}
+          onMouseEnter={(e: any) => { e.currentTarget.style.borderColor = '#67bed9'; e.currentTarget.style.color = '#67bed9'; }}
+          onMouseLeave={(e: any) => { e.currentTarget.style.borderColor = '#252525'; e.currentTarget.style.color = '#888'; }}
+        >
+          <Edit2 size={13} /> Editar evento
+        </Link>
       </div>
 
       {/* KPI cards */}

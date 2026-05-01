@@ -20,6 +20,7 @@ const client_1 = require("@prisma/client");
 const multer_1 = require("multer");
 const events_service_1 = require("./events.service");
 const create_event_dto_1 = require("./dto/create-event.dto");
+const update_event_dto_1 = require("./dto/update-event.dto");
 const roles_decorator_1 = require("../../common/decorators/roles.decorator");
 const current_user_decorator_1 = require("../../common/decorators/current-user.decorator");
 const public_decorator_1 = require("../../common/decorators/public.decorator");
@@ -45,6 +46,12 @@ let EventsController = class EventsController {
             throw new common_1.BadRequestException('Nenhum arquivo enviado');
         const result = await this.cloudinary.uploadBuffer(file.buffer, file.mimetype, 'outrahora/events');
         return { url: result.secure_url };
+    }
+    findForEdit(id, user) {
+        return this.events.findByIdForProducer(id, user.id);
+    }
+    update(id, dto, user) {
+        return this.events.update(id, user.id, dto);
     }
     myEvents(user, page, limit) {
         return this.events.findProducerEvents(user.id, page, limit);
@@ -117,6 +124,29 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EventsController.prototype, "uploadImage", null);
+__decorate([
+    (0, common_1.Get)(':id/manage'),
+    (0, roles_decorator_1.Roles)(client_1.Role.PRODUCER, client_1.Role.ADMIN),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Buscar evento por ID (edição)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], EventsController.prototype, "findForEdit", null);
+__decorate([
+    (0, common_1.Patch)(':id'),
+    (0, roles_decorator_1.Roles)(client_1.Role.PRODUCER, client_1.Role.ADMIN),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Editar evento' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_event_dto_1.UpdateEventDto, Object]),
+    __metadata("design:returntype", void 0)
+], EventsController.prototype, "update", null);
 __decorate([
     (0, common_1.Get)('producer/my-events'),
     (0, roles_decorator_1.Roles)(client_1.Role.PRODUCER, client_1.Role.ADMIN),

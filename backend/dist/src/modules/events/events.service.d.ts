@@ -1,15 +1,14 @@
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateEventDto } from './dto/create-event.dto';
+import { UpdateEventDto } from './dto/update-event.dto';
 export declare class EventsService {
     private prisma;
     constructor(prisma: PrismaService);
     create(dto: CreateEventDto, producerId: string): Promise<{
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        tags: string[];
-        description: string;
+        producerId: string;
         title: string;
+        description: string;
         slug: string;
         coverImage: string | null;
         bannerImage: string | null;
@@ -25,8 +24,10 @@ export declare class EventsService {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
+        tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
-        producerId: string;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     findAll(query: {
         city?: string;
@@ -49,8 +50,8 @@ export declare class EventsService {
             ageRating: number;
             category: string | null;
             batches: {
-                name: string;
                 price: import("@prisma/client/runtime/library").Decimal;
+                name: string;
             }[];
         }[];
         meta: {
@@ -66,10 +67,10 @@ export declare class EventsService {
         };
         batches: {
             id: string;
-            name: string;
             description: string | null;
             status: import(".prisma/client").$Enums.BatchStatus;
             price: import("@prisma/client/runtime/library").Decimal;
+            name: string;
             quantity: number;
             sold: number;
             startsAt: Date;
@@ -78,11 +79,9 @@ export declare class EventsService {
         }[];
     } & {
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        tags: string[];
-        description: string;
+        producerId: string;
         title: string;
+        description: string;
         slug: string;
         coverImage: string | null;
         bannerImage: string | null;
@@ -98,26 +97,26 @@ export declare class EventsService {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
+        tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
-        producerId: string;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     findProducerEvents(producerId: string, page?: number, limit?: number): Promise<{
         data: ({
-            _count: {
-                orders: number;
-                tickets: number;
-            };
             batches: {
                 price: import("@prisma/client/runtime/library").Decimal;
                 sold: number;
             }[];
+            _count: {
+                orders: number;
+                tickets: number;
+            };
         } & {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            tags: string[];
-            description: string;
+            producerId: string;
             title: string;
+            description: string;
             slug: string;
             coverImage: string | null;
             bannerImage: string | null;
@@ -133,8 +132,10 @@ export declare class EventsService {
             doorsOpen: Date | null;
             ageRating: number;
             category: string | null;
+            tags: string[];
             status: import(".prisma/client").$Enums.EventStatus;
-            producerId: string;
+            createdAt: Date;
+            updatedAt: Date;
         })[];
         meta: {
             total: number;
@@ -142,13 +143,28 @@ export declare class EventsService {
             lastPage: number;
         };
     }>;
-    publish(eventId: string, producerId: string): Promise<{
+    findByIdForProducer(eventId: string, producerId: string): Promise<{
+        batches: {
+            id: string;
+            description: string | null;
+            status: import(".prisma/client").$Enums.BatchStatus;
+            createdAt: Date;
+            updatedAt: Date;
+            price: import("@prisma/client/runtime/library").Decimal;
+            eventId: string;
+            name: string;
+            quantity: number;
+            sold: number;
+            startsAt: Date;
+            endsAt: Date;
+            ticketType: import(".prisma/client").$Enums.TicketType;
+            sortOrder: number;
+        }[];
+    } & {
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        tags: string[];
-        description: string;
+        producerId: string;
         title: string;
+        description: string;
         slug: string;
         coverImage: string | null;
         bannerImage: string | null;
@@ -164,8 +180,60 @@ export declare class EventsService {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
+        tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    update(eventId: string, producerId: string, dto: UpdateEventDto): Promise<{
+        id: string;
         producerId: string;
+        title: string;
+        description: string;
+        slug: string;
+        coverImage: string | null;
+        bannerImage: string | null;
+        venue: string;
+        address: string;
+        city: string;
+        state: string;
+        zipCode: string | null;
+        latitude: import("@prisma/client/runtime/library").Decimal | null;
+        longitude: import("@prisma/client/runtime/library").Decimal | null;
+        startDate: Date;
+        endDate: Date;
+        doorsOpen: Date | null;
+        ageRating: number;
+        category: string | null;
+        tags: string[];
+        status: import(".prisma/client").$Enums.EventStatus;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    publish(eventId: string, producerId: string): Promise<{
+        id: string;
+        producerId: string;
+        title: string;
+        description: string;
+        slug: string;
+        coverImage: string | null;
+        bannerImage: string | null;
+        venue: string;
+        address: string;
+        city: string;
+        state: string;
+        zipCode: string | null;
+        latitude: import("@prisma/client/runtime/library").Decimal | null;
+        longitude: import("@prisma/client/runtime/library").Decimal | null;
+        startDate: Date;
+        endDate: Date;
+        doorsOpen: Date | null;
+        ageRating: number;
+        category: string | null;
+        tags: string[];
+        status: import(".prisma/client").$Enums.EventStatus;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     cancel(eventId: string, producerId: string): Promise<void>;
     private getOwnedEvent;

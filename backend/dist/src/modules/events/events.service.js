@@ -135,6 +135,32 @@ let EventsService = class EventsService {
             meta: { total, page, lastPage: Math.ceil(total / take) },
         };
     }
+    async findByIdForProducer(eventId, producerId) {
+        const event = await this.prisma.event.findUnique({
+            where: { id: eventId },
+            include: {
+                batches: { orderBy: { sortOrder: 'asc' } },
+            },
+        });
+        if (!event)
+            throw new common_1.NotFoundException('Evento não encontrado');
+        if (event.producerId !== producerId)
+            throw new common_1.ForbiddenException('Acesso negado');
+        return event;
+    }
+    async update(eventId, producerId, dto) {
+        await this.getOwnedEvent(eventId, producerId);
+        const { startDate, endDate, doorsOpen, ...rest } = dto;
+        return this.prisma.event.update({
+            where: { id: eventId },
+            data: {
+                ...rest,
+                ...(startDate && { startDate: new Date(startDate) }),
+                ...(endDate && { endDate: new Date(endDate) }),
+                ...(doorsOpen !== undefined && { doorsOpen: doorsOpen ? new Date(doorsOpen) : null }),
+            },
+        });
+    }
     async publish(eventId, producerId) {
         const event = await this.getOwnedEvent(eventId, producerId);
         const hasBatches = await this.prisma.batch.count({ where: { eventId, status: 'ACTIVE' } });

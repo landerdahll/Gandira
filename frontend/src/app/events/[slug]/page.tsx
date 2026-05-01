@@ -1,7 +1,15 @@
 import { notFound } from 'next/navigation';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { MapPin, Calendar, Clock, DoorOpen } from 'lucide-react';
+import { MapPin, Calendar, Clock } from 'lucide-react';
+
+const TZ = 'America/Sao_Paulo';
+
+function fmtDate(d: Date) {
+  return d.toLocaleDateString('pt-BR', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function fmtTime(d: Date) {
+  return d.toLocaleTimeString('pt-BR', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false });
+}
 import { eventsApi } from '@/lib/api';
 import { BatchSelector } from '@/components/checkout/batch-selector';
 
@@ -87,14 +95,14 @@ export default async function EventPage({ params }: { params: { slug: string } }
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '24px 0' }}>
             <InfoRow icon={<Calendar size={16} color="#67bed9" />}>
               <span style={{ textTransform: 'capitalize' }}>
-                {format(startDate, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                {fmtDate(startDate)}
               </span>
             </InfoRow>
             <InfoRow icon={<Clock size={16} color="#67bed9" />}>
-              {format(startDate, 'HH:mm')} – {format(endDate, 'HH:mm')}
+              {fmtTime(startDate)} – {fmtTime(endDate)}
               {doorsOpen && (
                 <span style={{ color: '#555', marginLeft: '12px', fontSize: '13px' }}>
-                  (Portões: {format(doorsOpen, 'HH:mm')})
+                  (Portões: {fmtTime(doorsOpen)})
                 </span>
               )}
             </InfoRow>
