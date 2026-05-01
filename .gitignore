@@ -7,8 +7,9 @@ node_modules/
 .env.production
 .env*.local
 
-# Build outputs
-dist/
+# Build outputs (backend/dist is committed — compiled on deploy server)
+frontend/.next/
+frontend/out/
 .next/
 out/
 
