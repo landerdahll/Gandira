@@ -39,9 +39,25 @@ export default function CheckInPage() {
   const resultTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
-    eventsApi
-      .list({ limit: 100 })
-      .then((res) => setEvents(res.data.data ?? []))
+    // Load upcoming + recently started events (past 2 days) so staff can scan after event begins
+    Promise.all([
+      eventsApi.list({ limit: 100 }),
+      eventsApi.list({ limit: 30, past: true }),
+    ])
+      .then(([upcoming, recent]) => {
+        const upcomingData: Event[] = upcoming.data.data ?? [];
+        const recentData: Event[] = recent.data.data ?? [];
+        const twoDaysAgo = Date.now() - 2 * 24 * 60 * 60 * 1000;
+        const recentFiltered = recentData.filter(
+          (e) => new Date(e.startDate).getTime() >= twoDaysAgo,
+        );
+        const seen = new Set<string>();
+        const merged: Event[] = [];
+        for (const e of [...upcomingData, ...recentFiltered]) {
+          if (!seen.has(e.id)) { seen.add(e.id); merged.push(e); }
+        }
+        setEvents(merged);
+      })
       .catch(() => {})
       .finally(() => setLoadingEvents(false));
   }, []);

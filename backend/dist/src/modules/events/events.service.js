@@ -114,12 +114,11 @@ let EventsService = class EventsService {
         }
         return event;
     }
-    async findProducerEvents(producerId, page = 1, limit = 20) {
+    async findProducerEvents(_producerId, page = 1, limit = 20) {
         const take = Math.min(limit, 50);
         const skip = (page - 1) * take;
         const [data, total] = await Promise.all([
             this.prisma.event.findMany({
-                where: { producerId },
                 skip,
                 take,
                 orderBy: { createdAt: 'desc' },
@@ -128,14 +127,14 @@ let EventsService = class EventsService {
                     batches: { select: { price: true, sold: true } },
                 },
             }),
-            this.prisma.event.count({ where: { producerId } }),
+            this.prisma.event.count(),
         ]);
         return {
             data,
             meta: { total, page, lastPage: Math.ceil(total / take) },
         };
     }
-    async findByIdForProducer(eventId, producerId) {
+    async findByIdForProducer(eventId, _producerId) {
         const event = await this.prisma.event.findUnique({
             where: { id: eventId },
             include: {
@@ -144,8 +143,6 @@ let EventsService = class EventsService {
         });
         if (!event)
             throw new common_1.NotFoundException('Evento não encontrado');
-        if (event.producerId !== producerId)
-            throw new common_1.ForbiddenException('Acesso negado');
         return event;
     }
     async update(eventId, producerId, dto) {
@@ -186,12 +183,10 @@ let EventsService = class EventsService {
             });
         });
     }
-    async getOwnedEvent(eventId, producerId) {
+    async getOwnedEvent(eventId, _producerId) {
         const event = await this.prisma.event.findUnique({ where: { id: eventId } });
         if (!event)
             throw new common_1.NotFoundException('Evento não encontrado');
-        if (event.producerId !== producerId)
-            throw new common_1.ForbiddenException('Acesso negado');
         return event;
     }
 };

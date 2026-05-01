@@ -20,8 +20,8 @@ export declare class EventsController {
             ageRating: number;
             category: string | null;
             batches: {
-                price: import("@prisma/client/runtime/library").Decimal;
                 name: string;
+                price: import("@prisma/client/runtime/library").Decimal;
             }[];
         }[];
         meta: {
@@ -39,8 +39,8 @@ export declare class EventsController {
             id: string;
             description: string | null;
             status: import(".prisma/client").$Enums.BatchStatus;
-            price: import("@prisma/client/runtime/library").Decimal;
             name: string;
+            price: import("@prisma/client/runtime/library").Decimal;
             quantity: number;
             sold: number;
             startsAt: Date;
@@ -49,7 +49,6 @@ export declare class EventsController {
         }[];
     } & {
         id: string;
-        producerId: string;
         title: string;
         description: string;
         slug: string;
@@ -71,10 +70,10 @@ export declare class EventsController {
         status: import(".prisma/client").$Enums.EventStatus;
         createdAt: Date;
         updatedAt: Date;
+        producerId: string;
     }>;
     create(dto: CreateEventDto, user: any): Promise<{
         id: string;
-        producerId: string;
         title: string;
         description: string;
         slug: string;
@@ -96,6 +95,7 @@ export declare class EventsController {
         status: import(".prisma/client").$Enums.EventStatus;
         createdAt: Date;
         updatedAt: Date;
+        producerId: string;
     }>;
     uploadImage(file: Express.Multer.File): Promise<{
         url: string;
@@ -107,9 +107,9 @@ export declare class EventsController {
             status: import(".prisma/client").$Enums.BatchStatus;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             price: import("@prisma/client/runtime/library").Decimal;
             eventId: string;
-            name: string;
             quantity: number;
             sold: number;
             startsAt: Date;
@@ -119,7 +119,6 @@ export declare class EventsController {
         }[];
     } & {
         id: string;
-        producerId: string;
         title: string;
         description: string;
         slug: string;
@@ -141,10 +140,10 @@ export declare class EventsController {
         status: import(".prisma/client").$Enums.EventStatus;
         createdAt: Date;
         updatedAt: Date;
+        producerId: string;
     }>;
     update(id: string, dto: UpdateEventDto, user: any): Promise<{
         id: string;
-        producerId: string;
         title: string;
         description: string;
         slug: string;
@@ -166,6 +165,7 @@ export declare class EventsController {
         status: import(".prisma/client").$Enums.EventStatus;
         createdAt: Date;
         updatedAt: Date;
+        producerId: string;
     }>;
     myEvents(user: any, page: number, limit: number): Promise<{
         data: ({
@@ -179,7 +179,6 @@ export declare class EventsController {
             };
         } & {
             id: string;
-            producerId: string;
             title: string;
             description: string;
             slug: string;
@@ -201,6 +200,7 @@ export declare class EventsController {
             status: import(".prisma/client").$Enums.EventStatus;
             createdAt: Date;
             updatedAt: Date;
+            producerId: string;
         })[];
         meta: {
             total: number;
@@ -210,7 +210,6 @@ export declare class EventsController {
     }>;
     publish(id: string, user: any): Promise<{
         id: string;
-        producerId: string;
         title: string;
         description: string;
         slug: string;
@@ -232,6 +231,7 @@ export declare class EventsController {
         status: import(".prisma/client").$Enums.EventStatus;
         createdAt: Date;
         updatedAt: Date;
+        producerId: string;
     }>;
     cancel(id: string, user: any): Promise<void>;
 }

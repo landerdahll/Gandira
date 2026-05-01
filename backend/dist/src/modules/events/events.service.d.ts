@@ -6,7 +6,6 @@ export declare class EventsService {
     constructor(prisma: PrismaService);
     create(dto: CreateEventDto, producerId: string): Promise<{
         id: string;
-        producerId: string;
         title: string;
         description: string;
         slug: string;
@@ -28,6 +27,7 @@ export declare class EventsService {
         status: import(".prisma/client").$Enums.EventStatus;
         createdAt: Date;
         updatedAt: Date;
+        producerId: string;
     }>;
     findAll(query: {
         city?: string;
@@ -50,8 +50,8 @@ export declare class EventsService {
             ageRating: number;
             category: string | null;
             batches: {
-                price: import("@prisma/client/runtime/library").Decimal;
                 name: string;
+                price: import("@prisma/client/runtime/library").Decimal;
             }[];
         }[];
         meta: {
@@ -69,8 +69,8 @@ export declare class EventsService {
             id: string;
             description: string | null;
             status: import(".prisma/client").$Enums.BatchStatus;
-            price: import("@prisma/client/runtime/library").Decimal;
             name: string;
+            price: import("@prisma/client/runtime/library").Decimal;
             quantity: number;
             sold: number;
             startsAt: Date;
@@ -79,7 +79,6 @@ export declare class EventsService {
         }[];
     } & {
         id: string;
-        producerId: string;
         title: string;
         description: string;
         slug: string;
@@ -101,8 +100,9 @@ export declare class EventsService {
         status: import(".prisma/client").$Enums.EventStatus;
         createdAt: Date;
         updatedAt: Date;
+        producerId: string;
     }>;
-    findProducerEvents(producerId: string, page?: number, limit?: number): Promise<{
+    findProducerEvents(_producerId: string, page?: number, limit?: number): Promise<{
         data: ({
             batches: {
                 price: import("@prisma/client/runtime/library").Decimal;
@@ -114,7 +114,6 @@ export declare class EventsService {
             };
         } & {
             id: string;
-            producerId: string;
             title: string;
             description: string;
             slug: string;
@@ -136,6 +135,7 @@ export declare class EventsService {
             status: import(".prisma/client").$Enums.EventStatus;
             createdAt: Date;
             updatedAt: Date;
+            producerId: string;
         })[];
         meta: {
             total: number;
@@ -143,16 +143,16 @@ export declare class EventsService {
             lastPage: number;
         };
     }>;
-    findByIdForProducer(eventId: string, producerId: string): Promise<{
+    findByIdForProducer(eventId: string, _producerId: string): Promise<{
         batches: {
             id: string;
             description: string | null;
             status: import(".prisma/client").$Enums.BatchStatus;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             price: import("@prisma/client/runtime/library").Decimal;
             eventId: string;
-            name: string;
             quantity: number;
             sold: number;
             startsAt: Date;
@@ -162,7 +162,6 @@ export declare class EventsService {
         }[];
     } & {
         id: string;
-        producerId: string;
         title: string;
         description: string;
         slug: string;
@@ -184,10 +183,10 @@ export declare class EventsService {
         status: import(".prisma/client").$Enums.EventStatus;
         createdAt: Date;
         updatedAt: Date;
+        producerId: string;
     }>;
     update(eventId: string, producerId: string, dto: UpdateEventDto): Promise<{
         id: string;
-        producerId: string;
         title: string;
         description: string;
         slug: string;
@@ -209,10 +208,10 @@ export declare class EventsService {
         status: import(".prisma/client").$Enums.EventStatus;
         createdAt: Date;
         updatedAt: Date;
+        producerId: string;
     }>;
     publish(eventId: string, producerId: string): Promise<{
         id: string;
-        producerId: string;
         title: string;
         description: string;
         slug: string;
@@ -234,6 +233,7 @@ export declare class EventsService {
         status: import(".prisma/client").$Enums.EventStatus;
         createdAt: Date;
         updatedAt: Date;
+        producerId: string;
     }>;
     cancel(eventId: string, producerId: string): Promise<void>;
     private getOwnedEvent;

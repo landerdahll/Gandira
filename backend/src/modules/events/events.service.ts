@@ -124,13 +124,12 @@ export class EventsService {
     return event;
   }
 
-  async findProducerEvents(producerId: string, page = 1, limit = 20) {
+  async findProducerEvents(_producerId: string, page = 1, limit = 20) {
     const take = Math.min(limit, 50);
     const skip = (page - 1) * take;
 
     const [data, total] = await Promise.all([
       this.prisma.event.findMany({
-        where: { producerId },
         skip,
         take,
         orderBy: { createdAt: 'desc' },
@@ -139,7 +138,7 @@ export class EventsService {
           batches: { select: { price: true, sold: true } },
         },
       }),
-      this.prisma.event.count({ where: { producerId } }),
+      this.prisma.event.count(),
     ]);
 
     return {
@@ -148,7 +147,7 @@ export class EventsService {
     };
   }
 
-  async findByIdForProducer(eventId: string, producerId: string) {
+  async findByIdForProducer(eventId: string, _producerId: string) {
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
       include: {
@@ -156,7 +155,6 @@ export class EventsService {
       },
     });
     if (!event) throw new NotFoundException('Evento não encontrado');
-    if (event.producerId !== producerId) throw new ForbiddenException('Acesso negado');
     return event;
   }
 
@@ -206,10 +204,9 @@ export class EventsService {
     });
   }
 
-  private async getOwnedEvent(eventId: string, producerId: string) {
+  private async getOwnedEvent(eventId: string, _producerId: string) {
     const event = await this.prisma.event.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Evento não encontrado');
-    if (event.producerId !== producerId) throw new ForbiddenException('Acesso negado');
     return event;
   }
 }

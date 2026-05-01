@@ -2,7 +2,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 export declare class ReportsService {
     private prisma;
     constructor(prisma: PrismaService);
-    getEventReport(eventId: string, producerId: string): Promise<{
+    getEventReport(eventId: string, _producerId: string): Promise<{
         event: {
             id: string;
             title: string;
@@ -31,8 +31,8 @@ export declare class ReportsService {
             occupancyRate: string;
             id: string;
             status: import(".prisma/client").$Enums.BatchStatus;
-            price: import("@prisma/client/runtime/library").Decimal;
             name: string;
+            price: import("@prisma/client/runtime/library").Decimal;
             quantity: number;
             sold: number;
             ticketType: import(".prisma/client").$Enums.TicketType;
@@ -47,7 +47,7 @@ export declare class ReportsService {
             avgAge: number | null;
         };
     }>;
-    getProducerDashboard(producerId: string): Promise<{
+    getProducerDashboard(_producerId: string): Promise<{
         summary: {
             events: number;
             totalRevenue: number | import("@prisma/client/runtime/library").Decimal;
@@ -70,9 +70,9 @@ export declare class ReportsService {
                 createdAt: Date;
                 quantity: number;
                 total: import("@prisma/client/runtime/library").Decimal;
-                unitPrice: import("@prisma/client/runtime/library").Decimal;
-                batchId: string;
                 orderId: string;
+                batchId: string;
+                unitPrice: import("@prisma/client/runtime/library").Decimal;
             })[];
         } & {
             id: string;
@@ -81,12 +81,12 @@ export declare class ReportsService {
             updatedAt: Date;
             eventId: string;
             total: import("@prisma/client/runtime/library").Decimal;
+            cancelledAt: Date | null;
             userId: string;
             subtotal: import("@prisma/client/runtime/library").Decimal;
             platformFee: import("@prisma/client/runtime/library").Decimal;
             stripePaymentIntentId: string | null;
             stripeChargeId: string | null;
-            cancelledAt: Date | null;
             cancelReason: string | null;
             refundedAt: Date | null;
             stripeRefundId: string | null;

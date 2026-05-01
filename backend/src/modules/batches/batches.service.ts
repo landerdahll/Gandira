@@ -12,10 +12,9 @@ import { UpdateBatchDto } from './dto/update-batch.dto';
 export class BatchesService {
   constructor(private prisma: PrismaService) {}
 
-  async create(eventId: string, dto: CreateBatchDto, producerId: string) {
+  async create(eventId: string, dto: CreateBatchDto, _producerId: string) {
     const event = await this.prisma.event.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Evento não encontrado');
-    if (event.producerId !== producerId) throw new ForbiddenException('Acesso negado');
     if (event.status === 'CANCELLED' || event.status === 'FINISHED') {
       throw new ForbiddenException('Evento não permite alterações');
     }
@@ -43,10 +42,9 @@ export class BatchesService {
     });
   }
 
-  async update(eventId: string, batchId: string, dto: UpdateBatchDto, producerId: string) {
+  async update(eventId: string, batchId: string, dto: UpdateBatchDto, _producerId: string) {
     const event = await this.prisma.event.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Evento não encontrado');
-    if (event.producerId !== producerId) throw new ForbiddenException('Acesso negado');
 
     const batch = await this.prisma.batch.findUnique({ where: { id: batchId } });
     if (!batch || batch.eventId !== eventId) throw new NotFoundException('Lote não encontrado');

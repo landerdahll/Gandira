@@ -25,9 +25,9 @@ export declare class ReportsController {
                 createdAt: Date;
                 quantity: number;
                 total: import("@prisma/client/runtime/library").Decimal;
-                unitPrice: import("@prisma/client/runtime/library").Decimal;
-                batchId: string;
                 orderId: string;
+                batchId: string;
+                unitPrice: import("@prisma/client/runtime/library").Decimal;
             })[];
         } & {
             id: string;
@@ -36,12 +36,12 @@ export declare class ReportsController {
             updatedAt: Date;
             eventId: string;
             total: import("@prisma/client/runtime/library").Decimal;
+            cancelledAt: Date | null;
             userId: string;
             subtotal: import("@prisma/client/runtime/library").Decimal;
             platformFee: import("@prisma/client/runtime/library").Decimal;
             stripePaymentIntentId: string | null;
             stripeChargeId: string | null;
-            cancelledAt: Date | null;
             cancelReason: string | null;
             refundedAt: Date | null;
             stripeRefundId: string | null;
@@ -77,8 +77,8 @@ export declare class ReportsController {
             occupancyRate: string;
             id: string;
             status: import(".prisma/client").$Enums.BatchStatus;
-            price: import("@prisma/client/runtime/library").Decimal;
             name: string;
+            price: import("@prisma/client/runtime/library").Decimal;
             quantity: number;
             sold: number;
             ticketType: import(".prisma/client").$Enums.TicketType;

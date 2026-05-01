@@ -16,12 +16,10 @@ let ReportsService = class ReportsService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async getEventReport(eventId, producerId) {
+    async getEventReport(eventId, _producerId) {
         const event = await this.prisma.event.findUnique({ where: { id: eventId } });
         if (!event)
             throw new common_1.NotFoundException('Evento não encontrado');
-        if (event.producerId !== producerId)
-            throw new common_1.ForbiddenException('Acesso negado');
         const [ticketStats, revenueData, checkInCount, batchBreakdown, genderData, buyerBirthDates] = await Promise.all([
             this.prisma.ticket.groupBy({
                 by: ['status'],
@@ -111,18 +109,18 @@ let ReportsService = class ReportsService {
             },
         };
     }
-    async getProducerDashboard(producerId) {
+    async getProducerDashboard(_producerId) {
         const [eventCount, totalRevenue, totalTickets, recentOrders] = await Promise.all([
-            this.prisma.event.count({ where: { producerId } }),
+            this.prisma.event.count(),
             this.prisma.order.aggregate({
-                where: { event: { producerId }, status: 'PAID' },
+                where: { status: 'PAID' },
                 _sum: { total: true },
             }),
             this.prisma.ticket.count({
-                where: { event: { producerId }, status: { in: ['ACTIVE', 'USED'] } },
+                where: { status: { in: ['ACTIVE', 'USED'] } },
             }),
             this.prisma.order.findMany({
-                where: { event: { producerId }, status: 'PAID' },
+                where: { status: 'PAID' },
                 take: 10,
                 orderBy: { createdAt: 'desc' },
                 include: {

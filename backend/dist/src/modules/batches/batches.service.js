@@ -16,12 +16,10 @@ let BatchesService = class BatchesService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async create(eventId, dto, producerId) {
+    async create(eventId, dto, _producerId) {
         const event = await this.prisma.event.findUnique({ where: { id: eventId } });
         if (!event)
             throw new common_1.NotFoundException('Evento não encontrado');
-        if (event.producerId !== producerId)
-            throw new common_1.ForbiddenException('Acesso negado');
         if (event.status === 'CANCELLED' || event.status === 'FINISHED') {
             throw new common_1.ForbiddenException('Evento não permite alterações');
         }
@@ -46,12 +44,10 @@ let BatchesService = class BatchesService {
             },
         });
     }
-    async update(eventId, batchId, dto, producerId) {
+    async update(eventId, batchId, dto, _producerId) {
         const event = await this.prisma.event.findUnique({ where: { id: eventId } });
         if (!event)
             throw new common_1.NotFoundException('Evento não encontrado');
-        if (event.producerId !== producerId)
-            throw new common_1.ForbiddenException('Acesso negado');
         const batch = await this.prisma.batch.findUnique({ where: { id: batchId } });
         if (!batch || batch.eventId !== eventId)
             throw new common_1.NotFoundException('Lote não encontrado');

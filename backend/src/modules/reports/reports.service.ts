@@ -1,14 +1,13 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class ReportsService {
   constructor(private prisma: PrismaService) {}
 
-  async getEventReport(eventId: string, producerId: string) {
+  async getEventReport(eventId: string, _producerId: string) {
     const event = await this.prisma.event.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Evento não encontrado');
-    if (event.producerId !== producerId) throw new ForbiddenException('Acesso negado');
 
     const [ticketStats, revenueData, checkInCount, batchBreakdown, genderData, buyerBirthDates] =
       await Promise.all([
@@ -121,21 +120,21 @@ export class ReportsService {
     };
   }
 
-  async getProducerDashboard(producerId: string) {
+  async getProducerDashboard(_producerId: string) {
     const [eventCount, totalRevenue, totalTickets, recentOrders] = await Promise.all([
-      this.prisma.event.count({ where: { producerId } }),
+      this.prisma.event.count(),
 
       this.prisma.order.aggregate({
-        where: { event: { producerId }, status: 'PAID' },
+        where: { status: 'PAID' },
         _sum: { total: true },
       }),
 
       this.prisma.ticket.count({
-        where: { event: { producerId }, status: { in: ['ACTIVE', 'USED'] } },
+        where: { status: { in: ['ACTIVE', 'USED'] } },
       }),
 
       this.prisma.order.findMany({
-        where: { event: { producerId }, status: 'PAID' },
+        where: { status: 'PAID' },
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: {

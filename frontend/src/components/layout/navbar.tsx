@@ -54,7 +54,6 @@ export function Navbar() {
         {!loading && (
           <div className="nav-desktop" style={{ alignItems: 'center', gap: '4px' }}>
             <NavItem href="/">Ver eventos</NavItem>
-            <NavItem href="/sobre">Sobre</NavItem>
             <div style={{ width: '1px', height: '20px', background: '#2a2a2a', margin: '0 8px' }} />
 
             {user ? (

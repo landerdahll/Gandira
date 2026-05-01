@@ -6,11 +6,11 @@ export declare class BatchesController {
     constructor(batches: BatchesService);
     findAll(eventId: string): Promise<{
         id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
         description: string | null;
         status: import(".prisma/client").$Enums.BatchStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
         price: import("@prisma/client/runtime/library").Decimal;
         eventId: string;
         quantity: number;
@@ -22,11 +22,11 @@ export declare class BatchesController {
     }[]>;
     create(eventId: string, dto: CreateBatchDto, user: any): Promise<{
         id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
         description: string | null;
         status: import(".prisma/client").$Enums.BatchStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
         price: import("@prisma/client/runtime/library").Decimal;
         eventId: string;
         quantity: number;
@@ -38,11 +38,11 @@ export declare class BatchesController {
     }>;
     update(eventId: string, batchId: string, dto: UpdateBatchDto, user: any): Promise<{
         id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
         description: string | null;
         status: import(".prisma/client").$Enums.BatchStatus;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
         price: import("@prisma/client/runtime/library").Decimal;
         eventId: string;
         quantity: number;
