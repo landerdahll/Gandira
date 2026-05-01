@@ -1,0 +1,317 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  CUSTOMER
+  PRODUCER
+  STAFF
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  FINISHED
+}
+
+enum TicketType {
+  GENERAL
+  VIP
+  BACKSTAGE
+  ONLINE
+}
+
+enum BatchStatus {
+  ACTIVE
+  SOLD_OUT
+  EXPIRED
+  CANCELLED
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  PAID
+  CANCELLED
+  REFUNDED
+  EXPIRED
+}
+
+enum TicketStatus {
+  ACTIVE
+  USED
+  CANCELLED
+  TRANSFERRED
+}
+
+enum CheckInMethod {
+  QR_CODE
+  MANUAL
+  AT_DOOR
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String
+  phone         String?
+  cpf           String?   @unique
+  role          Role      @default(CUSTOMER)
+  gender        Gender?
+  birthDate     DateTime?
+  avatarUrl     String?
+  isVerified    Boolean   @default(false)
+  isActive      Boolean   @default(true)
+
+  events              Event[]
+  orders              Order[]
+  checkIns            CheckIn[] @relation("StaffCheckIns")
+  refreshTokens       RefreshToken[]
+  auditLogs           AuditLog[]
+  passwordResetTokens PasswordResetToken[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+  @@index([cpf])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
+}
+
+model Event {
+  id          String      @id @default(cuid())
+  producerId  String
+  producer    User        @relation(fields: [producerId], references: [id])
+
+  title       String
+  description String      @db.Text
+  slug        String      @unique
+  coverImage  String?
+  bannerImage String?
+
+  venue       String
+  address     String
+  city        String
+  state       String
+  zipCode     String?
+  latitude    Decimal?    @db.Decimal(10, 8)
+  longitude   Decimal?    @db.Decimal(11, 8)
+
+  startDate   DateTime
+  endDate     DateTime
+  doorsOpen   DateTime?
+
+  ageRating   Int         @default(0)
+  category    String?
+  tags        String[]    @default([])
+
+  status      EventStatus @default(DRAFT)
+
+  batches     Batch[]
+  orders      Order[]
+  checkIns    CheckIn[]
+  tickets     Ticket[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([slug])
+  @@index([producerId])
+  @@index([status, startDate])
+  @@index([city, status])
+}
+
+model Batch {
+  id          String      @id @default(cuid())
+  eventId     String
+  event       Event       @relation(fields: [eventId], references: [id])
+
+  name        String
+  description String?
+  price       Decimal     @db.Decimal(10, 2)
+  quantity    Int
+  sold        Int         @default(0)
+
+  startsAt    DateTime
+  endsAt      DateTime
+
+  ticketType  TicketType  @default(GENERAL)
+  status      BatchStatus @default(ACTIVE)
+  sortOrder   Int         @default(0)
+
+  tickets     Ticket[]
+  orderItems  OrderItem[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([eventId])
+  @@index([eventId, status])
+}
+
+model Order {
+  id                    String      @id @default(cuid())
+  userId                String
+  user                  User        @relation(fields: [userId], references: [id])
+  eventId               String
+  event                 Event       @relation(fields: [eventId], references: [id])
+
+  status                OrderStatus @default(PENDING)
+
+  subtotal              Decimal     @db.Decimal(10, 2)
+  platformFee           Decimal     @db.Decimal(10, 2)
+  total                 Decimal     @db.Decimal(10, 2)
+
+  stripePaymentIntentId String?     @unique
+  stripeChargeId        String?
+
+  cancelledAt           DateTime?
+  cancelReason          String?
+  refundedAt            DateTime?
+  stripeRefundId        String?
+
+  expiresAt             DateTime
+
+  items                 OrderItem[]
+  tickets               Ticket[]
+
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([eventId])
+  @@index([status])
+  @@index([stripePaymentIntentId])
+  @@index([expiresAt, status])
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  batchId   String
+  batch     Batch    @relation(fields: [batchId], references: [id])
+
+  quantity  Int
+  unitPrice Decimal  @db.Decimal(10, 2)
+  total     Decimal  @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+}
+
+model Ticket {
+  id           String       @id @default(cuid())
+  orderId      String
+  order        Order        @relation(fields: [orderId], references: [id])
+  batchId      String
+  batch        Batch        @relation(fields: [batchId], references: [id])
+  eventId      String
+  event        Event        @relation(fields: [eventId], references: [id])
+
+  // Token criptograficamente aleatório — conteúdo do QR Code
+  token        String       @unique @default(cuid())
+
+  status       TicketStatus @default(ACTIVE)
+
+  holderName   String?
+  holderEmail  String?
+  holderCpf    String?
+
+  qrCodeUrl    String?
+
+  checkIn      CheckIn?
+
+  cancelledAt  DateTime?
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([token])
+  @@index([orderId])
+  @@index([batchId])
+  @@index([eventId, status])
+}
+
+model CheckIn {
+  id        String        @id @default(cuid())
+  ticketId  String        @unique
+  ticket    Ticket        @relation(fields: [ticketId], references: [id])
+  eventId   String
+  event     Event         @relation(fields: [eventId], references: [id])
+
+  staffId   String?
+  staff     User?         @relation("StaffCheckIns", fields: [staffId], references: [id])
+
+  method    CheckInMethod @default(QR_CODE)
+  notes     String?
+
+  checkedAt DateTime      @default(now())
+
+  @@index([eventId])
+  @@index([ticketId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([token])
+  @@index([userId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}

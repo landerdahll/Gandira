@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Env files (NEVER commit these)
+.env
+.env.local
+.env.production
+.env*.local
+
+# Build outputs
+dist/
+.next/
+out/
+
+# Uploads (local disk, use Cloudinary in prod)
+uploads/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code
+.claude/
+
+# TypeScript
+*.tsbuildinfo
