@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle2, Ticket, Loader2, CalendarDays, MapPin } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { ordersApi } from '@/lib/api';
+import { ordersApi, paymentsApi } from '@/lib/api';
 
 function fmtDate(d?: string) {
   if (!d) return '';
@@ -25,6 +25,15 @@ function SuccessContent() {
   useEffect(() => {
     if (!orderId) return;
     let attempts = 0;
+    let fallbackCalled = false;
+
+    function celebrate() {
+      setTimeout(() => {
+        confetti({ particleCount: 80, spread: 60, origin: { y: 0.55 }, colors: ['#67bed9', '#ffffff', '#88aaff'] });
+        setTimeout(() => confetti({ particleCount: 40, spread: 80, origin: { y: 0.5, x: 0.3 }, colors: ['#67bed9', '#fff'] }), 300);
+        setTimeout(() => confetti({ particleCount: 40, spread: 80, origin: { y: 0.5, x: 0.7 }, colors: ['#67bed9', '#fff'] }), 500);
+      }, 200);
+    }
 
     const interval = setInterval(async () => {
       try {
@@ -34,14 +43,22 @@ function SuccessContent() {
           setOrder(data);
           setReady(true);
           clearInterval(interval);
-          setTimeout(() => {
-            confetti({ particleCount: 80, spread: 60, origin: { y: 0.55 }, colors: ['#67bed9', '#ffffff', '#88aaff'] });
-            setTimeout(() => confetti({ particleCount: 40, spread: 80, origin: { y: 0.5, x: 0.3 }, colors: ['#67bed9', '#fff'] }), 300);
-            setTimeout(() => confetti({ particleCount: 40, spread: 80, origin: { y: 0.5, x: 0.7 }, colors: ['#67bed9', '#fff'] }), 500);
-          }, 200);
+          celebrate();
+          return;
         }
       } catch {}
-      if (++attempts > 20) clearInterval(interval);
+
+      attempts++;
+
+      // After ~15s, call confirm-order as fallback (handles missing webhook)
+      if (attempts === 10 && !fallbackCalled) {
+        fallbackCalled = true;
+        try {
+          await paymentsApi.confirmOrder(orderId);
+        } catch {}
+      }
+
+      if (attempts > 20) clearInterval(interval);
     }, 1500);
 
     return () => clearInterval(interval);

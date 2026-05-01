@@ -105,6 +105,10 @@ export const ordersApi = {
   cancel: (id: string, reason?: string) => api.delete(`/orders/${id}`, { data: { reason } }),
 };
 
+export const paymentsApi = {
+  confirmOrder: (orderId: string) => api.post('/payments/confirm-order', { orderId }),
+};
+
 export const ticketsApi = {
   list: (params?: any) => api.get('/tickets', { params }),
   get: (id: string) => api.get(`/tickets/${id}`),

@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -59,6 +59,35 @@ export class PaymentsService {
 
     this.logger.log(`Refund created for order ${orderId}: ${refund.id}`);
     return refund;
+  }
+
+  /**
+   * Fallback para quando o webhook não chega: busca o status do PaymentIntent
+   * diretamente na Stripe e processa o pagamento se confirmado.
+   * Apenas o dono do pedido pode chamar isso.
+   */
+  async confirmOrder(orderId: string, userId: string): Promise<{ status: string }> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: { include: { batch: true } } },
+    });
+
+    if (!order) throw new NotFoundException('Pedido não encontrado');
+    if (order.userId !== userId) throw new ForbiddenException('Acesso negado');
+
+    if (order.status === 'PAID') return { status: 'PAID' };
+    if (order.status !== 'PENDING') return { status: order.status };
+
+    if (!order.stripePaymentIntentId) {
+      return { status: order.status };
+    }
+
+    const pi = await this.stripe.paymentIntents.retrieve(order.stripePaymentIntentId);
+    if (pi.status !== 'succeeded') return { status: order.status };
+
+    // PaymentIntent succeeded but webhook wasn't received — process manually
+    await this.onPaymentSucceeded(pi);
+    return { status: 'PAID' };
   }
 
   /**

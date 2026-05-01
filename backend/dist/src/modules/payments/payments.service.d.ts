@@ -11,6 +11,9 @@ export declare class PaymentsService {
     constructor(config: ConfigService, prisma: PrismaService, tickets: TicketsService);
     createPaymentIntent(order: any): Promise<Stripe.PaymentIntent>;
     refund(orderId: string, paymentIntentId: string): Promise<Stripe.Refund>;
+    confirmOrder(orderId: string, userId: string): Promise<{
+        status: string;
+    }>;
     constructWebhookEvent(payload: Buffer, signature: string): Stripe.Event;
     handleWebhookEvent(event: Stripe.Event): Promise<void>;
     private onPaymentSucceeded;

@@ -64,6 +64,28 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
         this.logger.log(`Refund created for order ${orderId}: ${refund.id}`);
         return refund;
     }
+    async confirmOrder(orderId, userId) {
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            include: { items: { include: { batch: true } } },
+        });
+        if (!order)
+            throw new common_1.NotFoundException('Pedido não encontrado');
+        if (order.userId !== userId)
+            throw new common_1.ForbiddenException('Acesso negado');
+        if (order.status === 'PAID')
+            return { status: 'PAID' };
+        if (order.status !== 'PENDING')
+            return { status: order.status };
+        if (!order.stripePaymentIntentId) {
+            return { status: order.status };
+        }
+        const pi = await this.stripe.paymentIntents.retrieve(order.stripePaymentIntentId);
+        if (pi.status !== 'succeeded')
+            return { status: order.status };
+        await this.onPaymentSucceeded(pi);
+        return { status: 'PAID' };
+    }
     constructWebhookEvent(payload, signature) {
         const secret = this.config.get('STRIPE_WEBHOOK_SECRET');
         try {

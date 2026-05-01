@@ -18,11 +18,17 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const payments_service_1 = require("./payments.service");
 const public_decorator_1 = require("../../common/decorators/public.decorator");
+const current_user_decorator_1 = require("../../common/decorators/current-user.decorator");
 const throttler_1 = require("@nestjs/throttler");
 let PaymentsController = PaymentsController_1 = class PaymentsController {
     constructor(payments) {
         this.payments = payments;
         this.logger = new common_1.Logger(PaymentsController_1.name);
+    }
+    confirmOrder(orderId, user) {
+        if (!orderId)
+            throw new common_1.BadRequestException('orderId obrigatório');
+        return this.payments.confirmOrder(orderId, user.id);
     }
     async stripeWebhook(req, signature) {
         if (!signature)
@@ -36,6 +42,16 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
     }
 };
 exports.PaymentsController = PaymentsController;
+__decorate([
+    (0, common_1.Post)('confirm-order'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Confirma pedido verificando Stripe diretamente (fallback para webhook)' }),
+    __param(0, (0, common_1.Body)('orderId')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], PaymentsController.prototype, "confirmOrder", null);
 __decorate([
     (0, public_decorator_1.Public)(),
     (0, throttler_1.SkipThrottle)(),

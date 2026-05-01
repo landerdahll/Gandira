@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Trash2, Plus, ArrowLeft, Calendar, MapPin, ImageIcon, Ticket, Tag, Save, Upload, Link2, X } from 'lucide-react';
-import { eventsApi, batchesApi } from '@/lib/api';
+import { eventsApi } from '@/lib/api';
 
 const inp: React.CSSProperties = {
   width: '100%', background: '#0f0f0f', border: '1px solid #252525',
