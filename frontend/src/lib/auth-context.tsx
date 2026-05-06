@@ -10,6 +10,7 @@ interface User {
   email: string;
   role: 'CUSTOMER' | 'PRODUCER' | 'STAFF' | 'ADMIN';
   avatarUrl?: string | null;
+  isVerified: boolean;
 }
 
 interface AuthContextType {

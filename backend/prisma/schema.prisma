@@ -87,7 +87,8 @@ model User {
   checkIns            CheckIn[] @relation("StaffCheckIns")
   refreshTokens       RefreshToken[]
   auditLogs           AuditLog[]
-  passwordResetTokens PasswordResetToken[]
+  passwordResetTokens       PasswordResetToken[]
+  emailVerificationTokens   EmailVerificationToken[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -282,6 +283,19 @@ model CheckIn {
 
   @@index([eventId])
   @@index([ticketId])
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([token])
+  @@index([userId])
 }
 
 model PasswordResetToken {

@@ -35,6 +35,11 @@ export class OrdersService {
    * Tickets are only generated after webhook confirms payment.
    */
   async create(dto: CreateOrderDto, userId: string) {
+    const buyer = await this.prisma.user.findUnique({ where: { id: userId }, select: { isVerified: true } });
+    if (!buyer?.isVerified) {
+      throw new ForbiddenException('Verifique seu e-mail antes de comprar ingressos');
+    }
+
     const event = await this.prisma.event.findUnique({ where: { id: dto.eventId } });
     if (!event || event.status !== 'PUBLISHED') {
       throw new NotFoundException('Evento não encontrado ou indisponível');

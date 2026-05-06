@@ -45,6 +45,11 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
       router.push('/auth/login?redirect=' + encodeURIComponent(window.location.pathname));
       return;
     }
+    if (!user.isVerified) {
+      toast.error('Verifique seu e-mail antes de comprar ingressos');
+      router.push('/auth/verify-email');
+      return;
+    }
     if (!currentBatch || qty === 0) {
       toast.error('Selecione pelo menos 1 ingresso');
       return;

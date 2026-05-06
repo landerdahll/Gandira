@@ -27,6 +27,76 @@ export class MailService {
     }
   }
 
+  async sendVerificationEmail(to: string, name: string, verifyUrl: string) {
+    const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 0;">
+    <tr><td align="center">
+      <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1e1e1e;border-radius:16px;overflow:hidden;max-width:480px;width:100%;">
+        <tr>
+          <td style="padding:32px 32px 24px;border-bottom:1px solid #1a1a1a;">
+            <p style="margin:0;font-size:24px;font-weight:800;color:#fff;letter-spacing:-0.5px;">
+              outra<span style="color:#67bed9">hora</span>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px;">
+            <p style="margin:0 0 8px;font-size:20px;font-weight:700;color:#fff;">Confirme seu e-mail</p>
+            <p style="margin:0 0 24px;font-size:14px;color:#666;line-height:1.6;">
+              Olá, ${name}. Clique no botão abaixo para confirmar seu e-mail e liberar a compra de ingressos. O link é válido por <strong style="color:#aaa">24 horas</strong>.
+            </p>
+            <table cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="border-radius:12px;background:#67bed9;box-shadow:0 0 24px rgba(103,190,217,0.3);">
+                  <a href="${verifyUrl}" target="_blank"
+                     style="display:inline-block;padding:14px 32px;color:#fff;font-size:15px;font-weight:700;text-decoration:none;letter-spacing:-0.2px;">
+                    Verificar e-mail
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:28px 0 0;font-size:12px;color:#444;line-height:1.6;">
+              Se você não criou uma conta na OutraHora, ignore este e-mail.
+            </p>
+            <p style="margin:12px 0 0;font-size:12px;color:#333;word-break:break-all;">
+              Link direto: <a href="${verifyUrl}" style="color:#67bed9;text-decoration:none;">${verifyUrl}</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 32px;border-top:1px solid #1a1a1a;">
+            <p style="margin:0;font-size:12px;color:#333;text-align:center;">
+              © ${new Date().getFullYear()} OutraHora — Todos os direitos reservados
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+    if (this.devMode) {
+      this.logger.warn('⚠️  SMTP não configurado — link de verificação:');
+      this.logger.warn(`📧  Para: ${to}`);
+      this.logger.warn(`🔗  ${verifyUrl}`);
+      return;
+    }
+
+    const info = await this.transporter.sendMail({
+      from: `"OutraHora" <${this.fromAddress}>`,
+      to,
+      subject: 'Confirme seu e-mail — OutraHora',
+      html,
+    });
+
+    this.logger.log(`Verification email sent to ${to} — messageId: ${info.messageId}`);
+  }
+
   async sendPasswordReset(to: string, name: string, resetUrl: string) {
     const html = `
 <!DOCTYPE html>

@@ -3,6 +3,7 @@ import {
   ConflictException,
   UnauthorizedException,
   BadRequestException,
+  NotFoundException,
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -71,9 +72,44 @@ export class AuthService {
 
     this.logger.log(`New user registered: ${user.email}`);
     await this.auditLog(user.id, 'USER_REGISTERED', 'User', user.id);
+    await this.dispatchVerificationEmail(user.id, user.email, user.name);
 
     const tokens = await this.generateTokenPair(user.id, user.email, user.role);
     return { user, ...tokens };
+  }
+
+  async verifyEmail(token: string) {
+    const record = await this.prisma.emailVerificationToken.findUnique({ where: { token } });
+    if (!record || record.usedAt) throw new BadRequestException('Token inválido ou já utilizado');
+    if (record.expiresAt < new Date()) throw new BadRequestException('Token expirado. Solicite um novo link.');
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({ where: { id: record.userId }, data: { isVerified: true } }),
+      this.prisma.emailVerificationToken.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
+    ]);
+
+    return { message: 'E-mail verificado com sucesso!' };
+  }
+
+  async resendVerification(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, name: true, isVerified: true },
+    });
+    if (!user) throw new NotFoundException('Usuário não encontrado');
+    if (user.isVerified) throw new BadRequestException('E-mail já verificado');
+
+    await this.dispatchVerificationEmail(user.id, user.email, user.name);
+    return { message: 'E-mail de verificação reenviado.' };
+  }
+
+  private async dispatchVerificationEmail(userId: string, email: string, name: string) {
+    await this.prisma.emailVerificationToken.deleteMany({ where: { userId } });
+    const token = generateSecureToken();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await this.prisma.emailVerificationToken.create({ data: { userId, token, expiresAt } });
+    const baseUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    await this.mail.sendVerificationEmail(email, name, `${baseUrl}/auth/verify-email?token=${token}`);
   }
 
   async login(dto: LoginDto, ipAddress?: string) {

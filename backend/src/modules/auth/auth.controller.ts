@@ -9,6 +9,10 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { Public } from '../../common/decorators/public.decorator';
 
+class VerifyEmailDto {
+  @ApiProperty() @IsString() token: string;
+}
+
 class ForgotPasswordDto {
   @ApiProperty() @IsEmail() email: string;
 }
@@ -71,6 +75,23 @@ export class AuthController {
     const token = req.cookies?.['refresh_token'];
     if (token) await this.auth.logout(token);
     res.clearCookie('refresh_token');
+  }
+
+  @Public()
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @ApiOperation({ summary: 'Verificar e-mail com token' })
+  async verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.auth.verifyEmail(dto.token);
+  }
+
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { ttl: 60000, limit: 3 } })
+  @ApiOperation({ summary: 'Reenviar e-mail de verificação' })
+  async resendVerification(@Req() req: any) {
+    return this.auth.resendVerification(req.user.sub);
   }
 
   @Public()
