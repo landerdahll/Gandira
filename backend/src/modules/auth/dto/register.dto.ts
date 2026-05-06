@@ -31,10 +31,10 @@ export class RegisterDto {
   })
   password: string;
 
-  @ApiPropertyOptional({ example: '(11) 99999-9999' })
+  @ApiPropertyOptional({ example: '(48) 991234567' })
   @IsOptional()
   @IsString()
-  @MaxLength(20)
+  @Matches(/^\(\d{2}\) \d{9}$/, { message: 'Celular inválido' })
   phone?: string;
 
   @ApiPropertyOptional({ example: '123.456.789-00' })

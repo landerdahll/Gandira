@@ -38,6 +38,21 @@ export class AuthService {
       if (cpfExists) throw new ConflictException('CPF já cadastrado');
     }
 
+    if (dto.birthDate) {
+      const birth = new Date(dto.birthDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (isNaN(birth.getTime()) || birth >= today) {
+        throw new BadRequestException('Data de nascimento inválida');
+      }
+      const age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      const exactAge = age - (m < 0 || (m === 0 && today.getDate() < birth.getDate()) ? 1 : 0);
+      if (exactAge < 14) {
+        throw new BadRequestException('Você deve ter ao menos 14 anos para se cadastrar');
+      }
+    }
+
     const password = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
     const cpf = dto.cpf ? dto.cpf.replace(/\D/g, '') : undefined;
 

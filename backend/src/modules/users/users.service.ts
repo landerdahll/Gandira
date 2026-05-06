@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { IsOptional, IsString, IsEnum, IsDateString, MaxLength, IsEmail, MinLength, Matches } from 'class-validator';
 import { Gender, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -9,7 +9,7 @@ const BCRYPT_ROUNDS = 12;
 export class UpdateProfileDto {
   @IsOptional() @IsString() @MaxLength(100) name?: string;
   @IsOptional() @IsEmail() email?: string;
-  @IsOptional() @IsString() @MaxLength(20) phone?: string;
+  @IsOptional() @IsString() @Matches(/^\(\d{2}\) \d{9}$/, { message: 'Celular inválido' }) phone?: string;
   @IsOptional() @IsEnum(Gender) gender?: Gender;
   @IsOptional() @IsDateString() birthDate?: string;
 }
@@ -36,6 +36,20 @@ export class UsersService {
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
+    if (dto.birthDate) {
+      const birth = new Date(dto.birthDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (isNaN(birth.getTime()) || birth >= today) {
+        throw new BadRequestException('Data de nascimento inválida');
+      }
+      const age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      const exactAge = age - (m < 0 || (m === 0 && today.getDate() < birth.getDate()) ? 1 : 0);
+      if (exactAge < 14) {
+        throw new BadRequestException('Você deve ter ao menos 14 anos');
+      }
+    }
     if (dto.email) {
       const existing = await this.prisma.user.findFirst({
         where: { email: dto.email.toLowerCase().trim(), NOT: { id: userId } },

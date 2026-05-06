@@ -15,11 +15,25 @@ const schema = z
   .object({
     name: z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
     email: z.string().email('E-mail inválido'),
-    phone: z.string().min(10, 'Celular inválido').max(20),
+    phone: z.string().min(1, 'Celular obrigatório').refine(
+      (v) => v.replace(/\D/g, '').length === 11,
+      'Celular deve ter DDD + 9 dígitos'
+    ),
     gender: z.enum(['MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY'], {
       required_error: 'Selecione o sexo',
     }),
-    birthDate: z.string().min(1, 'Data de nascimento obrigatória'),
+    birthDate: z.string()
+      .min(1, 'Data de nascimento obrigatória')
+      .refine((v) => {
+        const birth = new Date(v);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (isNaN(birth.getTime()) || birth >= today) return false;
+        const age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        const exactAge = age - (m < 0 || (m === 0 && today.getDate() < birth.getDate()) ? 1 : 0);
+        return exactAge >= 14;
+      }, 'Você deve ter ao menos 14 anos'),
     password: z
       .string()
       .min(8, 'Mínimo 8 caracteres')
@@ -63,8 +77,21 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
+
+  function formatPhone(digits: string): string {
+    if (!digits) return '';
+    if (digits.length <= 2) return `(${digits}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  }
+
+  function handlePhoneChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+    setValue('phone', formatPhone(digits), { shouldValidate: true });
+  }
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -153,8 +180,10 @@ export default function RegisterPage() {
             <Field label="Celular" error={errors.phone?.message}>
               <input
                 {...register('phone')}
+                onChange={handlePhoneChange}
+                value={watch('phone') ?? ''}
                 type="tel"
-                placeholder="(11) 99999-9999"
+                placeholder="(48) 991234567"
                 style={baseInput}
                 onFocus={onFocus} onBlur={onBlur}
               />
@@ -179,6 +208,7 @@ export default function RegisterPage() {
                 <input
                   {...register('birthDate')}
                   type="date"
+                  max={new Date(Date.now() - 14 * 365.25 * 24 * 3600 * 1000).toISOString().split('T')[0]}
                   style={{ ...baseInput, colorScheme: 'dark' }}
                   onFocus={onFocus} onBlur={onBlur}
                 />
