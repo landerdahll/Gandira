@@ -82,7 +82,7 @@ export function EventCard({ event, past }: EventCardProps) {
         </p>
         {!past && lowestPrice !== null && (
           <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>
-            {lowestPrice === 0 ? 'Gratuito' : `A partir de ${formatCurrency(lowestPrice)}`}
+            {lowestPrice === 0 ? 'Gratuito' : `A partir de ${formatCurrency(lowestPrice)} + taxas`}
           </p>
         )}
         {past && (

@@ -116,7 +116,7 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginTop: '20px' }}>
           {lowestPrice !== null && (
             <p style={{ fontSize: '16px', fontWeight: 600, color: '#aaa' }}>
-              {lowestPrice === 0 ? 'Gratuito' : `A partir de ${formatCurrency(lowestPrice)}`}
+              {lowestPrice === 0 ? 'Gratuito' : `A partir de ${formatCurrency(lowestPrice)} + taxas`}
             </p>
           )}
           <Link

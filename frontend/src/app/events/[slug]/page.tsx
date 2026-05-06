@@ -158,7 +158,7 @@ export default async function EventPage({ params }: { params: { slug: string } }
               {!isPast && lowestPrice !== null && (
                 <p style={{ fontSize: '26px', fontWeight: 800, color: '#fff' }}>
                   {lowestPrice === 0 ? 'Gratuito' : `R$ ${lowestPrice.toFixed(2).replace('.', ',')}`}
-                  {lowestPrice > 0 && <span style={{ fontSize: '13px', color: '#555', fontWeight: 400, marginLeft: '4px' }}>a partir de</span>}
+                  {lowestPrice > 0 && <span style={{ fontSize: '13px', color: '#555', fontWeight: 400, marginLeft: '4px' }}>a partir de + taxas</span>}
                 </p>
               )}
             </div>

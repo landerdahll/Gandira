@@ -111,6 +111,9 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
                 <p style={{ fontSize: '17px', fontWeight: 800, color: locked || isSoldOut ? '#444' : '#fff' }}>
                   {Number(batch.price) === 0 ? 'Grátis' : formatCurrency(Number(batch.price))}
                 </p>
+                {Number(batch.price) > 0 && !isSoldOut && (
+                  <p style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>+ taxas</p>
+                )}
                 {isSoldOut && (
                   <p style={{ fontSize: '11px', color: '#444', marginTop: '2px' }}>Esgotado</p>
                 )}
