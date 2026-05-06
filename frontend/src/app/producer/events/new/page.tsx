@@ -28,6 +28,24 @@ function emptyBatch(): Batch {
 type ConfirmType = 'cancel' | 'publish' | 'draft' | null;
 type ImageMode = 'upload' | 'url';
 
+function nowLocalInput(): string {
+  return new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(new Date()).replace(' ', 'T').slice(0, 16);
+}
+
+function addHours(dt: string, h: number): string {
+  const d = new Date(dt);
+  d.setHours(d.getHours() + h);
+  return new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(d).replace(' ', 'T').slice(0, 16);
+}
+
 export default function NewEventPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -49,6 +67,21 @@ export default function NewEventPage() {
 
   function setField(k: keyof typeof form, v: string) {
     setForm(f => ({ ...f, [k]: v }));
+  }
+
+  function setDateField(k: 'startDate' | 'endDate' | 'doorsOpen', v: string) {
+    setForm(f => {
+      const next = { ...f, [k]: v };
+      if (!v) return next;
+      if (k === 'doorsOpen') {
+        if (!f.startDate) next.startDate = v;
+        if (!f.endDate) next.endDate = addHours(v, 2);
+      } else if (k === 'startDate') {
+        if (!f.doorsOpen) next.doorsOpen = v;
+        if (!f.endDate) next.endDate = addHours(v, 2);
+      }
+      return next;
+    });
   }
 
   function setBatch(i: number, k: keyof Batch, v: string) {
@@ -308,17 +341,20 @@ export default function NewEventPage() {
         {/* ── Data e horário ────────────────────────────────────────────── */}
         <Card icon={<Calendar size={15} />} title="Data e Horário">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <Field label="Abertura dos portões">
+              <input type="datetime-local" style={{ ...inp, colorScheme: 'dark' }} value={form.doorsOpen}
+                min={nowLocalInput().slice(0, 10) + 'T00:00'}
+                onChange={e => setDateField('doorsOpen', e.target.value)} onFocus={focus} onBlur={blur} />
+            </Field>
             <Field label="Início do evento *">
               <input type="datetime-local" style={{ ...inp, colorScheme: 'dark' }} required value={form.startDate}
-                onChange={e => setField('startDate', e.target.value)} onFocus={focus} onBlur={blur} />
+                min={nowLocalInput().slice(0, 10) + 'T00:00'}
+                onChange={e => setDateField('startDate', e.target.value)} onFocus={focus} onBlur={blur} />
             </Field>
             <Field label="Término do evento *">
               <input type="datetime-local" style={{ ...inp, colorScheme: 'dark' }} required value={form.endDate}
-                onChange={e => setField('endDate', e.target.value)} onFocus={focus} onBlur={blur} />
-            </Field>
-            <Field label="Abertura dos portões">
-              <input type="datetime-local" style={{ ...inp, colorScheme: 'dark' }} value={form.doorsOpen}
-                onChange={e => setField('doorsOpen', e.target.value)} onFocus={focus} onBlur={blur} />
+                min={nowLocalInput().slice(0, 10) + 'T00:00'}
+                onChange={e => setDateField('endDate', e.target.value)} onFocus={focus} onBlur={blur} />
             </Field>
           </div>
         </Card>

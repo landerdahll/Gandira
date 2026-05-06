@@ -19,6 +19,16 @@ const IMAGE_MAX_MB = 5;
 type ImageMode = 'upload' | 'url';
 
 // Convert UTC ISO string → "YYYY-MM-DDTHH:mm" in Brazil local time for datetime-local input
+function addHours(dt: string, h: number): string {
+  const d = new Date(dt);
+  d.setHours(d.getHours() + h);
+  return new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(d).replace(' ', 'T').slice(0, 16);
+}
+
 function utcToLocalInput(utcStr?: string | null): string {
   if (!utcStr) return '';
   const d = new Date(utcStr);
@@ -73,6 +83,21 @@ export default function EditEventPage() {
 
   function setField(k: keyof typeof form, v: string) {
     setForm(f => ({ ...f, [k]: v }));
+  }
+
+  function setDateField(k: 'startDate' | 'endDate' | 'doorsOpen', v: string) {
+    setForm(f => {
+      const next = { ...f, [k]: v };
+      if (!v) return next;
+      if (k === 'doorsOpen') {
+        if (!f.startDate) next.startDate = v;
+        if (!f.endDate) next.endDate = addHours(v, 2);
+      } else if (k === 'startDate') {
+        if (!f.doorsOpen) next.doorsOpen = v;
+        if (!f.endDate) next.endDate = addHours(v, 2);
+      }
+      return next;
+    });
   }
 
   const focus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -296,17 +321,17 @@ export default function EditEventPage() {
         {/* ── Data e horário ────────────────────────────────────────────── */}
         <Card icon={<Calendar size={15} />} title="Data e Horário">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <Field label="Abertura dos portões">
+              <input type="datetime-local" style={{ ...inp, colorScheme: 'dark' }} value={form.doorsOpen}
+                onChange={e => setDateField('doorsOpen', e.target.value)} onFocus={focus} onBlur={blur} />
+            </Field>
             <Field label="Início do evento *">
               <input type="datetime-local" style={{ ...inp, colorScheme: 'dark' }} value={form.startDate}
-                onChange={e => setField('startDate', e.target.value)} onFocus={focus} onBlur={blur} />
+                onChange={e => setDateField('startDate', e.target.value)} onFocus={focus} onBlur={blur} />
             </Field>
             <Field label="Término do evento *">
               <input type="datetime-local" style={{ ...inp, colorScheme: 'dark' }} value={form.endDate}
-                onChange={e => setField('endDate', e.target.value)} onFocus={focus} onBlur={blur} />
-            </Field>
-            <Field label="Abertura dos portões">
-              <input type="datetime-local" style={{ ...inp, colorScheme: 'dark' }} value={form.doorsOpen}
-                onChange={e => setField('doorsOpen', e.target.value)} onFocus={focus} onBlur={blur} />
+                onChange={e => setDateField('endDate', e.target.value)} onFocus={focus} onBlur={blur} />
             </Field>
           </div>
         </Card>
