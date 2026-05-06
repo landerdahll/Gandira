@@ -108,7 +108,7 @@ export class AuthService {
     const token = generateSecureToken();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await this.prisma.emailVerificationToken.create({ data: { userId, token, expiresAt } });
-    const baseUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    const baseUrl = (this.config.get<string>('FRONTEND_URL', 'http://localhost:3000')).split(',')[0].trim();
     await this.mail.sendVerificationEmail(email, name, `${baseUrl}/auth/verify-email?token=${token}`);
   }
 
