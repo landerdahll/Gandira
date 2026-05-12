@@ -104,8 +104,8 @@ export default function RegisterPage() {
         birthDate: data.birthDate,
       });
       await login({ email: data.email, password: data.password });
-      toast.success('Conta criada com sucesso!');
-      router.push('/');
+      toast.success('Conta criada! Verifique seu e-mail para liberar a compra de ingressos.');
+      router.push('/auth/verify-email');
     } catch (e: any) {
       const msg = e.response?.data?.message;
       toast.error(Array.isArray(msg) ? msg[0] : (msg ?? 'Erro ao criar conta'));
@@ -225,6 +225,7 @@ export default function RegisterPage() {
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Mín. 8 chars, 1 maiúscula, 1 número"
+                  autoComplete="new-password"
                   style={{ ...baseInput, paddingRight: 48 }}
                   onFocus={onFocus} onBlur={onBlur}
                 />
@@ -252,6 +253,7 @@ export default function RegisterPage() {
                   {...register('confirmPassword')}
                   type={showConfirm ? 'text' : 'password'}
                   placeholder="Repita a senha"
+                  autoComplete="new-password"
                   style={{ ...baseInput, paddingRight: 48 }}
                   onFocus={onFocus} onBlur={onBlur}
                 />

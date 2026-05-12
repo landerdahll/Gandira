@@ -67,7 +67,7 @@ export class AuthService {
         gender: dto.gender,
         birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
       },
-      select: { id: true, email: true, name: true, role: true },
+      select: { id: true, email: true, name: true, role: true, isVerified: true },
     });
 
     this.logger.log(`New user registered: ${user.email}`);
@@ -133,7 +133,7 @@ export class AuthService {
 
     const tokens = await this.generateTokenPair(user.id, user.email, user.role);
     return {
-      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified },
       ...tokens,
     };
   }
