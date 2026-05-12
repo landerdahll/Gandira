@@ -57,7 +57,7 @@ let MailService = MailService_1 = class MailService {
               </tr>
             </table>
             <p style="margin:28px 0 0;font-size:12px;color:#444;line-height:1.6;">
-              Se você não criou uma conta na OutraHora, ignore este e-mail.
+              Se você não criou uma conta na Gandira, ignore este e-mail.
             </p>
             <p style="margin:12px 0 0;font-size:12px;color:#333;word-break:break-all;">
               Link direto: <a href="${verifyUrl}" style="color:#67bed9;text-decoration:none;">${verifyUrl}</a>
@@ -85,7 +85,7 @@ let MailService = MailService_1 = class MailService {
         const { error } = await this.resend.emails.send({
             from: `Gandira <${this.fromAddress}>`,
             to,
-            subject: 'Confirme seu e-mail — OutraHora',
+            subject: 'Confirme seu e-mail — Gandira',
             html,
         });
         if (error) {
@@ -113,7 +113,7 @@ let MailService = MailService_1 = class MailService {
           <td style="padding:32px;">
             <p style="margin:0 0 8px;font-size:20px;font-weight:700;color:#fff;">Redefinição de senha</p>
             <p style="margin:0 0 24px;font-size:14px;color:#666;line-height:1.6;">
-              Olá, ${name}. Recebemos uma solicitação para redefinir a senha da sua conta OutraHora.
+              Olá, ${name}. Recebemos uma solicitação para redefinir a senha da sua conta Gandira.
             </p>
             <p style="margin:0 0 24px;font-size:14px;color:#666;line-height:1.6;">
               Clique no botão abaixo para criar uma nova senha. O link é válido por <strong style="color:#aaa">1 hora</strong>.
@@ -157,7 +157,7 @@ let MailService = MailService_1 = class MailService {
         const { error } = await this.resend.emails.send({
             from: `Gandira <${this.fromAddress}>`,
             to,
-            subject: 'Redefinição de senha — OutraHora',
+            subject: 'Redefinição de senha — Gandira',
             html,
         });
         if (error) {
