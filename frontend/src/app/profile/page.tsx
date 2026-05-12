@@ -262,12 +262,8 @@ export default function ProfilePage() {
         />
       )}
       {modal === 'phone' && (
-        <EditFieldModal
-          title="Alterar celular"
-          label="Novo número"
+        <EditPhoneModal
           current={profile.phone}
-          type="tel"
-          placeholder="(11) 99999-9999"
           onClose={() => setModal(null)}
           onSave={async value => {
             await usersApi.updateProfile({ phone: value });
@@ -388,6 +384,55 @@ function EditFieldModal({ title, label, current, type, placeholder, onClose, onS
         value={value}
         onChange={e => setValue(e.target.value)}
         placeholder={placeholder}
+        style={inputStyle}
+        onFocus={e => (e.currentTarget.style.borderColor = '#67bed9')}
+        onBlur={e => (e.currentTarget.style.borderColor = '#252525')}
+        onKeyDown={e => e.key === 'Enter' && save()}
+        autoFocus
+      />
+      <ModalActions onClose={onClose} onSave={save} saving={saving} />
+    </Modal>
+  );
+}
+
+/* ── Edit phone modal (with mask) ────────────────────────────────────────── */
+
+function EditPhoneModal({ current, onClose, onSave }: { current: string; onClose: () => void; onSave: (v: string) => Promise<void> }) {
+  const [value, setValue] = useState(current ?? '');
+  const [saving, setSaving] = useState(false);
+
+  function formatPhone(digits: string): string {
+    if (!digits) return '';
+    if (digits.length <= 2) return `(${digits}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+    setValue(formatPhone(digits));
+  }
+
+  async function save() {
+    if (!value.trim() || value === current) return onClose();
+    setSaving(true);
+    try {
+      await onSave(value.trim());
+      onClose();
+    } catch (e: any) {
+      toast.error(e.response?.data?.message ?? 'Erro ao salvar');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal title="Alterar celular" onClose={onClose}>
+      <label style={labelStyle}>Novo número</label>
+      <input
+        type="tel"
+        value={value}
+        onChange={handleChange}
+        placeholder="(xx) 912345678"
         style={inputStyle}
         onFocus={e => (e.currentTarget.style.borderColor = '#67bed9')}
         onBlur={e => (e.currentTarget.style.borderColor = '#252525')}
