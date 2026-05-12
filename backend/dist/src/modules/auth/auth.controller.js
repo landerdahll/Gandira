@@ -80,8 +80,8 @@ let AuthController = class AuthController {
     async verifyEmail(dto) {
         return this.auth.verifyEmail(dto.token);
     }
-    async resendVerification(req) {
-        return this.auth.resendVerification(req.user.sub);
+    async resendVerification(email) {
+        return this.auth.resendVerificationByEmail(email);
     }
     async forgotPassword(dto) {
         await this.auth.forgotPassword(dto.email);
@@ -159,13 +159,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "verifyEmail", null);
 __decorate([
+    (0, public_decorator_1.Public)(),
     (0, common_1.Post)('resend-verification'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, throttler_1.Throttle)({ default: { ttl: 60000, limit: 3 } }),
     (0, swagger_1.ApiOperation)({ summary: 'Reenviar e-mail de verificação' }),
-    __param(0, (0, common_1.Req)()),
+    __param(0, (0, common_1.Body)('email')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "resendVerification", null);
 __decorate([

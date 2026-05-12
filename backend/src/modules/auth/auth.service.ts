@@ -91,13 +91,14 @@ export class AuthService {
     return { message: 'E-mail verificado com sucesso!' };
   }
 
-  async resendVerification(userId: string) {
+  async resendVerificationByEmail(email: string) {
+    if (!email) throw new BadRequestException('E-mail obrigatório');
     const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, email: true, name: true, isVerified: true },
+      where: { email: email.toLowerCase().trim() },
+      select: { id: true, email: true, name: true, isVerified: true, isActive: true },
     });
-    if (!user) throw new NotFoundException('Usuário não encontrado');
-    if (user.isVerified) throw new BadRequestException('E-mail já verificado');
+    // Always return 200 to avoid enumeration
+    if (!user || !user.isActive || user.isVerified) return { message: 'E-mail de verificação reenviado.' };
 
     await this.dispatchVerificationEmail(user.id, user.email, user.name);
     return { message: 'E-mail de verificação reenviado.' };

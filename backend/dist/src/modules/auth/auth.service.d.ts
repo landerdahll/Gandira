@@ -25,7 +25,7 @@ export declare class AuthService {
     verifyEmail(token: string): Promise<{
         message: string;
     }>;
-    resendVerification(userId: string): Promise<{
+    resendVerificationByEmail(email: string): Promise<{
         message: string;
     }>;
     private dispatchVerificationEmail;

@@ -40,13 +40,13 @@ function VerifyEmailContent() {
   }, [token]);
 
   async function handleResend() {
-    if (!user) {
+    if (!user?.email) {
       router.push('/auth/login');
       return;
     }
     setResending(true);
     try {
-      await authApi.resendVerification();
+      await authApi.resendVerification(user.email);
       toast.success('E-mail reenviado! Verifique sua caixa de entrada.');
     } catch {
       toast.error('Erro ao reenviar. Tente novamente em alguns minutos.');
@@ -138,8 +138,8 @@ function VerifyEmailContent() {
                 {resending ? 'Enviando...' : 'Reenviar e-mail de verificação'}
               </button>
             )}
-            <Link href="/" style={{ fontSize: 14, color: '#555', textDecoration: 'none' }}>
-              Voltar para a página inicial
+            <Link href="/" style={{ fontSize: 15, color: '#888', textDecoration: 'none' }}>
+              Navegar sem verificar →
             </Link>
           </>
         )}
@@ -176,8 +176,8 @@ function VerifyEmailContent() {
                 {resending ? 'Enviando...' : 'Reenviar e-mail de verificação'}
               </button>
             )}
-            <Link href="/" style={{ fontSize: 14, color: '#555', textDecoration: 'none' }}>
-              Voltar para a página inicial
+            <Link href="/" style={{ fontSize: 15, color: '#888', textDecoration: 'none' }}>
+              Navegar sem verificar →
             </Link>
           </>
         )}

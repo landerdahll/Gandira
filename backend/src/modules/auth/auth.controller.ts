@@ -86,12 +86,13 @@ export class AuthController {
     return this.auth.verifyEmail(dto.token);
   }
 
+  @Public()
   @Post('resend-verification')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { ttl: 60000, limit: 3 } })
   @ApiOperation({ summary: 'Reenviar e-mail de verificação' })
-  async resendVerification(@Req() req: any) {
-    return this.auth.resendVerification(req.user.sub);
+  async resendVerification(@Body('email') email: string) {
+    return this.auth.resendVerificationByEmail(email);
   }
 
   @Public()

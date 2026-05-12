@@ -117,15 +117,15 @@ let AuthService = AuthService_1 = class AuthService {
         ]);
         return { message: 'E-mail verificado com sucesso!' };
     }
-    async resendVerification(userId) {
+    async resendVerificationByEmail(email) {
+        if (!email)
+            throw new common_1.BadRequestException('E-mail obrigatório');
         const user = await this.prisma.user.findUnique({
-            where: { id: userId },
-            select: { id: true, email: true, name: true, isVerified: true },
+            where: { email: email.toLowerCase().trim() },
+            select: { id: true, email: true, name: true, isVerified: true, isActive: true },
         });
-        if (!user)
-            throw new common_1.NotFoundException('Usuário não encontrado');
-        if (user.isVerified)
-            throw new common_1.BadRequestException('E-mail já verificado');
+        if (!user || !user.isActive || user.isVerified)
+            return { message: 'E-mail de verificação reenviado.' };
         await this.dispatchVerificationEmail(user.id, user.email, user.name);
         return { message: 'E-mail de verificação reenviado.' };
     }

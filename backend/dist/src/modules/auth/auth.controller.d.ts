@@ -42,7 +42,7 @@ export declare class AuthController {
     verifyEmail(dto: VerifyEmailDto): Promise<{
         message: string;
     }>;
-    resendVerification(req: any): Promise<{
+    resendVerification(email: string): Promise<{
         message: string;
     }>;
     forgotPassword(dto: ForgotPasswordDto): Promise<{
