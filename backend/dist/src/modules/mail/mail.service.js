@@ -63,6 +63,8 @@ let MailService = MailService_1 = class MailService {
                     user: config.get('SMTP_USER'),
                     pass: config.get('SMTP_PASS'),
                 },
+                connectionTimeout: 10000,
+                greetingTimeout: 10000,
             });
         }
     }

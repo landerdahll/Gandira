@@ -135,7 +135,8 @@ let AuthService = AuthService_1 = class AuthService {
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
         await this.prisma.emailVerificationToken.create({ data: { userId, token, expiresAt } });
         const baseUrl = (this.config.get('FRONTEND_URL', 'http://localhost:3000')).split(',')[0].trim();
-        await this.mail.sendVerificationEmail(email, name, `${baseUrl}/auth/verify-email?token=${token}`);
+        this.mail.sendVerificationEmail(email, name, `${baseUrl}/auth/verify-email?token=${token}`)
+            .catch(err => this.logger.error(`Falha ao enviar e-mail de verificação para ${email}: ${err.message}`));
     }
     async login(dto, ipAddress) {
         const user = await this.prisma.user.findUnique({

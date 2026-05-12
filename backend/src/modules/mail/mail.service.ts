@@ -23,6 +23,8 @@ export class MailService {
           user: config.get<string>('SMTP_USER'),
           pass: config.get<string>('SMTP_PASS'),
         },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
       });
     }
   }

@@ -17,9 +17,9 @@ export declare class AuthController {
     constructor(auth: AuthService);
     register(dto: RegisterDto, res: Response): Promise<{
         user: {
+            name: string;
             id: string;
             email: string;
-            name: string;
             role: import(".prisma/client").$Enums.Role;
             isVerified: boolean;
         };
