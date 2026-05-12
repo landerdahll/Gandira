@@ -36,10 +36,8 @@ let MailService = MailService_1 = class MailService {
     <tr><td align="center">
       <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1e1e1e;border-radius:16px;overflow:hidden;max-width:480px;width:100%;">
         <tr>
-          <td style="padding:32px 32px 24px;border-bottom:1px solid #1a1a1a;">
-            <p style="margin:0;font-size:24px;font-weight:800;color:#fff;letter-spacing:-0.5px;">
-              outra<span style="color:#67bed9">hora</span>
-            </p>
+          <td style="padding:28px 32px;border-bottom:1px solid #1a1a1a;">
+            <img src="https://gandira.vercel.app/gandira-logo.png" alt="Gandira" style="height:36px;display:block;" />
           </td>
         </tr>
         <tr>
@@ -69,7 +67,7 @@ let MailService = MailService_1 = class MailService {
         <tr>
           <td style="padding:20px 32px;border-top:1px solid #1a1a1a;">
             <p style="margin:0;font-size:12px;color:#333;text-align:center;">
-              © ${new Date().getFullYear()} OutraHora — Todos os direitos reservados
+              © ${new Date().getFullYear()} Gandira — Todos os direitos reservados
             </p>
           </td>
         </tr>
@@ -85,7 +83,7 @@ let MailService = MailService_1 = class MailService {
             return;
         }
         const { error } = await this.resend.emails.send({
-            from: `OutraHora <${this.fromAddress}>`,
+            from: `Gandira <${this.fromAddress}>`,
             to,
             subject: 'Confirme seu e-mail — OutraHora',
             html,
@@ -107,10 +105,8 @@ let MailService = MailService_1 = class MailService {
     <tr><td align="center">
       <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1e1e1e;border-radius:16px;overflow:hidden;max-width:480px;width:100%;">
         <tr>
-          <td style="padding:32px 32px 24px;border-bottom:1px solid #1a1a1a;">
-            <p style="margin:0;font-size:24px;font-weight:800;color:#fff;letter-spacing:-0.5px;">
-              outra<span style="color:#67bed9">hora</span>
-            </p>
+          <td style="padding:28px 32px;border-bottom:1px solid #1a1a1a;">
+            <img src="https://gandira.vercel.app/gandira-logo.png" alt="Gandira" style="height:36px;display:block;" />
           </td>
         </tr>
         <tr>
@@ -143,7 +139,7 @@ let MailService = MailService_1 = class MailService {
         <tr>
           <td style="padding:20px 32px;border-top:1px solid #1a1a1a;">
             <p style="margin:0;font-size:12px;color:#333;text-align:center;">
-              © ${new Date().getFullYear()} OutraHora — Todos os direitos reservados
+              © ${new Date().getFullYear()} Gandira — Todos os direitos reservados
             </p>
           </td>
         </tr>
@@ -159,7 +155,7 @@ let MailService = MailService_1 = class MailService {
             return;
         }
         const { error } = await this.resend.emails.send({
-            from: `OutraHora <${this.fromAddress}>`,
+            from: `Gandira <${this.fromAddress}>`,
             to,
             subject: 'Redefinição de senha — OutraHora',
             html,
