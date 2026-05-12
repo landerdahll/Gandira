@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle2, XCircle, Loader2, Mail } from 'lucide-react';
@@ -11,6 +11,14 @@ import { useAuth } from '@/lib/auth-context';
 type State = 'loading' | 'success' | 'error' | 'no-token';
 
 export default function VerifyEmailPage() {
+  return (
+    <Suspense>
+      <VerifyEmailContent />
+    </Suspense>
+  );
+}
+
+function VerifyEmailContent() {
   const params = useSearchParams();
   const router = useRouter();
   const { user } = useAuth();
