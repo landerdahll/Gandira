@@ -100,13 +100,13 @@
   }
   .featured-card-img {
     width: 100% !important;
-    height: 200px !important;
-    min-height: 200px !important;
-    overflow: hidden !important;
+    height: auto !important;
+    min-height: unset !important;
   }
   .featured-card-img img {
     min-height: unset !important;
-    height: 100% !important;
+    height: auto !important;
+    width: 100% !important;
   }
   .featured-card-body {
     padding: 20px !important;
