@@ -183,7 +183,7 @@ export default function RegisterPage() {
                 onChange={handlePhoneChange}
                 value={watch('phone') ?? ''}
                 type="tel"
-                placeholder="(48) 991234567"
+                placeholder="(xx) 912345678"
                 style={baseInput}
                 onFocus={onFocus} onBlur={onBlur}
               />
