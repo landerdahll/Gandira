@@ -89,7 +89,6 @@ model User {
   auditLogs           AuditLog[]
   passwordResetTokens       PasswordResetToken[]
   emailVerificationTokens   EmailVerificationToken[]
-  twoFactorTokens           TwoFactorToken[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -304,20 +303,6 @@ model PasswordResetToken {
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   token     String    @unique
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  @@index([token])
-  @@index([userId])
-}
-
-model TwoFactorToken {
-  id        String    @id @default(cuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String    @unique
-  code      String
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())

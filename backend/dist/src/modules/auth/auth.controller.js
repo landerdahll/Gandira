@@ -29,18 +29,6 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], VerifyEmailDto.prototype, "token", void 0);
-class Verify2FADto {
-}
-__decorate([
-    (0, swagger_2.ApiProperty)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], Verify2FADto.prototype, "twoFactorToken", void 0);
-__decorate([
-    (0, swagger_2.ApiProperty)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], Verify2FADto.prototype, "code", void 0);
 class ForgotPasswordDto {
 }
 __decorate([
@@ -74,14 +62,6 @@ let AuthController = class AuthController {
     }
     async login(dto, req, res) {
         const result = await this.auth.login(dto, req.ip);
-        if (result.requires2FA) {
-            return { requires2FA: true, twoFactorToken: result.twoFactorToken };
-        }
-        this.setRefreshCookie(res, result.refreshToken);
-        return { user: result.user, accessToken: result.accessToken };
-    }
-    async verify2FA(dto, res) {
-        const result = await this.auth.verify2FA(dto.twoFactorToken, dto.code);
         this.setRefreshCookie(res, result.refreshToken);
         return { user: result.user, accessToken: result.accessToken };
     }
@@ -146,18 +126,6 @@ __decorate([
     __metadata("design:paramtypes", [login_dto_1.LoginDto, Object, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
-__decorate([
-    (0, public_decorator_1.Public)(),
-    (0, common_1.Post)('verify-2fa'),
-    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    (0, throttler_1.Throttle)({ default: { ttl: 60000, limit: 5 } }),
-    (0, swagger_1.ApiOperation)({ summary: 'Verificar código 2FA e completar login' }),
-    __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Res)({ passthrough: true })),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Verify2FADto, Object]),
-    __metadata("design:returntype", Promise)
-], AuthController.prototype, "verify2FA", null);
 __decorate([
     (0, public_decorator_1.Public)(),
     (0, common_1.Post)('refresh'),

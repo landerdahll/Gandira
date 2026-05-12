@@ -30,22 +30,6 @@ export declare class AuthService {
     }>;
     private dispatchVerificationEmail;
     login(dto: LoginDto, ipAddress?: string): Promise<{
-        requires2FA: true;
-        twoFactorToken: string;
-    } | {
-        accessToken: string;
-        refreshToken: string;
-        requires2FA: false;
-        user: {
-            id: string;
-            email: string;
-            name: string;
-            role: import(".prisma/client").$Enums.Role;
-            isVerified: boolean;
-        };
-        twoFactorToken?: undefined;
-    }>;
-    verify2FA(twoFactorToken: string, code: string): Promise<{
         accessToken: string;
         refreshToken: string;
         user: {

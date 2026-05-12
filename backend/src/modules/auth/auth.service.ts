@@ -133,53 +133,9 @@ export class AuthService {
     this.logger.log(`User login: ${user.email}`);
     await this.auditLog(user.id, 'LOGIN_SUCCESS', 'User', user.id, { ipAddress });
 
-    const needsTwoFactor = ['PRODUCER', 'STAFF', 'ADMIN'].includes(user.role);
-    if (needsTwoFactor) {
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      const hashedCode = await bcrypt.hash(code, 10);
-      const twoFactorToken = generateSecureToken(32);
-      const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-
-      await this.prisma.twoFactorToken.deleteMany({ where: { userId: user.id } });
-      await this.prisma.twoFactorToken.create({
-        data: { userId: user.id, token: twoFactorToken, code: hashedCode, expiresAt },
-      });
-
-      this.mail.sendTwoFactorCode(user.email, user.name, code)
-        .catch(err => this.logger.error(`Falha ao enviar código 2FA: ${err.message}`));
-
-      return { requires2FA: true as const, twoFactorToken };
-    }
-
     const tokens = await this.generateTokenPair(user.id, user.email, user.role);
     return {
-      requires2FA: false as const,
       user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified },
-      ...tokens,
-    };
-  }
-
-  async verify2FA(twoFactorToken: string, code: string) {
-    const record = await this.prisma.twoFactorToken.findUnique({
-      where: { token: twoFactorToken },
-      include: { user: true },
-    });
-
-    if (!record || record.usedAt || record.expiresAt < new Date()) {
-      throw new UnauthorizedException('Código inválido ou expirado');
-    }
-
-    const isValid = await bcrypt.compare(code, record.code);
-    if (!isValid) throw new UnauthorizedException('Código inválido ou expirado');
-
-    await this.prisma.twoFactorToken.update({
-      where: { id: record.id },
-      data: { usedAt: new Date() },
-    });
-
-    const tokens = await this.generateTokenPair(record.userId, record.user.email, record.user.role);
-    return {
-      user: { id: record.user.id, email: record.user.email, name: record.user.name, role: record.user.role, isVerified: record.user.isVerified },
       ...tokens,
     };
   }

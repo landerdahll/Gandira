@@ -199,66 +199,6 @@ export class MailService {
     }
   }
 
-  async sendTwoFactorCode(to: string, name: string, code: string) {
-    const html = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 0;">
-    <tr><td align="center">
-      <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1e1e1e;border-radius:16px;overflow:hidden;max-width:480px;width:100%;">
-        <tr>
-          <td style="padding:28px 32px;border-bottom:1px solid #1a1a1a;">
-            <img src="https://gandira.vercel.app/gandira-logo.png" alt="Gandira" style="height:36px;display:block;" />
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:32px;">
-            <p style="margin:0 0 8px;font-size:20px;font-weight:700;color:#fff;">Código de verificação</p>
-            <p style="margin:0 0 24px;font-size:14px;color:#666;line-height:1.6;">
-              Olá, ${name}. Use o código abaixo para concluir seu login. Ele é válido por <strong style="color:#aaa">5 minutos</strong>.
-            </p>
-            <div style="background:#0d1e28;border:1px solid #67bed922;border-radius:16px;padding:28px;text-align:center;margin-bottom:24px;">
-              <span style="font-size:40px;font-weight:800;color:#fff;letter-spacing:12px;">${code}</span>
-            </div>
-            <p style="margin:0;font-size:12px;color:#444;line-height:1.6;">
-              Se você não tentou fazer login na Gandira, ignore este e-mail. Sua conta permanece segura.
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:20px 32px;border-top:1px solid #1a1a1a;">
-            <p style="margin:0;font-size:12px;color:#333;text-align:center;">
-              © ${new Date().getFullYear()} Gandira — Todos os direitos reservados
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
-
-    if (this.devMode) {
-      this.logger.warn(`⚠️  2FA (dev) — Para: ${to} | Código: ${code}`);
-      return;
-    }
-
-    const { error } = await this.resend!.emails.send({
-      from: `Gandira <${this.fromAddress}>`,
-      to,
-      subject: `${code} é seu código de acesso — Gandira`,
-      html,
-    });
-
-    if (error) {
-      this.logger.error(`Falha ao enviar código 2FA para ${to}: ${error.message}`);
-    } else {
-      this.logger.log(`Código 2FA enviado para ${to}`);
-    }
-  }
-
   async sendPasswordReset(to: string, name: string, resetUrl: string) {
     const html = `
 <!DOCTYPE html>
