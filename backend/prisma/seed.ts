@@ -10,39 +10,39 @@ async function main() {
 
   // Admin
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@outrahora.com' },
+    where: { email: 'admin@gandira.com' },
     update: {},
-    create: { email: 'admin@outrahora.com', password, name: 'Admin', role: 'ADMIN', isVerified: true },
+    create: { email: 'admin@gandira.com', password, name: 'Admin', role: 'ADMIN', isVerified: true },
   });
 
   // Producer
   const producer = await prisma.user.upsert({
-    where: { email: 'produtor@outrahora.com' },
+    where: { email: 'produtor@gandira.com' },
     update: {},
-    create: { email: 'produtor@outrahora.com', password, name: 'João Produtor', role: 'PRODUCER', isVerified: true },
+    create: { email: 'produtor@gandira.com', password, name: 'João Produtor', role: 'PRODUCER', isVerified: true },
   });
 
   // Staff
   const staff = await prisma.user.upsert({
-    where: { email: 'staff@outrahora.com' },
+    where: { email: 'staff@gandira.com' },
     update: {},
-    create: { email: 'staff@outrahora.com', password, name: 'Maria Portaria', role: 'STAFF', isVerified: true },
+    create: { email: 'staff@gandira.com', password, name: 'Maria Portaria', role: 'STAFF', isVerified: true },
   });
 
   // Customer
   const customer = await prisma.user.upsert({
-    where: { email: 'cliente@outrahora.com' },
+    where: { email: 'cliente@gandira.com' },
     update: {},
-    create: { email: 'cliente@outrahora.com', password, name: 'Pedro Cliente', role: 'CUSTOMER' },
+    create: { email: 'cliente@gandira.com', password, name: 'Pedro Cliente', role: 'CUSTOMER' },
   });
 
   // Event
   const event = await prisma.event.create({
     data: {
       producerId: producer.id,
-      title: 'OutraFest 2025',
+      title: 'Gandira Fest 2025',
       description: 'O maior festival de música eletrônica do ano. 3 palcos, 20 artistas nacionais e internacionais, food trucks e muito mais.',
-      slug: 'outrafest-2025',
+      slug: 'gandira-fest-2025',
       venue: 'Espaço das Américas',
       address: 'Rua Tagipuru, 795',
       city: 'São Paulo',
@@ -78,11 +78,11 @@ async function main() {
 
   console.log('✅ Seed complete!');
   console.log('\n👥 Users created:');
-  console.log('  admin@outrahora.com       → ADMIN    (senha: Admin@123)');
-  console.log('  produtor@outrahora.com    → PRODUCER (senha: Admin@123)');
-  console.log('  staff@outrahora.com       → STAFF    (senha: Admin@123)');
-  console.log('  cliente@outrahora.com     → CUSTOMER (senha: Admin@123)');
-  console.log('\n🎉 Event created: OutraFest 2025 (slug: outrafest-2025)');
+  console.log('  admin@gandira.com       → ADMIN    (senha: Admin@123)');
+  console.log('  produtor@gandira.com    → PRODUCER (senha: Admin@123)');
+  console.log('  staff@gandira.com       → STAFF    (senha: Admin@123)');
+  console.log('  cliente@gandira.com     → CUSTOMER (senha: Admin@123)');
+  console.log('\n🎉 Event created: Gandira Fest 2025 (slug: gandira-fest-2025)');
 }
 
 main()
