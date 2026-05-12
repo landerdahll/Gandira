@@ -15,9 +15,9 @@ export declare class AuthService {
         accessToken: string;
         refreshToken: string;
         user: {
-            name: string;
             id: string;
             email: string;
+            name: string;
             role: import(".prisma/client").$Enums.Role;
             isVerified: boolean;
         };

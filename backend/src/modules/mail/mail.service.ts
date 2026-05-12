@@ -1,31 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
-  private transporter: nodemailer.Transporter;
+  private resend: Resend | null = null;
   private fromAddress: string;
   private devMode: boolean;
 
   constructor(private config: ConfigService) {
-    const host = config.get<string>('SMTP_HOST');
-    this.fromAddress = config.get<string>('SMTP_FROM', 'noreply@outrahora.com');
-    this.devMode = !host;
+    const apiKey = config.get<string>('RESEND_API_KEY');
+    this.fromAddress = config.get<string>('RESEND_FROM', 'onboarding@resend.dev');
+    this.devMode = !apiKey;
 
-    if (host) {
-      this.transporter = nodemailer.createTransport({
-        host,
-        port: config.get<number>('SMTP_PORT', 587),
-        secure: config.get<number>('SMTP_PORT', 587) === 465,
-        auth: {
-          user: config.get<string>('SMTP_USER'),
-          pass: config.get<string>('SMTP_PASS'),
-        },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-      });
+    if (apiKey) {
+      this.resend = new Resend(apiKey);
     }
   }
 
@@ -83,20 +73,24 @@ export class MailService {
 </html>`;
 
     if (this.devMode) {
-      this.logger.warn('⚠️  SMTP não configurado — link de verificação:');
+      this.logger.warn('⚠️  RESEND_API_KEY não configurado — link de verificação:');
       this.logger.warn(`📧  Para: ${to}`);
       this.logger.warn(`🔗  ${verifyUrl}`);
       return;
     }
 
-    const info = await this.transporter.sendMail({
-      from: `"OutraHora" <${this.fromAddress}>`,
+    const { error } = await this.resend!.emails.send({
+      from: `OutraHora <${this.fromAddress}>`,
       to,
       subject: 'Confirme seu e-mail — OutraHora',
       html,
     });
 
-    this.logger.log(`Verification email sent to ${to} — messageId: ${info.messageId}`);
+    if (error) {
+      this.logger.error(`Falha ao enviar e-mail de verificação para ${to}: ${error.message}`);
+    } else {
+      this.logger.log(`E-mail de verificação enviado para ${to}`);
+    }
   }
 
   async sendPasswordReset(to: string, name: string, resetUrl: string) {
@@ -108,7 +102,6 @@ export class MailService {
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 0;">
     <tr><td align="center">
       <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1e1e1e;border-radius:16px;overflow:hidden;max-width:480px;width:100%;">
-        <!-- Header -->
         <tr>
           <td style="padding:32px 32px 24px;border-bottom:1px solid #1a1a1a;">
             <p style="margin:0;font-size:24px;font-weight:800;color:#fff;letter-spacing:-0.5px;">
@@ -116,7 +109,6 @@ export class MailService {
             </p>
           </td>
         </tr>
-        <!-- Body -->
         <tr>
           <td style="padding:32px;">
             <p style="margin:0 0 8px;font-size:20px;font-weight:700;color:#fff;">Redefinição de senha</p>
@@ -144,7 +136,6 @@ export class MailService {
             </p>
           </td>
         </tr>
-        <!-- Footer -->
         <tr>
           <td style="padding:20px 32px;border-top:1px solid #1a1a1a;">
             <p style="margin:0;font-size:12px;color:#333;text-align:center;">
@@ -159,19 +150,23 @@ export class MailService {
 </html>`;
 
     if (this.devMode) {
-      this.logger.warn('⚠️  SMTP não configurado — link de redefinição:');
+      this.logger.warn('⚠️  RESEND_API_KEY não configurado — link de redefinição:');
       this.logger.warn(`📧  Para: ${to}`);
       this.logger.warn(`🔗  ${resetUrl}`);
       return;
     }
 
-    const info = await this.transporter.sendMail({
-      from: `"OutraHora" <${this.fromAddress}>`,
+    const { error } = await this.resend!.emails.send({
+      from: `OutraHora <${this.fromAddress}>`,
       to,
       subject: 'Redefinição de senha — OutraHora',
       html,
     });
 
-    this.logger.log(`Password reset email sent to ${to} — messageId: ${info.messageId}`);
+    if (error) {
+      this.logger.error(`Falha ao enviar e-mail de redefinição para ${to}: ${error.message}`);
+    } else {
+      this.logger.log(`E-mail de redefinição enviado para ${to}`);
+    }
   }
 }

@@ -1,43 +1,10 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
@@ -46,26 +13,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MailService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
-const nodemailer = __importStar(require("nodemailer"));
+const resend_1 = require("resend");
 let MailService = MailService_1 = class MailService {
     constructor(config) {
         this.config = config;
         this.logger = new common_1.Logger(MailService_1.name);
-        const host = config.get('SMTP_HOST');
-        this.fromAddress = config.get('SMTP_FROM', 'noreply@outrahora.com');
-        this.devMode = !host;
-        if (host) {
-            this.transporter = nodemailer.createTransport({
-                host,
-                port: config.get('SMTP_PORT', 587),
-                secure: config.get('SMTP_PORT', 587) === 465,
-                auth: {
-                    user: config.get('SMTP_USER'),
-                    pass: config.get('SMTP_PASS'),
-                },
-                connectionTimeout: 10000,
-                greetingTimeout: 10000,
-            });
+        this.resend = null;
+        const apiKey = config.get('RESEND_API_KEY');
+        this.fromAddress = config.get('RESEND_FROM', 'onboarding@resend.dev');
+        this.devMode = !apiKey;
+        if (apiKey) {
+            this.resend = new resend_1.Resend(apiKey);
         }
     }
     async sendVerificationEmail(to, name, verifyUrl) {
@@ -121,18 +79,23 @@ let MailService = MailService_1 = class MailService {
 </body>
 </html>`;
         if (this.devMode) {
-            this.logger.warn('⚠️  SMTP não configurado — link de verificação:');
+            this.logger.warn('⚠️  RESEND_API_KEY não configurado — link de verificação:');
             this.logger.warn(`📧  Para: ${to}`);
             this.logger.warn(`🔗  ${verifyUrl}`);
             return;
         }
-        const info = await this.transporter.sendMail({
-            from: `"OutraHora" <${this.fromAddress}>`,
+        const { error } = await this.resend.emails.send({
+            from: `OutraHora <${this.fromAddress}>`,
             to,
             subject: 'Confirme seu e-mail — OutraHora',
             html,
         });
-        this.logger.log(`Verification email sent to ${to} — messageId: ${info.messageId}`);
+        if (error) {
+            this.logger.error(`Falha ao enviar e-mail de verificação para ${to}: ${error.message}`);
+        }
+        else {
+            this.logger.log(`E-mail de verificação enviado para ${to}`);
+        }
     }
     async sendPasswordReset(to, name, resetUrl) {
         const html = `
@@ -143,7 +106,6 @@ let MailService = MailService_1 = class MailService {
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 0;">
     <tr><td align="center">
       <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1e1e1e;border-radius:16px;overflow:hidden;max-width:480px;width:100%;">
-        <!-- Header -->
         <tr>
           <td style="padding:32px 32px 24px;border-bottom:1px solid #1a1a1a;">
             <p style="margin:0;font-size:24px;font-weight:800;color:#fff;letter-spacing:-0.5px;">
@@ -151,7 +113,6 @@ let MailService = MailService_1 = class MailService {
             </p>
           </td>
         </tr>
-        <!-- Body -->
         <tr>
           <td style="padding:32px;">
             <p style="margin:0 0 8px;font-size:20px;font-weight:700;color:#fff;">Redefinição de senha</p>
@@ -179,7 +140,6 @@ let MailService = MailService_1 = class MailService {
             </p>
           </td>
         </tr>
-        <!-- Footer -->
         <tr>
           <td style="padding:20px 32px;border-top:1px solid #1a1a1a;">
             <p style="margin:0;font-size:12px;color:#333;text-align:center;">
@@ -193,18 +153,23 @@ let MailService = MailService_1 = class MailService {
 </body>
 </html>`;
         if (this.devMode) {
-            this.logger.warn('⚠️  SMTP não configurado — link de redefinição:');
+            this.logger.warn('⚠️  RESEND_API_KEY não configurado — link de redefinição:');
             this.logger.warn(`📧  Para: ${to}`);
             this.logger.warn(`🔗  ${resetUrl}`);
             return;
         }
-        const info = await this.transporter.sendMail({
-            from: `"OutraHora" <${this.fromAddress}>`,
+        const { error } = await this.resend.emails.send({
+            from: `OutraHora <${this.fromAddress}>`,
             to,
             subject: 'Redefinição de senha — OutraHora',
             html,
         });
-        this.logger.log(`Password reset email sent to ${to} — messageId: ${info.messageId}`);
+        if (error) {
+            this.logger.error(`Falha ao enviar e-mail de redefinição para ${to}: ${error.message}`);
+        }
+        else {
+            this.logger.log(`E-mail de redefinição enviado para ${to}`);
+        }
     }
 };
 exports.MailService = MailService;
