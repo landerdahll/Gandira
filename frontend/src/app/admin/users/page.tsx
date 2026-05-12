@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { adminApi } from '@/lib/api';
-import { Search, Users, ShieldCheck, UserCheck, Phone, Calendar, Mail, ChevronDown, KeyRound } from 'lucide-react';
+import { Search, Users, ShieldCheck, UserCheck, Phone, Calendar, Mail, ChevronDown, KeyRound, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const GENDER_LABELS: Record<string, string> = {
@@ -99,6 +99,20 @@ export default function AdminUsersPage() {
       load(meta.page);
     } catch (e: any) {
       toast.error(e.response?.data?.message ?? 'Erro ao alterar cargo');
+    } finally {
+      setActing(null);
+    }
+  }
+
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`Excluir "${name}"? O e-mail será liberado para novo cadastro. Esta ação não pode ser desfeita.`)) return;
+    setActing(id);
+    try {
+      await adminApi.deleteUser(id);
+      toast.success(`Usuário "${name}" excluído.`);
+      load(meta.page);
+    } catch (e: any) {
+      toast.error(e.response?.data?.message ?? 'Erro ao excluir usuário');
     } finally {
       setActing(null);
     }
@@ -262,6 +276,24 @@ export default function AdminUsersPage() {
                 {/* Right: actions — skip ADMIN */}
                 {user.role !== 'ADMIN' && (
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
+                    {/* Delete button */}
+                    <button
+                      onClick={() => handleDelete(user.id, user.name)}
+                      disabled={acting === user.id}
+                      title="Excluir usuário e liberar e-mail"
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '5px',
+                        padding: '7px 10px', borderRadius: '8px', border: '1px solid #252525',
+                        background: '#1a1a1a', color: '#555',
+                        fontSize: '12px', cursor: 'pointer',
+                        opacity: acting === user.id ? 0.5 : 1,
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = '#ff6b6b44'; e.currentTarget.style.color = '#ff6b6b'; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = '#252525'; e.currentTarget.style.color = '#555'; }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+
                     {/* Reset password button */}
                     <button
                       onClick={() => handleResetPassword(user.id, user.name)}

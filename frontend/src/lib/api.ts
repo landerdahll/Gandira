@@ -147,4 +147,5 @@ export const adminApi = {
   promoteStaff:    (id: string) => api.patch(`/users/${id}/promote-staff`),
   demote:          (id: string) => api.patch(`/users/${id}/demote`),
   resetPassword:   (id: string) => api.patch(`/users/${id}/reset-password`),
+  deleteUser:      (id: string) => api.delete(`/users/${id}`),
 };

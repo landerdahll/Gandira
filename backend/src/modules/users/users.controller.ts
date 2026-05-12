@@ -100,4 +100,11 @@ export class UsersController {
   resetPassword(@Param('id') id: string) {
     return this.users.resetUserPassword(id);
   }
+
+  @Delete(':id')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Excluir usuário (admin) — anonimiza dados e libera o e-mail' })
+  deleteUser(@Param('id') id: string) {
+    return this.users.deleteUser(id);
+  }
 }

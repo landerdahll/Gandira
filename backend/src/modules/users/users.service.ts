@@ -168,4 +168,29 @@ export class UsersService {
     await this.prisma.user.update({ where: { id: userId }, data: { password: hashed } });
     return { message: `Senha redefinida para: ${tempPassword}` };
   }
+
+  async deleteUser(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Usuário não encontrado');
+
+    await this.prisma.$transaction([
+      this.prisma.emailVerificationToken.deleteMany({ where: { userId } }),
+      this.prisma.passwordResetToken.deleteMany({ where: { userId } }),
+      this.prisma.refreshToken.deleteMany({ where: { userId } }),
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          email: `deleted_${userId}@deleted.local`,
+          name: 'Conta excluída',
+          phone: null,
+          cpf: null,
+          avatarUrl: null,
+          isActive: false,
+          isVerified: false,
+        },
+      }),
+    ]);
+
+    return { message: 'Usuário excluído com sucesso' };
+  }
 }
