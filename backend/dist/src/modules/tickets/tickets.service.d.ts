@@ -30,15 +30,15 @@ export declare class TicketsService {
             createdAt: Date;
             updatedAt: Date;
             token: string;
-            status: import(".prisma/client").$Enums.TicketStatus;
             eventId: string;
+            status: import(".prisma/client").$Enums.TicketStatus;
+            cancelledAt: Date | null;
+            batchId: string;
+            orderId: string;
             holderName: string | null;
             holderEmail: string | null;
             holderCpf: string | null;
             qrCodeUrl: string | null;
-            cancelledAt: Date | null;
-            orderId: string;
-            batchId: string;
         })[];
         meta: {
             total: number;
@@ -70,15 +70,15 @@ export declare class TicketsService {
         createdAt: Date;
         updatedAt: Date;
         token: string;
-        status: import(".prisma/client").$Enums.TicketStatus;
         eventId: string;
+        status: import(".prisma/client").$Enums.TicketStatus;
+        cancelledAt: Date | null;
+        batchId: string;
+        orderId: string;
         holderName: string | null;
         holderEmail: string | null;
         holderCpf: string | null;
         qrCodeUrl: string | null;
-        cancelledAt: Date | null;
-        orderId: string;
-        batchId: string;
     }>;
     validateAndCheckIn(token: string, eventId: string, staffId: string): Promise<{
         valid: boolean;

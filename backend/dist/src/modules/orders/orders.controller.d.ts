@@ -11,16 +11,6 @@ export declare class OrdersController {
     }>;
     findAll(user: any, page: number, limit: number): Promise<{
         data: ({
-            tickets: {
-                id: string;
-                status: import(".prisma/client").$Enums.TicketStatus;
-            }[];
-            event: {
-                title: string;
-                slug: string;
-                coverImage: string | null;
-                startDate: Date;
-            };
             items: ({
                 batch: {
                     name: string;
@@ -29,29 +19,39 @@ export declare class OrdersController {
             } & {
                 id: string;
                 createdAt: Date;
-                quantity: number;
                 total: import("@prisma/client/runtime/library").Decimal;
-                orderId: string;
-                batchId: string;
+                quantity: number;
                 unitPrice: import("@prisma/client/runtime/library").Decimal;
+                batchId: string;
+                orderId: string;
             })[];
+            event: {
+                title: string;
+                slug: string;
+                coverImage: string | null;
+                startDate: Date;
+            };
+            tickets: {
+                id: string;
+                status: import(".prisma/client").$Enums.TicketStatus;
+            }[];
         } & {
             id: string;
-            status: import(".prisma/client").$Enums.OrderStatus;
             createdAt: Date;
             updatedAt: Date;
-            eventId: string;
-            total: import("@prisma/client/runtime/library").Decimal;
-            cancelledAt: Date | null;
             userId: string;
+            expiresAt: Date;
+            total: import("@prisma/client/runtime/library").Decimal;
+            eventId: string;
+            status: import(".prisma/client").$Enums.OrderStatus;
             subtotal: import("@prisma/client/runtime/library").Decimal;
             platformFee: import("@prisma/client/runtime/library").Decimal;
             stripePaymentIntentId: string | null;
             stripeChargeId: string | null;
+            cancelledAt: Date | null;
             cancelReason: string | null;
             refundedAt: Date | null;
             stripeRefundId: string | null;
-            expiresAt: Date;
         })[];
         meta: {
             total: number;
@@ -60,39 +60,17 @@ export declare class OrdersController {
         };
     }>;
     findOne(id: string, user: any): Promise<{
-        tickets: {
-            id: string;
-            status: import(".prisma/client").$Enums.TicketStatus;
-            createdAt: Date;
-            updatedAt: Date;
-            eventId: string;
-            token: string;
-            holderName: string | null;
-            holderEmail: string | null;
-            holderCpf: string | null;
-            qrCodeUrl: string | null;
-            cancelledAt: Date | null;
-            orderId: string;
-            batchId: string;
-        }[];
-        event: {
-            title: string;
-            slug: string;
-            coverImage: string | null;
-            venue: string;
-            startDate: Date;
-        };
         items: ({
             batch: {
                 id: string;
-                description: string | null;
-                status: import(".prisma/client").$Enums.BatchStatus;
+                name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                name: string;
-                price: import("@prisma/client/runtime/library").Decimal;
+                description: string | null;
                 eventId: string;
+                status: import(".prisma/client").$Enums.BatchStatus;
                 quantity: number;
+                price: import("@prisma/client/runtime/library").Decimal;
                 sold: number;
                 startsAt: Date;
                 endsAt: Date;
@@ -102,29 +80,51 @@ export declare class OrdersController {
         } & {
             id: string;
             createdAt: Date;
-            quantity: number;
             total: import("@prisma/client/runtime/library").Decimal;
-            orderId: string;
-            batchId: string;
+            quantity: number;
             unitPrice: import("@prisma/client/runtime/library").Decimal;
+            batchId: string;
+            orderId: string;
         })[];
+        event: {
+            title: string;
+            slug: string;
+            coverImage: string | null;
+            venue: string;
+            startDate: Date;
+        };
+        tickets: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            token: string;
+            eventId: string;
+            status: import(".prisma/client").$Enums.TicketStatus;
+            cancelledAt: Date | null;
+            batchId: string;
+            orderId: string;
+            holderName: string | null;
+            holderEmail: string | null;
+            holderCpf: string | null;
+            qrCodeUrl: string | null;
+        }[];
     } & {
         id: string;
-        status: import(".prisma/client").$Enums.OrderStatus;
         createdAt: Date;
         updatedAt: Date;
-        eventId: string;
-        total: import("@prisma/client/runtime/library").Decimal;
-        cancelledAt: Date | null;
         userId: string;
+        expiresAt: Date;
+        total: import("@prisma/client/runtime/library").Decimal;
+        eventId: string;
+        status: import(".prisma/client").$Enums.OrderStatus;
         subtotal: import("@prisma/client/runtime/library").Decimal;
         platformFee: import("@prisma/client/runtime/library").Decimal;
         stripePaymentIntentId: string | null;
         stripeChargeId: string | null;
+        cancelledAt: Date | null;
         cancelReason: string | null;
         refundedAt: Date | null;
         stripeRefundId: string | null;
-        expiresAt: Date;
     }>;
     cancel(id: string, user: any, reason?: string): Promise<void>;
 }

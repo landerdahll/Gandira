@@ -27,6 +27,10 @@ let OrdersService = OrdersService_1 = class OrdersService {
         this.logger = new common_1.Logger(OrdersService_1.name);
     }
     async create(dto, userId) {
+        const buyer = await this.prisma.user.findUnique({ where: { id: userId }, select: { isVerified: true } });
+        if (!buyer?.isVerified) {
+            throw new common_1.ForbiddenException('Verifique seu e-mail antes de comprar ingressos');
+        }
         const event = await this.prisma.event.findUnique({ where: { id: dto.eventId } });
         if (!event || event.status !== 'PUBLISHED') {
             throw new common_1.NotFoundException('Evento não encontrado ou indisponível');

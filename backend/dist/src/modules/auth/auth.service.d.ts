@@ -19,8 +19,16 @@ export declare class AuthService {
             email: string;
             name: string;
             role: import(".prisma/client").$Enums.Role;
+            isVerified: boolean;
         };
     }>;
+    verifyEmail(token: string): Promise<{
+        message: string;
+    }>;
+    resendVerification(userId: string): Promise<{
+        message: string;
+    }>;
+    private dispatchVerificationEmail;
     login(dto: LoginDto, ipAddress?: string): Promise<{
         accessToken: string;
         refreshToken: string;
@@ -29,6 +37,7 @@ export declare class AuthService {
             email: string;
             name: string;
             role: import(".prisma/client").$Enums.Role;
+            isVerified: boolean;
         };
     }>;
     refresh(refreshToken: string): Promise<{

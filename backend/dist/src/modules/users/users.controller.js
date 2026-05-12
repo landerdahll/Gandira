@@ -62,6 +62,9 @@ let UsersController = class UsersController {
     resetPassword(id) {
         return this.users.resetUserPassword(id);
     }
+    deleteUser(id) {
+        return this.users.deleteUser(id);
+    }
 };
 exports.UsersController = UsersController;
 __decorate([
@@ -165,6 +168,15 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "resetPassword", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: 'Excluir usuário (admin) — anonimiza dados e libera o e-mail' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "deleteUser", null);
 exports.UsersController = UsersController = __decorate([
     (0, swagger_1.ApiTags)('Users'),
     (0, swagger_1.ApiBearerAuth)(),

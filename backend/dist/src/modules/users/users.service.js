@@ -66,7 +66,7 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MaxLength)(20),
+    (0, class_validator_1.Matches)(/^\(\d{2}\) \d{9}$/, { message: 'Celular inválido' }),
     __metadata("design:type", String)
 ], UpdateProfileDto.prototype, "phone", void 0);
 __decorate([
@@ -110,6 +110,20 @@ let UsersService = class UsersService {
         return user;
     }
     async updateProfile(userId, dto) {
+        if (dto.birthDate) {
+            const birth = new Date(dto.birthDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (isNaN(birth.getTime()) || birth >= today) {
+                throw new common_1.BadRequestException('Data de nascimento inválida');
+            }
+            const age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            const exactAge = age - (m < 0 || (m === 0 && today.getDate() < birth.getDate()) ? 1 : 0);
+            if (exactAge < 14) {
+                throw new common_1.BadRequestException('Você deve ter ao menos 14 anos');
+            }
+        }
         if (dto.email) {
             const existing = await this.prisma.user.findFirst({
                 where: { email: dto.email.toLowerCase().trim(), NOT: { id: userId } },
@@ -214,6 +228,29 @@ let UsersService = class UsersService {
         const hashed = await bcrypt.hash(tempPassword, BCRYPT_ROUNDS);
         await this.prisma.user.update({ where: { id: userId }, data: { password: hashed } });
         return { message: `Senha redefinida para: ${tempPassword}` };
+    }
+    async deleteUser(userId) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user)
+            throw new common_1.NotFoundException('Usuário não encontrado');
+        await this.prisma.$transaction([
+            this.prisma.emailVerificationToken.deleteMany({ where: { userId } }),
+            this.prisma.passwordResetToken.deleteMany({ where: { userId } }),
+            this.prisma.refreshToken.deleteMany({ where: { userId } }),
+            this.prisma.user.update({
+                where: { id: userId },
+                data: {
+                    email: `deleted_${userId}@deleted.local`,
+                    name: 'Conta excluída',
+                    phone: null,
+                    cpf: null,
+                    avatarUrl: null,
+                    isActive: false,
+                    isVerified: false,
+                },
+            }),
+        ]);
+        return { message: 'Usuário excluído com sucesso' };
     }
 };
 exports.UsersService = UsersService;

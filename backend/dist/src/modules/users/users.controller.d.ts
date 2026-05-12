@@ -7,20 +7,20 @@ export declare class UsersController {
     constructor(users: UsersService, cloudinary: CloudinaryService);
     me(user: any): Promise<{
         id: string;
-        createdAt: Date;
-        name: string;
         email: string;
+        name: string;
         phone: string | null;
         role: import(".prisma/client").$Enums.Role;
         gender: import(".prisma/client").$Enums.Gender | null;
         birthDate: Date | null;
         avatarUrl: string | null;
         isVerified: boolean;
+        createdAt: Date;
     }>;
     update(user: any, dto: UpdateProfileDto): Promise<{
         id: string;
-        name: string;
         email: string;
+        name: string;
         phone: string | null;
         role: import(".prisma/client").$Enums.Role;
         gender: import(".prisma/client").$Enums.Gender | null;
@@ -39,37 +39,37 @@ export declare class UsersController {
     }>;
     promote(id: string): Promise<{
         id: string;
-        name: string;
         email: string;
+        name: string;
         role: import(".prisma/client").$Enums.Role;
     }>;
     promoteStaff(id: string): Promise<{
         id: string;
-        name: string;
         email: string;
+        name: string;
         role: import(".prisma/client").$Enums.Role;
     }>;
     demote(id: string): Promise<{
         id: string;
-        name: string;
         email: string;
+        name: string;
         role: import(".prisma/client").$Enums.Role;
     }>;
     listAll(page: number, limit: number, search?: string, role?: Role): Promise<{
         data: {
             id: string;
-            createdAt: Date;
-            _count: {
-                orders: number;
-            };
-            name: string;
             email: string;
+            name: string;
             phone: string | null;
             role: import(".prisma/client").$Enums.Role;
             gender: import(".prisma/client").$Enums.Gender | null;
             birthDate: Date | null;
             isVerified: boolean;
             isActive: boolean;
+            createdAt: Date;
+            _count: {
+                orders: number;
+            };
         }[];
         meta: {
             total: number;
@@ -78,6 +78,9 @@ export declare class UsersController {
         };
     }>;
     resetPassword(id: string): Promise<{
+        message: string;
+    }>;
+    deleteUser(id: string): Promise<{
         message: string;
     }>;
 }

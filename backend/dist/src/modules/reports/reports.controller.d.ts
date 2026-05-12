@@ -9,12 +9,9 @@ export declare class ReportsController {
             totalTicketsSold: number;
         };
         recentOrders: ({
-            event: {
-                title: string;
-            };
             user: {
-                name: string;
                 email: string;
+                name: string;
             };
             items: ({
                 batch: {
@@ -23,29 +20,32 @@ export declare class ReportsController {
             } & {
                 id: string;
                 createdAt: Date;
-                quantity: number;
                 total: import("@prisma/client/runtime/library").Decimal;
-                orderId: string;
-                batchId: string;
+                quantity: number;
                 unitPrice: import("@prisma/client/runtime/library").Decimal;
+                batchId: string;
+                orderId: string;
             })[];
+            event: {
+                title: string;
+            };
         } & {
             id: string;
-            status: import(".prisma/client").$Enums.OrderStatus;
             createdAt: Date;
             updatedAt: Date;
-            eventId: string;
-            total: import("@prisma/client/runtime/library").Decimal;
-            cancelledAt: Date | null;
             userId: string;
+            expiresAt: Date;
+            total: import("@prisma/client/runtime/library").Decimal;
+            eventId: string;
+            status: import(".prisma/client").$Enums.OrderStatus;
             subtotal: import("@prisma/client/runtime/library").Decimal;
             platformFee: import("@prisma/client/runtime/library").Decimal;
             stripePaymentIntentId: string | null;
             stripeChargeId: string | null;
+            cancelledAt: Date | null;
             cancelReason: string | null;
             refundedAt: Date | null;
             stripeRefundId: string | null;
-            expiresAt: Date;
         })[];
     }>;
     eventReport(eventId: string, user: any): Promise<{
@@ -76,10 +76,10 @@ export declare class ReportsController {
             available: number;
             occupancyRate: string;
             id: string;
-            status: import(".prisma/client").$Enums.BatchStatus;
             name: string;
-            price: import("@prisma/client/runtime/library").Decimal;
+            status: import(".prisma/client").$Enums.BatchStatus;
             quantity: number;
+            price: import("@prisma/client/runtime/library").Decimal;
             sold: number;
             ticketType: import(".prisma/client").$Enums.TicketType;
         }[];

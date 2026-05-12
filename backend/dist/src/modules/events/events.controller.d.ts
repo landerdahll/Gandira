@@ -37,11 +37,11 @@ export declare class EventsController {
         };
         batches: {
             id: string;
+            name: string;
             description: string | null;
             status: import(".prisma/client").$Enums.BatchStatus;
-            name: string;
-            price: import("@prisma/client/runtime/library").Decimal;
             quantity: number;
+            price: import("@prisma/client/runtime/library").Decimal;
             sold: number;
             startsAt: Date;
             endsAt: Date;
@@ -49,8 +49,13 @@ export declare class EventsController {
         }[];
     } & {
         id: string;
-        title: string;
+        createdAt: Date;
+        updatedAt: Date;
         description: string;
+        title: string;
+        tags: string[];
+        status: import(".prisma/client").$Enums.EventStatus;
+        producerId: string;
         slug: string;
         coverImage: string | null;
         bannerImage: string | null;
@@ -66,16 +71,16 @@ export declare class EventsController {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
-        tags: string[];
-        status: import(".prisma/client").$Enums.EventStatus;
-        createdAt: Date;
-        updatedAt: Date;
-        producerId: string;
     }>;
     create(dto: CreateEventDto, user: any): Promise<{
         id: string;
-        title: string;
+        createdAt: Date;
+        updatedAt: Date;
         description: string;
+        title: string;
+        tags: string[];
+        status: import(".prisma/client").$Enums.EventStatus;
+        producerId: string;
         slug: string;
         coverImage: string | null;
         bannerImage: string | null;
@@ -91,11 +96,6 @@ export declare class EventsController {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
-        tags: string[];
-        status: import(".prisma/client").$Enums.EventStatus;
-        createdAt: Date;
-        updatedAt: Date;
-        producerId: string;
     }>;
     uploadImage(file: Express.Multer.File): Promise<{
         url: string;
@@ -103,14 +103,14 @@ export declare class EventsController {
     findForEdit(id: string, user: any): Promise<{
         batches: {
             id: string;
-            description: string | null;
-            status: import(".prisma/client").$Enums.BatchStatus;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
-            name: string;
-            price: import("@prisma/client/runtime/library").Decimal;
+            description: string | null;
             eventId: string;
+            status: import(".prisma/client").$Enums.BatchStatus;
             quantity: number;
+            price: import("@prisma/client/runtime/library").Decimal;
             sold: number;
             startsAt: Date;
             endsAt: Date;
@@ -119,8 +119,13 @@ export declare class EventsController {
         }[];
     } & {
         id: string;
-        title: string;
+        createdAt: Date;
+        updatedAt: Date;
         description: string;
+        title: string;
+        tags: string[];
+        status: import(".prisma/client").$Enums.EventStatus;
+        producerId: string;
         slug: string;
         coverImage: string | null;
         bannerImage: string | null;
@@ -136,16 +141,16 @@ export declare class EventsController {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
-        tags: string[];
-        status: import(".prisma/client").$Enums.EventStatus;
-        createdAt: Date;
-        updatedAt: Date;
-        producerId: string;
     }>;
     update(id: string, dto: UpdateEventDto, user: any): Promise<{
         id: string;
-        title: string;
+        createdAt: Date;
+        updatedAt: Date;
         description: string;
+        title: string;
+        tags: string[];
+        status: import(".prisma/client").$Enums.EventStatus;
+        producerId: string;
         slug: string;
         coverImage: string | null;
         bannerImage: string | null;
@@ -161,26 +166,26 @@ export declare class EventsController {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
-        tags: string[];
-        status: import(".prisma/client").$Enums.EventStatus;
-        createdAt: Date;
-        updatedAt: Date;
-        producerId: string;
     }>;
     myEvents(user: any, page: number, limit: number): Promise<{
         data: ({
-            batches: {
-                price: import("@prisma/client/runtime/library").Decimal;
-                sold: number;
-            }[];
             _count: {
                 orders: number;
                 tickets: number;
             };
+            batches: {
+                price: import("@prisma/client/runtime/library").Decimal;
+                sold: number;
+            }[];
         } & {
             id: string;
-            title: string;
+            createdAt: Date;
+            updatedAt: Date;
             description: string;
+            title: string;
+            tags: string[];
+            status: import(".prisma/client").$Enums.EventStatus;
+            producerId: string;
             slug: string;
             coverImage: string | null;
             bannerImage: string | null;
@@ -196,11 +201,6 @@ export declare class EventsController {
             doorsOpen: Date | null;
             ageRating: number;
             category: string | null;
-            tags: string[];
-            status: import(".prisma/client").$Enums.EventStatus;
-            createdAt: Date;
-            updatedAt: Date;
-            producerId: string;
         })[];
         meta: {
             total: number;
@@ -210,8 +210,13 @@ export declare class EventsController {
     }>;
     publish(id: string, user: any): Promise<{
         id: string;
-        title: string;
+        createdAt: Date;
+        updatedAt: Date;
         description: string;
+        title: string;
+        tags: string[];
+        status: import(".prisma/client").$Enums.EventStatus;
+        producerId: string;
         slug: string;
         coverImage: string | null;
         bannerImage: string | null;
@@ -227,11 +232,6 @@ export declare class EventsController {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
-        tags: string[];
-        status: import(".prisma/client").$Enums.EventStatus;
-        createdAt: Date;
-        updatedAt: Date;
-        producerId: string;
     }>;
     cancel(id: string, user: any): Promise<void>;
 }

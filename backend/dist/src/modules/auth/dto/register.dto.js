@@ -39,10 +39,10 @@ __decorate([
     __metadata("design:type", String)
 ], RegisterDto.prototype, "password", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: '(11) 99999-9999' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: '(48) 991234567' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MaxLength)(20),
+    (0, class_validator_1.Matches)(/^\(\d{2}\) \d{9}$/, { message: 'Celular inválido' }),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "phone", void 0);
 __decorate([

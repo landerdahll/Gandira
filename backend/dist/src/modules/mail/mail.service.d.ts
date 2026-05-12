@@ -6,5 +6,6 @@ export declare class MailService {
     private fromAddress;
     private devMode;
     constructor(config: ConfigService);
+    sendVerificationEmail(to: string, name: string, verifyUrl: string): Promise<void>;
     sendPasswordReset(to: string, name: string, resetUrl: string): Promise<void>;
 }

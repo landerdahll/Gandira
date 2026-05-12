@@ -16,20 +16,20 @@ export declare class UsersService {
     constructor(prisma: PrismaService);
     getProfile(userId: string): Promise<{
         id: string;
-        createdAt: Date;
-        name: string;
         email: string;
+        name: string;
         phone: string | null;
         role: import(".prisma/client").$Enums.Role;
         gender: import(".prisma/client").$Enums.Gender | null;
         birthDate: Date | null;
         avatarUrl: string | null;
         isVerified: boolean;
+        createdAt: Date;
     }>;
     updateProfile(userId: string, dto: UpdateProfileDto): Promise<{
         id: string;
-        name: string;
         email: string;
+        name: string;
         phone: string | null;
         role: import(".prisma/client").$Enums.Role;
         gender: import(".prisma/client").$Enums.Gender | null;
@@ -48,37 +48,37 @@ export declare class UsersService {
     }>;
     promoteToProducer(userId: string): Promise<{
         id: string;
-        name: string;
         email: string;
+        name: string;
         role: import(".prisma/client").$Enums.Role;
     }>;
     promoteToStaff(userId: string): Promise<{
         id: string;
-        name: string;
         email: string;
+        name: string;
         role: import(".prisma/client").$Enums.Role;
     }>;
     demoteToCustomer(userId: string): Promise<{
         id: string;
-        name: string;
         email: string;
+        name: string;
         role: import(".prisma/client").$Enums.Role;
     }>;
     listAll(page?: number, limit?: number, search?: string, role?: Role): Promise<{
         data: {
             id: string;
-            createdAt: Date;
-            _count: {
-                orders: number;
-            };
-            name: string;
             email: string;
+            name: string;
             phone: string | null;
             role: import(".prisma/client").$Enums.Role;
             gender: import(".prisma/client").$Enums.Gender | null;
             birthDate: Date | null;
             isVerified: boolean;
             isActive: boolean;
+            createdAt: Date;
+            _count: {
+                orders: number;
+            };
         }[];
         meta: {
             total: number;
@@ -87,6 +87,9 @@ export declare class UsersService {
         };
     }>;
     resetUserPassword(userId: string): Promise<{
+        message: string;
+    }>;
+    deleteUser(userId: string): Promise<{
         message: string;
     }>;
 }

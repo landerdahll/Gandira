@@ -71,6 +71,20 @@ let AuthService = AuthService_1 = class AuthService {
             if (cpfExists)
                 throw new common_1.ConflictException('CPF já cadastrado');
         }
+        if (dto.birthDate) {
+            const birth = new Date(dto.birthDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (isNaN(birth.getTime()) || birth >= today) {
+                throw new common_1.BadRequestException('Data de nascimento inválida');
+            }
+            const age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            const exactAge = age - (m < 0 || (m === 0 && today.getDate() < birth.getDate()) ? 1 : 0);
+            if (exactAge < 14) {
+                throw new common_1.BadRequestException('Você deve ter ao menos 14 anos para se cadastrar');
+            }
+        }
         const password = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
         const cpf = dto.cpf ? dto.cpf.replace(/\D/g, '') : undefined;
         const user = await this.prisma.user.create({
@@ -83,12 +97,45 @@ let AuthService = AuthService_1 = class AuthService {
                 gender: dto.gender,
                 birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
             },
-            select: { id: true, email: true, name: true, role: true },
+            select: { id: true, email: true, name: true, role: true, isVerified: true },
         });
         this.logger.log(`New user registered: ${user.email}`);
         await this.auditLog(user.id, 'USER_REGISTERED', 'User', user.id);
+        await this.dispatchVerificationEmail(user.id, user.email, user.name);
         const tokens = await this.generateTokenPair(user.id, user.email, user.role);
         return { user, ...tokens };
+    }
+    async verifyEmail(token) {
+        const record = await this.prisma.emailVerificationToken.findUnique({ where: { token } });
+        if (!record || record.usedAt)
+            throw new common_1.BadRequestException('Token inválido ou já utilizado');
+        if (record.expiresAt < new Date())
+            throw new common_1.BadRequestException('Token expirado. Solicite um novo link.');
+        await this.prisma.$transaction([
+            this.prisma.user.update({ where: { id: record.userId }, data: { isVerified: true } }),
+            this.prisma.emailVerificationToken.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
+        ]);
+        return { message: 'E-mail verificado com sucesso!' };
+    }
+    async resendVerification(userId) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { id: true, email: true, name: true, isVerified: true },
+        });
+        if (!user)
+            throw new common_1.NotFoundException('Usuário não encontrado');
+        if (user.isVerified)
+            throw new common_1.BadRequestException('E-mail já verificado');
+        await this.dispatchVerificationEmail(user.id, user.email, user.name);
+        return { message: 'E-mail de verificação reenviado.' };
+    }
+    async dispatchVerificationEmail(userId, email, name) {
+        await this.prisma.emailVerificationToken.deleteMany({ where: { userId } });
+        const token = (0, crypto_util_1.generateSecureToken)();
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        await this.prisma.emailVerificationToken.create({ data: { userId, token, expiresAt } });
+        const baseUrl = (this.config.get('FRONTEND_URL', 'http://localhost:3000')).split(',')[0].trim();
+        await this.mail.sendVerificationEmail(email, name, `${baseUrl}/auth/verify-email?token=${token}`);
     }
     async login(dto, ipAddress) {
         const user = await this.prisma.user.findUnique({
@@ -106,7 +153,7 @@ let AuthService = AuthService_1 = class AuthService {
         await this.auditLog(user.id, 'LOGIN_SUCCESS', 'User', user.id, { ipAddress });
         const tokens = await this.generateTokenPair(user.id, user.email, user.role);
         return {
-            user: { id: user.id, email: user.email, name: user.name, role: user.role },
+            user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified },
             ...tokens,
         };
     }

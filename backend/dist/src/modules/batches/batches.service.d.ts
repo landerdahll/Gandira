@@ -6,14 +6,14 @@ export declare class BatchesService {
     constructor(prisma: PrismaService);
     create(eventId: string, dto: CreateBatchDto, _producerId: string): Promise<{
         id: string;
-        description: string | null;
-        status: import(".prisma/client").$Enums.BatchStatus;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
-        price: import("@prisma/client/runtime/library").Decimal;
+        description: string | null;
         eventId: string;
+        status: import(".prisma/client").$Enums.BatchStatus;
         quantity: number;
+        price: import("@prisma/client/runtime/library").Decimal;
         sold: number;
         startsAt: Date;
         endsAt: Date;
@@ -22,14 +22,14 @@ export declare class BatchesService {
     }>;
     update(eventId: string, batchId: string, dto: UpdateBatchDto, _producerId: string): Promise<{
         id: string;
-        description: string | null;
-        status: import(".prisma/client").$Enums.BatchStatus;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
-        price: import("@prisma/client/runtime/library").Decimal;
+        description: string | null;
         eventId: string;
+        status: import(".prisma/client").$Enums.BatchStatus;
         quantity: number;
+        price: import("@prisma/client/runtime/library").Decimal;
         sold: number;
         startsAt: Date;
         endsAt: Date;
@@ -38,14 +38,14 @@ export declare class BatchesService {
     }>;
     findByEvent(eventId: string): Promise<{
         id: string;
-        description: string | null;
-        status: import(".prisma/client").$Enums.BatchStatus;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
-        price: import("@prisma/client/runtime/library").Decimal;
+        description: string | null;
         eventId: string;
+        status: import(".prisma/client").$Enums.BatchStatus;
         quantity: number;
+        price: import("@prisma/client/runtime/library").Decimal;
         sold: number;
         startsAt: Date;
         endsAt: Date;
@@ -55,14 +55,14 @@ export declare class BatchesService {
     reserveStock(batchId: string, quantity: number, tx: any): Promise<any>;
     releaseStock(batchId: string, quantity: number): Promise<{
         id: string;
-        description: string | null;
-        status: import(".prisma/client").$Enums.BatchStatus;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        name: string;
-        price: import("@prisma/client/runtime/library").Decimal;
+        description: string | null;
         eventId: string;
+        status: import(".prisma/client").$Enums.BatchStatus;
         quantity: number;
+        price: import("@prisma/client/runtime/library").Decimal;
         sold: number;
         startsAt: Date;
         endsAt: Date;

@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+declare class VerifyEmailDto {
+    token: string;
+}
 declare class ForgotPasswordDto {
     email: string;
 }
@@ -18,6 +21,7 @@ export declare class AuthController {
             email: string;
             name: string;
             role: import(".prisma/client").$Enums.Role;
+            isVerified: boolean;
         };
         accessToken: string;
     }>;
@@ -27,6 +31,7 @@ export declare class AuthController {
             email: string;
             name: string;
             role: import(".prisma/client").$Enums.Role;
+            isVerified: boolean;
         };
         accessToken: string;
     }>;
@@ -34,6 +39,12 @@ export declare class AuthController {
         accessToken: string;
     }>;
     logout(req: Request, res: Response): Promise<void>;
+    verifyEmail(dto: VerifyEmailDto): Promise<{
+        message: string;
+    }>;
+    resendVerification(req: any): Promise<{
+        message: string;
+    }>;
     forgotPassword(dto: ForgotPasswordDto): Promise<{
         message: string;
     }>;
