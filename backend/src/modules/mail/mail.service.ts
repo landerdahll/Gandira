@@ -91,6 +91,114 @@ export class MailService {
     }
   }
 
+  async sendOrderConfirmation(to: string, name: string, data: {
+    eventTitle: string;
+    eventDate: Date;
+    venue: string;
+    items: { batchName: string; ticketType: string; quantity: number }[];
+    total: number;
+    ticketCount: number;
+    myTicketsUrl: string;
+  }) {
+    const fmtDate = (d: Date) => new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit', month: 'long', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo',
+    }).format(d);
+
+    const fmtCurrency = (v: number) =>
+      v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    const itemsHtml = data.items.map(i => `
+      <tr>
+        <td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:#ccc;font-size:14px;">${i.batchName}</td>
+        <td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:#888;font-size:14px;text-align:center;">${i.quantity}</td>
+      </tr>`).join('');
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 0;">
+    <tr><td align="center">
+      <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1e1e1e;border-radius:16px;overflow:hidden;max-width:480px;width:100%;">
+        <tr>
+          <td style="padding:28px 32px;border-bottom:1px solid #1a1a1a;">
+            <img src="https://gandira.vercel.app/gandira-logo.png" alt="Gandira" style="height:36px;display:block;" />
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px;">
+            <p style="margin:0 0 4px;font-size:20px;font-weight:700;color:#fff;">Pedido confirmado! 🎉</p>
+            <p style="margin:0 0 24px;font-size:14px;color:#666;line-height:1.6;">
+              Olá, ${name}. Seu pagamento foi aprovado e seus ingressos estão garantidos.
+            </p>
+
+            <div style="background:#0d1e28;border:1px solid #67bed922;border-radius:12px;padding:20px;margin-bottom:24px;">
+              <p style="margin:0 0 4px;font-size:17px;font-weight:700;color:#fff;">${data.eventTitle}</p>
+              <p style="margin:0 0 4px;font-size:13px;color:#67bed9;">${fmtDate(data.eventDate)}</p>
+              <p style="margin:0;font-size:13px;color:#666;">${data.venue}</p>
+            </div>
+
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+              <thead>
+                <tr>
+                  <th style="text-align:left;font-size:12px;color:#555;padding-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Ingresso</th>
+                  <th style="text-align:center;font-size:12px;color:#555;padding-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Qtd</th>
+                </tr>
+              </thead>
+              <tbody>${itemsHtml}</tbody>
+            </table>
+
+            <div style="display:flex;justify-content:space-between;padding:14px 0;border-top:1px solid #252525;margin-bottom:28px;">
+              <span style="font-size:14px;font-weight:700;color:#fff;">Total pago</span>
+              <span style="font-size:14px;font-weight:700;color:#67bed9;">${fmtCurrency(data.total)}</span>
+            </div>
+
+            <table cellpadding="0" cellspacing="0" width="100%">
+              <tr>
+                <td style="border-radius:12px;background:#67bed9;box-shadow:0 0 24px rgba(103,190,217,0.3);text-align:center;">
+                  <a href="${data.myTicketsUrl}" target="_blank"
+                     style="display:block;padding:14px 32px;color:#fff;font-size:15px;font-weight:700;text-decoration:none;">
+                    Ver meus ingressos
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 32px;border-top:1px solid #1a1a1a;">
+            <p style="margin:0;font-size:12px;color:#333;text-align:center;">
+              © ${new Date().getFullYear()} Gandira — Todos os direitos reservados
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+    if (this.devMode) {
+      this.logger.warn(`⚠️  Confirmação de pedido (dev) — Para: ${to} | Evento: ${data.eventTitle}`);
+      return;
+    }
+
+    const { error } = await this.resend!.emails.send({
+      from: `Gandira <${this.fromAddress}>`,
+      to,
+      subject: `Ingresso confirmado — ${data.eventTitle}`,
+      html,
+    });
+
+    if (error) {
+      this.logger.error(`Falha ao enviar confirmação de pedido para ${to}: ${error.message}`);
+    } else {
+      this.logger.log(`Confirmação de pedido enviada para ${to}`);
+    }
+  }
+
   async sendPasswordReset(to: string, name: string, resetUrl: string) {
     const html = `
 <!DOCTYPE html>

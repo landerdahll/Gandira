@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TicketsService } from '../tickets/tickets.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class PaymentsService {
@@ -13,6 +14,7 @@ export class PaymentsService {
     private config: ConfigService,
     private prisma: PrismaService,
     private tickets: TicketsService,
+    private mail: MailService,
   ) {
     this.stripe = new Stripe(config.get<string>('STRIPE_SECRET_KEY')!, {
       apiVersion: '2023-10-16',
@@ -163,6 +165,29 @@ export class PaymentsService {
     });
 
     this.logger.log(`Payment succeeded for order ${order.id} — tickets generated`);
+
+    // Fire-and-forget: send confirmation email to buyer
+    this.prisma.order.findUnique({
+      where: { id: order.id },
+      include: {
+        user: { select: { email: true, name: true } },
+        event: { select: { title: true, startDate: true, venue: true, city: true } },
+        items: { include: { batch: { select: { name: true, ticketType: true } } } },
+        tickets: { select: { id: true } },
+      },
+    }).then(full => {
+      if (!full) return;
+      const frontendUrl = (this.config.get<string>('FRONTEND_URL', 'http://localhost:3000')).split(',')[0].trim();
+      this.mail.sendOrderConfirmation(full.user.email, full.user.name, {
+        eventTitle: full.event.title,
+        eventDate: full.event.startDate,
+        venue: `${full.event.venue}, ${full.event.city}`,
+        items: full.items.map(i => ({ batchName: i.batch.name, ticketType: i.batch.ticketType, quantity: i.quantity })),
+        total: Number(full.total),
+        ticketCount: full.tickets.length,
+        myTicketsUrl: `${frontendUrl}/my-tickets`,
+      }).catch(err => this.logger.error(`Falha ao enviar e-mail de confirmação: ${err.message}`));
+    }).catch(err => this.logger.error(`Falha ao buscar pedido para e-mail: ${err.message}`));
   }
 
   private async onPaymentFailed(pi: Stripe.PaymentIntent) {

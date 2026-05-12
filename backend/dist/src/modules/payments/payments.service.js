@@ -19,11 +19,13 @@ const config_1 = require("@nestjs/config");
 const stripe_1 = __importDefault(require("stripe"));
 const prisma_service_1 = require("../../prisma/prisma.service");
 const tickets_service_1 = require("../tickets/tickets.service");
+const mail_service_1 = require("../mail/mail.service");
 let PaymentsService = PaymentsService_1 = class PaymentsService {
-    constructor(config, prisma, tickets) {
+    constructor(config, prisma, tickets, mail) {
         this.config = config;
         this.prisma = prisma;
         this.tickets = tickets;
+        this.mail = mail;
         this.logger = new common_1.Logger(PaymentsService_1.name);
         this.stripe = new stripe_1.default(config.get('STRIPE_SECRET_KEY'), {
             apiVersion: '2023-10-16',
@@ -140,6 +142,28 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
             }
         });
         this.logger.log(`Payment succeeded for order ${order.id} — tickets generated`);
+        this.prisma.order.findUnique({
+            where: { id: order.id },
+            include: {
+                user: { select: { email: true, name: true } },
+                event: { select: { title: true, startDate: true, venue: true, city: true } },
+                items: { include: { batch: { select: { name: true, ticketType: true } } } },
+                tickets: { select: { id: true } },
+            },
+        }).then(full => {
+            if (!full)
+                return;
+            const frontendUrl = (this.config.get('FRONTEND_URL', 'http://localhost:3000')).split(',')[0].trim();
+            this.mail.sendOrderConfirmation(full.user.email, full.user.name, {
+                eventTitle: full.event.title,
+                eventDate: full.event.startDate,
+                venue: `${full.event.venue}, ${full.event.city}`,
+                items: full.items.map(i => ({ batchName: i.batch.name, ticketType: i.batch.ticketType, quantity: i.quantity })),
+                total: Number(full.total),
+                ticketCount: full.tickets.length,
+                myTicketsUrl: `${frontendUrl}/my-tickets`,
+            }).catch(err => this.logger.error(`Falha ao enviar e-mail de confirmação: ${err.message}`));
+        }).catch(err => this.logger.error(`Falha ao buscar pedido para e-mail: ${err.message}`));
     }
     async onPaymentFailed(pi) {
         const order = await this.prisma.order.findUnique({
@@ -165,6 +189,7 @@ exports.PaymentsService = PaymentsService = PaymentsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [config_1.ConfigService,
         prisma_service_1.PrismaService,
-        tickets_service_1.TicketsService])
+        tickets_service_1.TicketsService,
+        mail_service_1.MailService])
 ], PaymentsService);
 //# sourceMappingURL=payments.service.js.map
