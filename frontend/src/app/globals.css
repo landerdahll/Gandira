@@ -102,6 +102,11 @@
     width: 100% !important;
     height: 200px !important;
     min-height: 200px !important;
+    overflow: hidden !important;
+  }
+  .featured-card-img img {
+    min-height: unset !important;
+    height: 100% !important;
   }
   .featured-card-body {
     padding: 20px !important;
