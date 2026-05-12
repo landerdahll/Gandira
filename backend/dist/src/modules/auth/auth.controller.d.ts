@@ -5,6 +5,10 @@ import { LoginDto } from './dto/login.dto';
 declare class VerifyEmailDto {
     token: string;
 }
+declare class Verify2FADto {
+    twoFactorToken: string;
+    code: string;
+}
 declare class ForgotPasswordDto {
     email: string;
 }
@@ -26,6 +30,23 @@ export declare class AuthController {
         accessToken: string;
     }>;
     login(dto: LoginDto, req: Request, res: Response): Promise<{
+        requires2FA: boolean;
+        twoFactorToken: string;
+        user?: undefined;
+        accessToken?: undefined;
+    } | {
+        user: {
+            id: string;
+            email: string;
+            name: string;
+            role: import(".prisma/client").$Enums.Role;
+            isVerified: boolean;
+        };
+        accessToken: string;
+        requires2FA?: undefined;
+        twoFactorToken?: undefined;
+    }>;
+    verify2FA(dto: Verify2FADto, res: Response): Promise<{
         user: {
             id: string;
             email: string;

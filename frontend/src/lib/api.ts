@@ -98,6 +98,8 @@ export const authApi = {
     api.post('/auth/reset-password', { token, password }),
   verifyEmail: (token: string) => api.post('/auth/verify-email', { token }),
   resendVerification: (email: string) => api.post('/auth/resend-verification', { email }),
+  verify2FA: (twoFactorToken: string, code: string) =>
+    api.post('/auth/verify-2fa', { twoFactorToken, code }),
 };
 
 export const ordersApi = {

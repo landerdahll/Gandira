@@ -32,8 +32,8 @@ export declare class ReportsService {
             id: string;
             name: string;
             status: import(".prisma/client").$Enums.BatchStatus;
-            quantity: number;
             price: import("@prisma/client/runtime/library").Decimal;
+            quantity: number;
             sold: number;
             ticketType: import(".prisma/client").$Enums.TicketType;
         }[];
@@ -58,6 +58,9 @@ export declare class ReportsService {
                 email: string;
                 name: string;
             };
+            event: {
+                title: string;
+            };
             items: ({
                 batch: {
                     name: string;
@@ -65,27 +68,24 @@ export declare class ReportsService {
             } & {
                 id: string;
                 createdAt: Date;
+                orderId: string;
                 total: import("@prisma/client/runtime/library").Decimal;
                 quantity: number;
-                unitPrice: import("@prisma/client/runtime/library").Decimal;
                 batchId: string;
-                orderId: string;
+                unitPrice: import("@prisma/client/runtime/library").Decimal;
             })[];
-            event: {
-                title: string;
-            };
         } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
             userId: string;
             expiresAt: Date;
-            total: import("@prisma/client/runtime/library").Decimal;
             eventId: string;
+            stripePaymentIntentId: string | null;
             status: import(".prisma/client").$Enums.OrderStatus;
             subtotal: import("@prisma/client/runtime/library").Decimal;
             platformFee: import("@prisma/client/runtime/library").Decimal;
-            stripePaymentIntentId: string | null;
+            total: import("@prisma/client/runtime/library").Decimal;
             stripeChargeId: string | null;
             cancelledAt: Date | null;
             cancelReason: string | null;

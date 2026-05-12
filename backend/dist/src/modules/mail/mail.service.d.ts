@@ -20,5 +20,6 @@ export declare class MailService {
         ticketCount: number;
         myTicketsUrl: string;
     }): Promise<void>;
+    sendTwoFactorCode(to: string, name: string, code: string): Promise<void>;
     sendPasswordReset(to: string, name: string, resetUrl: string): Promise<void>;
 }

@@ -13,6 +13,11 @@ class VerifyEmailDto {
   @ApiProperty() @IsString() token: string;
 }
 
+class Verify2FADto {
+  @ApiProperty() @IsString() twoFactorToken: string;
+  @ApiProperty() @IsString() code: string;
+}
+
 class ForgotPasswordDto {
   @ApiProperty() @IsEmail() email: string;
 }
@@ -53,6 +58,23 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.auth.login(dto, req.ip);
+    if (result.requires2FA) {
+      return { requires2FA: true, twoFactorToken: result.twoFactorToken };
+    }
+    this.setRefreshCookie(res, result.refreshToken);
+    return { user: result.user, accessToken: result.accessToken };
+  }
+
+  @Public()
+  @Post('verify-2fa')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @ApiOperation({ summary: 'Verificar código 2FA e completar login' })
+  async verify2FA(
+    @Body() dto: Verify2FADto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.auth.verify2FA(dto.twoFactorToken, dto.code);
     this.setRefreshCookie(res, result.refreshToken);
     return { user: result.user, accessToken: result.accessToken };
   }

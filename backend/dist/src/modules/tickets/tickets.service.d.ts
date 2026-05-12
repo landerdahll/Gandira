@@ -30,11 +30,11 @@ export declare class TicketsService {
             createdAt: Date;
             updatedAt: Date;
             token: string;
+            orderId: string;
             eventId: string;
             status: import(".prisma/client").$Enums.TicketStatus;
             cancelledAt: Date | null;
             batchId: string;
-            orderId: string;
             holderName: string | null;
             holderEmail: string | null;
             holderCpf: string | null;
@@ -53,13 +53,13 @@ export declare class TicketsService {
             address: string;
             startDate: Date;
         };
+        order: {
+            userId: string;
+        };
         batch: {
             name: string;
             price: import("@prisma/client/runtime/library").Decimal;
             ticketType: import(".prisma/client").$Enums.TicketType;
-        };
-        order: {
-            userId: string;
         };
         checkIn: {
             method: import(".prisma/client").$Enums.CheckInMethod;
@@ -70,11 +70,11 @@ export declare class TicketsService {
         createdAt: Date;
         updatedAt: Date;
         token: string;
+        orderId: string;
         eventId: string;
         status: import(".prisma/client").$Enums.TicketStatus;
         cancelledAt: Date | null;
         batchId: string;
-        orderId: string;
         holderName: string | null;
         holderEmail: string | null;
         holderCpf: string | null;

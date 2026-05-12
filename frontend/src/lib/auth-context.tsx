@@ -16,7 +16,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (data: { email: string; password: string }) => Promise<void>;
+  login: (data: { email: string; password: string }) => Promise<{ requires2FA: boolean; twoFactorToken?: string }>;
+  setSession: (accessToken: string, user: User) => void;
   logout: () => Promise<void>;
   isProducer: boolean;
   isStaff: boolean;
@@ -44,8 +45,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (credentials: { email: string; password: string }) => {
     const res = await authApi.login(credentials);
+    if (res.data.requires2FA) {
+      return { requires2FA: true, twoFactorToken: res.data.twoFactorToken as string };
+    }
     Cookies.set('access_token', res.data.accessToken, { secure: true, sameSite: 'strict' });
     setUser(res.data.user);
+    return { requires2FA: false };
+  };
+
+  const setSession = (accessToken: string, user: User) => {
+    Cookies.set('access_token', accessToken, { secure: true, sameSite: 'strict' });
+    setUser(user);
   };
 
   const logout = async () => {
@@ -61,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         loading,
         login,
+        setSession,
         logout,
         isProducer: user?.role === 'PRODUCER' || user?.role === 'ADMIN',
         isStaff: user?.role === 'STAFF' || user?.role === 'PRODUCER' || user?.role === 'ADMIN',
