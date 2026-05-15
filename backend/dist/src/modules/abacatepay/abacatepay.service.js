@@ -61,6 +61,7 @@ let AbacatepayService = AbacatepayService_1 = class AbacatepayService {
             throw new common_1.BadRequestException('Erro ao gerar cobrança PIX');
         }
         const body = await res.json();
+        this.logger.log(`AbacatePay create response: ${JSON.stringify(body)}`);
         const data = body.data;
         return {
             id: data.id,

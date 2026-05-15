@@ -58,6 +58,7 @@ export class AbacatepayService {
     }
 
     const body = await res.json();
+    this.logger.log(`AbacatePay create response: ${JSON.stringify(body)}`);
     const data = body.data;
 
     return {
