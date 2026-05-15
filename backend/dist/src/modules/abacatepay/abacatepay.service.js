@@ -46,12 +46,10 @@ let AbacatepayService = AbacatepayService_1 = class AbacatepayService {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                data: {
-                    amount: amountCents,
-                    externalId: orderId,
-                    description: `Ingressos - ${order.event.title}`,
-                    expiresIn: 3600,
-                },
+                amount: amountCents,
+                externalId: orderId,
+                description: `Ingressos - ${order.event.title}`,
+                expiresIn: 3600,
             }),
         });
         if (!res.ok) {
