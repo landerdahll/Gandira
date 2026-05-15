@@ -87,17 +87,19 @@ let AbacatepayService = AbacatepayService_1 = class AbacatepayService {
         return { simulated: true };
     }
     async handleWebhook(payload, secret) {
+        this.logger.log(`AbacatePay webhook recebido: ${JSON.stringify(payload)}`);
         if (this.webhookSecret && secret !== this.webhookSecret) {
-            this.logger.warn('AbacatePay webhook: secret inválido');
+            this.logger.warn(`AbacatePay webhook: secret inválido (recebido: ${secret})`);
             return;
         }
         const event = payload.event;
-        this.logger.log(`AbacatePay webhook: ${event}`);
+        this.logger.log(`AbacatePay webhook event: ${event}`);
         if (event !== 'transparent.completed')
             return;
         const externalId = payload.data?.externalId;
+        this.logger.log(`AbacatePay webhook externalId: ${externalId}`);
         if (!externalId) {
-            this.logger.error('AbacatePay webhook: externalId ausente');
+            this.logger.error(`AbacatePay webhook: externalId ausente. data: ${JSON.stringify(payload.data)}`);
             return;
         }
         await this.onPixPaid(externalId);

@@ -89,19 +89,23 @@ export class AbacatepayService {
   }
 
   async handleWebhook(payload: any, secret: string) {
+    this.logger.log(`AbacatePay webhook recebido: ${JSON.stringify(payload)}`);
+
     if (this.webhookSecret && secret !== this.webhookSecret) {
-      this.logger.warn('AbacatePay webhook: secret inválido');
+      this.logger.warn(`AbacatePay webhook: secret inválido (recebido: ${secret})`);
       return;
     }
 
     const event: string = payload.event;
-    this.logger.log(`AbacatePay webhook: ${event}`);
+    this.logger.log(`AbacatePay webhook event: ${event}`);
 
     if (event !== 'transparent.completed') return;
 
     const externalId: string | undefined = payload.data?.externalId;
+    this.logger.log(`AbacatePay webhook externalId: ${externalId}`);
+
     if (!externalId) {
-      this.logger.error('AbacatePay webhook: externalId ausente');
+      this.logger.error(`AbacatePay webhook: externalId ausente. data: ${JSON.stringify(payload.data)}`);
       return;
     }
 
