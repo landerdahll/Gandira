@@ -108,7 +108,7 @@ function PixTab({ orderId, total }: { orderId: string; total: number }) {
       const d = res.data;
       setPixData({
         qrCode: d.brCode,
-        qrImage: `data:image/png;base64,${d.brCodeBase64}`,
+        qrImage: d.brCodeBase64,
         expiresAt: new Date(d.expiresAt).getTime() / 1000,
       });
     } catch (e: any) {

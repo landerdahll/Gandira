@@ -41,10 +41,13 @@ export class AbacatepayService {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        amount: amountCents,
-        externalId: orderId,
-        description: `Ingressos - ${order.event.title}`,
-        expiresIn: 3600,
+        method: 'PIX',
+        data: {
+          amount: amountCents,
+          externalId: orderId,
+          description: `Ingressos - ${order.event.title}`,
+          expiresIn: 3600,
+        },
       }),
     });
 
