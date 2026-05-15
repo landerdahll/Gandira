@@ -5,7 +5,7 @@ export declare class ReportsController {
     dashboard(user: any): Promise<{
         summary: {
             events: number;
-            totalRevenue: number | import("@prisma/client/runtime/library").Decimal;
+            totalRevenue: number;
             totalTicketsSold: number;
         };
         recentOrders: ({
@@ -23,32 +23,48 @@ export declare class ReportsController {
             } & {
                 id: string;
                 createdAt: Date;
+                orderId: string;
+                batchId: string;
                 total: import("@prisma/client/runtime/library").Decimal;
                 quantity: number;
                 unitPrice: import("@prisma/client/runtime/library").Decimal;
-                batchId: string;
-                orderId: string;
             })[];
         } & {
             id: string;
-            expiresAt: Date;
+            status: import(".prisma/client").$Enums.OrderStatus;
             createdAt: Date;
             updatedAt: Date;
             eventId: string;
-            userId: string;
-            status: import(".prisma/client").$Enums.OrderStatus;
+            cancelledAt: Date | null;
             subtotal: import("@prisma/client/runtime/library").Decimal;
             platformFee: import("@prisma/client/runtime/library").Decimal;
             total: import("@prisma/client/runtime/library").Decimal;
+            discountAmount: import("@prisma/client/runtime/library").Decimal;
+            expiresAt: Date;
+            userId: string;
             stripePaymentIntentId: string | null;
             stripeChargeId: string | null;
             couponId: string | null;
-            discountAmount: import("@prisma/client/runtime/library").Decimal;
-            cancelledAt: Date | null;
             cancelReason: string | null;
             refundedAt: Date | null;
             stripeRefundId: string | null;
         })[];
+        revenueByEvent: {
+            [k: string]: {
+                total: number;
+                discount: number;
+            };
+        };
+        couponBreakdown: {
+            id: string;
+            code: string;
+            discountPct: number;
+            ticketsCount: number;
+            maxUses: number | null;
+            eventId: string;
+            eventTitle: string;
+            totalDiscount: number;
+        }[];
     }>;
     eventReport(eventId: string, user: any): Promise<{
         event: {
@@ -65,10 +81,19 @@ export declare class ReportsController {
         };
         revenue: {
             orders: number;
-            subtotal: number | import("@prisma/client/runtime/library").Decimal;
-            platformFee: number | import("@prisma/client/runtime/library").Decimal;
+            subtotal: number;
+            platformFee: number;
+            discount: number;
             total: number;
         };
+        coupons: {
+            id: string;
+            code: string;
+            discountPct: number;
+            ticketsCount: number;
+            maxUses: number | null;
+            totalDiscount: number;
+        }[];
         checkIns: {
             count: number;
             rate: string;
@@ -78,10 +103,10 @@ export declare class ReportsController {
             available: number;
             occupancyRate: string;
             id: string;
-            name: string;
             status: import(".prisma/client").$Enums.BatchStatus;
-            quantity: number;
+            name: string;
             price: import("@prisma/client/runtime/library").Decimal;
+            quantity: number;
             sold: number;
             ticketType: import(".prisma/client").$Enums.TicketType;
         }[];

@@ -20,7 +20,7 @@ let ReportsService = class ReportsService {
         const event = await this.prisma.event.findUnique({ where: { id: eventId } });
         if (!event)
             throw new common_1.NotFoundException('Evento não encontrado');
-        const [ticketStats, revenueData, checkInCount, batchBreakdown, genderData, buyerBirthDates] = await Promise.all([
+        const [ticketStats, revenueData, checkInCount, batchBreakdown, genderData, buyerBirthDates, couponBreakdown] = await Promise.all([
             this.prisma.ticket.groupBy({
                 by: ['status'],
                 where: { eventId },
@@ -28,7 +28,7 @@ let ReportsService = class ReportsService {
             }),
             this.prisma.order.aggregate({
                 where: { eventId, status: 'PAID' },
-                _sum: { subtotal: true, platformFee: true, total: true },
+                _sum: { subtotal: true, platformFee: true, total: true, discountAmount: true },
                 _count: { _all: true },
             }),
             this.prisma.checkIn.count({ where: { eventId } }),
@@ -57,6 +57,17 @@ let ReportsService = class ReportsService {
                 },
                 select: { birthDate: true },
             }),
+            this.prisma.coupon.findMany({
+                where: { eventId, usedCount: { gt: 0 } },
+                select: {
+                    id: true, code: true, discount: true, usedCount: true, maxUses: true,
+                    orders: {
+                        where: { status: 'PAID' },
+                        select: { discountAmount: true },
+                    },
+                },
+                orderBy: { usedCount: 'desc' },
+            }),
         ]);
         const statusMap = Object.fromEntries(ticketStats.map((s) => [s.status, s._count._all]));
         const now = Date.now();
@@ -68,7 +79,6 @@ let ReportsService = class ReportsService {
             : null;
         const totalGenderCount = genderData.reduce((s, g) => s + g._count._all, 0);
         const totalSold = batchBreakdown.reduce((sum, b) => sum + b.sold, 0);
-        const totalRevenue = batchBreakdown.reduce((sum, b) => sum + Number(b.price) * b.sold, 0);
         return {
             event: {
                 id: event.id,
@@ -84,10 +94,19 @@ let ReportsService = class ReportsService {
             },
             revenue: {
                 orders: revenueData._count._all,
-                subtotal: revenueData._sum.subtotal ?? 0,
-                platformFee: revenueData._sum.platformFee ?? 0,
-                total: totalRevenue,
+                subtotal: Number(revenueData._sum.subtotal ?? 0),
+                platformFee: Number(revenueData._sum.platformFee ?? 0),
+                discount: Number(revenueData._sum.discountAmount ?? 0),
+                total: Number(revenueData._sum.total ?? 0),
             },
+            coupons: couponBreakdown.map(c => ({
+                id: c.id,
+                code: c.code,
+                discountPct: Number(c.discount),
+                ticketsCount: c.usedCount,
+                maxUses: c.maxUses,
+                totalDiscount: c.orders.reduce((sum, o) => sum + Number(o.discountAmount), 0),
+            })),
             checkIns: {
                 count: checkInCount,
                 rate: totalSold > 0 ? ((checkInCount / totalSold) * 100).toFixed(1) : '0',
@@ -109,18 +128,18 @@ let ReportsService = class ReportsService {
             },
         };
     }
-    async getProducerDashboard(_producerId) {
-        const [eventCount, totalRevenue, totalTickets, recentOrders] = await Promise.all([
-            this.prisma.event.count(),
+    async getProducerDashboard(producerId) {
+        const [eventCount, totalRevenue, totalTickets, recentOrders, revenueByEvent, couponStats] = await Promise.all([
+            this.prisma.event.count({ where: { producerId } }),
             this.prisma.order.aggregate({
-                where: { status: 'PAID' },
+                where: { status: 'PAID', event: { producerId } },
                 _sum: { total: true },
             }),
             this.prisma.ticket.count({
-                where: { status: { in: ['ACTIVE', 'USED'] } },
+                where: { status: { in: ['ACTIVE', 'USED'] }, event: { producerId } },
             }),
             this.prisma.order.findMany({
-                where: { status: 'PAID' },
+                where: { status: 'PAID', event: { producerId } },
                 take: 10,
                 orderBy: { createdAt: 'desc' },
                 include: {
@@ -129,14 +148,51 @@ let ReportsService = class ReportsService {
                     items: { include: { batch: { select: { name: true } } } },
                 },
             }),
+            this.prisma.order.groupBy({
+                by: ['eventId'],
+                where: { status: 'PAID', event: { producerId } },
+                _sum: { total: true, discountAmount: true },
+            }),
+            this.prisma.coupon.findMany({
+                where: { event: { producerId }, usedCount: { gt: 0 } },
+                select: {
+                    id: true,
+                    code: true,
+                    discount: true,
+                    usedCount: true,
+                    maxUses: true,
+                    event: { select: { id: true, title: true } },
+                    orders: {
+                        where: { status: 'PAID' },
+                        select: { discountAmount: true },
+                    },
+                },
+                orderBy: { usedCount: 'desc' },
+            }),
         ]);
+        const revenueMap = Object.fromEntries(revenueByEvent.map(r => [
+            r.eventId,
+            { total: Number(r._sum.total ?? 0), discount: Number(r._sum.discountAmount ?? 0) },
+        ]));
+        const couponBreakdown = couponStats.map(c => ({
+            id: c.id,
+            code: c.code,
+            discountPct: Number(c.discount),
+            ticketsCount: c.usedCount,
+            maxUses: c.maxUses,
+            eventId: c.event.id,
+            eventTitle: c.event.title,
+            totalDiscount: c.orders.reduce((sum, o) => sum + Number(o.discountAmount), 0),
+        }));
         return {
             summary: {
                 events: eventCount,
-                totalRevenue: totalRevenue._sum.total ?? 0,
+                totalRevenue: Number(totalRevenue._sum.total ?? 0),
                 totalTicketsSold: totalTickets,
             },
             recentOrders,
+            revenueByEvent: revenueMap,
+            couponBreakdown,
         };
     }
 };

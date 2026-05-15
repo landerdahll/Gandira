@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { eventsApi, reportsApi } from '@/lib/api';
-import { Plus, BarChart2, Eye, EyeOff, Calendar, MapPin, ChevronRight, TrendingUp, Ticket, Users, DollarSign } from 'lucide-react';
+import { Plus, BarChart2, Eye, EyeOff, Calendar, MapPin, TrendingUp, Ticket, DollarSign, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 function fmtCurrency(v: number) {
@@ -23,6 +23,8 @@ const STATUS: Record<string, { label: string; color: string; bg: string }> = {
 export default function ProducerDashboard() {
   const [events, setEvents] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
+  const [revenueByEvent, setRevenueByEvent] = useState<Record<string, { total: number; discount: number }>>({});
+  const [couponBreakdown, setCouponBreakdown] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState<string | null>(null);
   const [showRevenue, setShowRevenue] = useState(false);
@@ -35,6 +37,8 @@ export default function ProducerDashboard() {
       ]);
       setEvents(evRes.data.data);
       setSummary(dashRes.data.summary);
+      setRevenueByEvent(dashRes.data.revenueByEvent ?? {});
+      setCouponBreakdown(dashRes.data.couponBreakdown ?? []);
     } catch {
       toast.error('Erro ao carregar dados');
     } finally {
@@ -117,7 +121,9 @@ export default function ProducerDashboard() {
           {events.map((event: any) => {
             const s = STATUS[event.status] ?? STATUS.DRAFT;
             const sold = event.batches?.reduce((a: number, b: any) => a + b.sold, 0) ?? 0;
-            const revenue = event.batches?.reduce((a: number, b: any) => a + b.sold * Number(b.price), 0) ?? 0;
+            const revenue = revenueByEvent[event.id]?.total
+              ?? event.batches?.reduce((a: number, b: any) => a + b.sold * Number(b.price), 0)
+              ?? 0;
 
             return (
               <div key={event.id} className="event-card" style={{
@@ -184,6 +190,58 @@ export default function ProducerDashboard() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Coupon breakdown — only shown when there are coupons with sales */}
+      {!loading && couponBreakdown.length > 0 && (
+        <div style={{ marginTop: '40px' }}>
+          <h2 style={{ fontSize: '13px', fontWeight: 600, color: '#444', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>
+            Vendas por Cupom
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {couponBreakdown.map((c: any) => (
+              <div key={c.id} style={{
+                display: 'flex', alignItems: 'center', gap: '14px',
+                padding: '14px 16px',
+                background: '#141414', border: '1px solid #1e1e1e', borderRadius: '14px',
+              }}>
+                <div style={{
+                  width: '36px', height: '36px', borderRadius: '8px',
+                  background: '#0d1e28', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  <Tag size={16} color="#67bed9" />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                    <span style={{
+                      fontSize: '13px', fontWeight: 700, color: '#fff',
+                      fontFamily: 'monospace', letterSpacing: '0.05em',
+                    }}>
+                      {c.code}
+                    </span>
+                    <span style={{ fontSize: '11px', color: '#67bed9', fontWeight: 600 }}>
+                      -{c.discountPct}%
+                    </span>
+                    <span style={{ fontSize: '11px', color: '#444' }}>
+                      {c.eventTitle}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                    <Pill icon={<Ticket size={11} />}>
+                      {c.ticketsCount} {c.ticketsCount === 1 ? 'ingresso' : 'ingressos'}
+                      {c.maxUses != null ? ` / ${c.maxUses}` : ''}
+                    </Pill>
+                    {c.totalDiscount > 0 && (
+                      <Pill icon={<TrendingUp size={11} />} highlight>
+                        -{showRevenue ? fmtCurrency(c.totalDiscount) : 'R$ ••••••'} descontados
+                      </Pill>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
