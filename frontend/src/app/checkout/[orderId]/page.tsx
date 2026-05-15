@@ -254,7 +254,7 @@ function CheckoutContent() {
   const clientSecret = searchParams.get('secret');
   const router = useRouter();
   const [order, setOrder] = useState<any>(null);
-  const [paymentTab, setPaymentTab] = useState<'card' | 'pix'>('card');
+  const [paymentTab, setPaymentTab] = useState<'card' | 'pix'>('pix');
   const [orderId, setOrderId] = useState('');
 
   useEffect(() => {
@@ -395,22 +395,57 @@ function CheckoutContent() {
 
             {/* Payment method tabs */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-              {(['card', 'pix'] as const).map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setPaymentTab(tab)}
-                  style={{
-                    flex: 1, padding: '10px 0', borderRadius: '10px',
-                    border: `1px solid ${paymentTab === tab ? '#67bed955' : '#252525'}`,
-                    background: paymentTab === tab ? '#0d1e28' : '#141414',
-                    color: paymentTab === tab ? '#67bed9' : '#555',
-                    fontSize: '13px', fontWeight: 700, cursor: 'pointer',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {tab === 'card' ? '💳 Cartão' : '🏦 PIX'}
-                </button>
-              ))}
+              {/* PIX — destaque */}
+              <button
+                onClick={() => setPaymentTab('pix')}
+                style={{
+                  flex: 2, padding: '12px 0', borderRadius: '12px', cursor: 'pointer',
+                  border: `1.5px solid ${paymentTab === 'pix' ? '#32bcad' : '#1e1e1e'}`,
+                  background: paymentTab === 'pix' ? 'linear-gradient(135deg, #0a2e2a 0%, #0d3330 100%)' : '#141414',
+                  transition: 'all 0.15s',
+                  position: 'relative', overflow: 'hidden',
+                }}
+              >
+                {paymentTab === 'pix' && (
+                  <span style={{
+                    position: 'absolute', top: '6px', right: '8px',
+                    fontSize: '9px', fontWeight: 800, color: '#32bcad',
+                    textTransform: 'uppercase', letterSpacing: '0.06em',
+                  }}>
+                    Recomendado
+                  </span>
+                )}
+                <span style={{ fontSize: '18px', display: 'block', marginBottom: '2px' }}>🏦</span>
+                <span style={{
+                  fontSize: '13px', fontWeight: 800,
+                  color: paymentTab === 'pix' ? '#32bcad' : '#444',
+                  display: 'block',
+                }}>PIX</span>
+                <span style={{ fontSize: '11px', color: paymentTab === 'pix' ? '#1a7a6e' : '#333', display: 'block' }}>
+                  Aprovação imediata
+                </span>
+              </button>
+
+              {/* Cartão */}
+              <button
+                onClick={() => setPaymentTab('card')}
+                style={{
+                  flex: 1, padding: '12px 0', borderRadius: '12px', cursor: 'pointer',
+                  border: `1.5px solid ${paymentTab === 'card' ? '#67bed955' : '#1e1e1e'}`,
+                  background: paymentTab === 'card' ? '#0d1e28' : '#141414',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <span style={{ fontSize: '18px', display: 'block', marginBottom: '2px' }}>💳</span>
+                <span style={{
+                  fontSize: '13px', fontWeight: 700,
+                  color: paymentTab === 'card' ? '#67bed9' : '#444',
+                  display: 'block',
+                }}>Cartão</span>
+                <span style={{ fontSize: '11px', color: paymentTab === 'card' ? '#3a7a8a' : '#333', display: 'block' }}>
+                  Crédito / Débito
+                </span>
+              </button>
             </div>
 
             {paymentTab === 'card' && clientSecret && (
