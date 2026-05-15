@@ -28,6 +28,11 @@ let AbacatepayController = class AbacatepayController {
             throw new common_1.BadRequestException('orderId obrigatório');
         return this.abacatepay.createPixCharge(orderId, user.id);
     }
+    checkPix(pixId, orderId, user) {
+        if (!pixId || !orderId)
+            throw new common_1.BadRequestException('pixId e orderId obrigatórios');
+        return this.abacatepay.checkPixAndConfirm(pixId, orderId, user.id);
+    }
     simulatePix(pixId, _user) {
         if (!pixId)
             throw new common_1.BadRequestException('pixId obrigatório');
@@ -49,6 +54,17 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], AbacatepayController.prototype, "createPix", null);
+__decorate([
+    (0, common_1.Post)('pix/check'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Consulta status do PIX no AbacatePay e confirma pedido se pago' }),
+    __param(0, (0, common_1.Body)('pixId')),
+    __param(1, (0, common_1.Body)('orderId')),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", void 0)
+], AbacatepayController.prototype, "checkPix", null);
 __decorate([
     (0, common_1.Post)('pix/simulate'),
     (0, swagger_1.ApiBearerAuth)(),

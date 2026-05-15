@@ -17,6 +17,9 @@ export declare class AbacatepayService {
         brCodeBase64: any;
         expiresAt: any;
     }>;
+    checkPixAndConfirm(pixId: string, orderId: string, userId: string): Promise<{
+        status: string;
+    }>;
     simulatePixPayment(pixId: string): Promise<{
         simulated: boolean;
     }>;

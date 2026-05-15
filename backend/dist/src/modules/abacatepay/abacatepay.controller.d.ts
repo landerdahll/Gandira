@@ -8,6 +8,9 @@ export declare class AbacatepayController {
         brCodeBase64: any;
         expiresAt: any;
     }>;
+    checkPix(pixId: string, orderId: string, user: any): Promise<{
+        status: string;
+    }>;
     simulatePix(pixId: string, _user: any): Promise<{
         simulated: boolean;
     }>;

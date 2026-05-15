@@ -90,8 +90,19 @@ function PixTab({ orderId, total }: { orderId: string; total: number }) {
 
   useEffect(() => {
     if (!pixData) return;
+    let tick = 0;
     const interval = setInterval(async () => {
+      tick++;
       try {
+        // A cada 2 ticks (~5s) consulta o AbacatePay diretamente como fallback
+        if (tick % 2 === 0) {
+          const res = await pixApi.check(pixData.id, orderId);
+          if (res.data.status === 'PAID') {
+            clearInterval(interval);
+            router.push(`/checkout/success?orderId=${orderId}`);
+            return;
+          }
+        }
         const res = await ordersApi.get(orderId);
         if (res.data.status === 'PAID') {
           clearInterval(interval);

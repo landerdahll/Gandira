@@ -18,6 +18,18 @@ export class AbacatepayController {
     return this.abacatepay.createPixCharge(orderId, user.id);
   }
 
+  @Post('pix/check')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Consulta status do PIX no AbacatePay e confirma pedido se pago' })
+  checkPix(
+    @Body('pixId') pixId: string,
+    @Body('orderId') orderId: string,
+    @CurrentUser() user: any,
+  ) {
+    if (!pixId || !orderId) throw new BadRequestException('pixId e orderId obrigatórios');
+    return this.abacatepay.checkPixAndConfirm(pixId, orderId, user.id);
+  }
+
   @Post('pix/simulate')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Simula pagamento PIX em modo dev (AbacatePay sandbox)' })

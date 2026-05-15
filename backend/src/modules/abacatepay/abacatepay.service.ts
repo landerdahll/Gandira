@@ -69,6 +69,31 @@ export class AbacatepayService {
     };
   }
 
+  async checkPixAndConfirm(pixId: string, orderId: string, userId: string) {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException('Pedido não encontrado');
+    if (order.userId !== userId) throw new ForbiddenException('Acesso negado');
+    if (order.status === 'PAID') return { status: 'PAID' };
+    if (order.status !== 'PENDING') return { status: order.status };
+
+    const res = await fetch(`${BASE_URL}/transparents/check?id=${encodeURIComponent(pixId)}`, {
+      headers: { Authorization: `Bearer ${this.apiKey}` },
+    });
+
+    if (!res.ok) return { status: order.status };
+
+    const body = await res.json();
+    const pixStatus: string = body.data?.status ?? '';
+    this.logger.log(`AbacatePay check pixId=${pixId} status=${pixStatus}`);
+
+    if (pixStatus === 'PAID' || pixStatus === 'APPROVED') {
+      await this.onPixPaid(orderId);
+      return { status: 'PAID' };
+    }
+
+    return { status: pixStatus || order.status };
+  }
+
   async simulatePixPayment(pixId: string) {
     const res = await fetch(`${BASE_URL}/transparents/simulate-payment?id=${encodeURIComponent(pixId)}`, {
       method: 'POST',
