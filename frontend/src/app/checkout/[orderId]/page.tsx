@@ -400,8 +400,8 @@ function CheckoutContent() {
                 onClick={() => setPaymentTab('pix')}
                 style={{
                   flex: 3, padding: '12px 0', borderRadius: '12px', cursor: 'pointer',
-                  border: `1.5px solid ${paymentTab === 'pix' ? '#32bcad' : '#1e1e1e'}`,
-                  background: paymentTab === 'pix' ? 'linear-gradient(135deg, #0a2e2a 0%, #0d3330 100%)' : '#141414',
+                  border: `1.5px solid ${paymentTab === 'pix' ? '#67bed955' : '#1e1e1e'}`,
+                  background: paymentTab === 'pix' ? '#0d1e28' : '#141414',
                   transition: 'all 0.15s',
                   position: 'relative', overflow: 'hidden',
                 }}
@@ -409,10 +409,10 @@ function CheckoutContent() {
                 <span style={{ fontSize: '18px', display: 'block', marginBottom: '2px' }}>🏦</span>
                 <span style={{
                   fontSize: '13px', fontWeight: 800,
-                  color: paymentTab === 'pix' ? '#32bcad' : '#444',
+                  color: paymentTab === 'pix' ? '#67bed9' : '#444',
                   display: 'block',
                 }}>PIX</span>
-                <span style={{ fontSize: '11px', color: paymentTab === 'pix' ? '#1a7a6e' : '#333', display: 'block' }}>
+                <span style={{ fontSize: '11px', color: paymentTab === 'pix' ? '#3a7a8a' : '#333', display: 'block' }}>
                   Aprovação imediata
                 </span>
               </button>
