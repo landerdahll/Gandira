@@ -399,7 +399,7 @@ function CheckoutContent() {
               <button
                 onClick={() => setPaymentTab('pix')}
                 style={{
-                  flex: 2, padding: '12px 0', borderRadius: '12px', cursor: 'pointer',
+                  flex: 3, padding: '12px 0', borderRadius: '12px', cursor: 'pointer',
                   border: `1.5px solid ${paymentTab === 'pix' ? '#32bcad' : '#1e1e1e'}`,
                   background: paymentTab === 'pix' ? 'linear-gradient(135deg, #0a2e2a 0%, #0d3330 100%)' : '#141414',
                   transition: 'all 0.15s',
@@ -421,7 +421,7 @@ function CheckoutContent() {
               <button
                 onClick={() => setPaymentTab('card')}
                 style={{
-                  flex: 1, padding: '12px 0', borderRadius: '12px', cursor: 'pointer',
+                  flex: 2, padding: '12px 0', borderRadius: '12px', cursor: 'pointer',
                   border: `1.5px solid ${paymentTab === 'card' ? '#67bed955' : '#1e1e1e'}`,
                   background: paymentTab === 'card' ? '#0d1e28' : '#141414',
                   transition: 'all 0.15s',
