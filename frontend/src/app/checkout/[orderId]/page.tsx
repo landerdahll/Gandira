@@ -406,15 +406,6 @@ function CheckoutContent() {
                   position: 'relative', overflow: 'hidden',
                 }}
               >
-                {paymentTab === 'pix' && (
-                  <span style={{
-                    position: 'absolute', top: '6px', right: '8px',
-                    fontSize: '9px', fontWeight: 800, color: '#32bcad',
-                    textTransform: 'uppercase', letterSpacing: '0.06em',
-                  }}>
-                    Recomendado
-                  </span>
-                )}
                 <span style={{ fontSize: '18px', display: 'block', marginBottom: '2px' }}>🏦</span>
                 <span style={{
                   fontSize: '13px', fontWeight: 800,
