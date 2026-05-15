@@ -18,6 +18,14 @@ export class AbacatepayController {
     return this.abacatepay.createPixCharge(orderId, user.id);
   }
 
+  @Post('pix/simulate')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Simula pagamento PIX em modo dev (AbacatePay sandbox)' })
+  simulatePix(@Body('pixId') pixId: string, @CurrentUser() _user: any) {
+    if (!pixId) throw new BadRequestException('pixId obrigatório');
+    return this.abacatepay.simulatePixPayment(pixId);
+  }
+
   @Public()
   @SkipThrottle()
   @Post('webhook/abacatepay')

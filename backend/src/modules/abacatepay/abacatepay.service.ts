@@ -68,6 +68,25 @@ export class AbacatepayService {
     };
   }
 
+  async simulatePixPayment(pixId: string) {
+    const res = await fetch(`${BASE_URL}/transparents/simulate-payment`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id: pixId }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      this.logger.error(`AbacatePay simulate error: ${err}`);
+      throw new BadRequestException('Erro ao simular pagamento');
+    }
+
+    return { simulated: true };
+  }
+
   async handleWebhook(payload: any, secret: string) {
     if (this.webhookSecret && secret !== this.webhookSecret) {
       this.logger.warn('AbacatePay webhook: secret inválido');

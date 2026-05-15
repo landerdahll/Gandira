@@ -124,6 +124,7 @@ export const paymentsApi = {
 
 export const pixApi = {
   create: (orderId: string) => api.post('/payments/pix/create', { orderId }),
+  simulate: (pixId: string) => api.post('/payments/pix/simulate', { pixId }),
 };
 
 export const ticketsApi = {

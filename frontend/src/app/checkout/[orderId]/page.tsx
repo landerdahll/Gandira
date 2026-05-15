@@ -75,9 +75,10 @@ function PaymentForm({ orderId, total }: { orderId: string; total: number }) {
 function PixTab({ orderId, total }: { orderId: string; total: number }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [pixData, setPixData] = useState<{ qrCode: string; qrImage: string; expiresAt: number } | null>(null);
+  const [pixData, setPixData] = useState<{ id: string; qrCode: string; qrImage: string; expiresAt: number } | null>(null);
   const [copied, setCopied] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(0);
+  const [simulating, setSimulating] = useState(false);
 
   useEffect(() => {
     if (!pixData) return;
@@ -107,6 +108,7 @@ function PixTab({ orderId, total }: { orderId: string; total: number }) {
       const res = await pixApi.create(orderId);
       const d = res.data;
       setPixData({
+        id: d.id,
         qrCode: d.brCode,
         qrImage: d.brCodeBase64,
         expiresAt: new Date(d.expiresAt).getTime() / 1000,
@@ -203,9 +205,31 @@ function PixTab({ orderId, total }: { orderId: string; total: number }) {
               <Loader2 size={14} color="#67bed9" style={{ animation: 'spin 1s linear infinite' }} />
               <span style={{ fontSize: '13px', color: '#555' }}>Aguardando confirmação do pagamento...</span>
             </div>
-            <p style={{ fontSize: '12px', color: '#333' }}>
+            <p style={{ fontSize: '12px', color: '#333', marginBottom: '16px' }}>
               Expira em {mins}:{secs.toString().padStart(2, '0')}
             </p>
+            <button
+              onClick={async () => {
+                setSimulating(true);
+                try {
+                  await pixApi.simulate(pixData!.id);
+                  toast.success('Pagamento simulado! Aguarde a confirmação...');
+                } catch {
+                  toast.error('Erro ao simular. Verifique se está em modo dev.');
+                } finally {
+                  setSimulating(false);
+                }
+              }}
+              disabled={simulating}
+              style={{
+                padding: '8px 18px', borderRadius: '8px',
+                border: '1px solid #333', background: '#1a1a1a',
+                color: '#555', fontSize: '12px', fontWeight: 600,
+                cursor: simulating ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {simulating ? 'Simulando...' : '🧪 Simular pagamento (sandbox)'}
+            </button>
           </>
         )}
       </div>

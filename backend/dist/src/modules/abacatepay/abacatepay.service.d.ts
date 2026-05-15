@@ -17,6 +17,9 @@ export declare class AbacatepayService {
         brCodeBase64: any;
         expiresAt: any;
     }>;
+    simulatePixPayment(pixId: string): Promise<{
+        simulated: boolean;
+    }>;
     handleWebhook(payload: any, secret: string): Promise<void>;
     private onPixPaid;
 }

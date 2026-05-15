@@ -69,6 +69,22 @@ let AbacatepayService = AbacatepayService_1 = class AbacatepayService {
             expiresAt: data.expiresAt,
         };
     }
+    async simulatePixPayment(pixId) {
+        const res = await fetch(`${BASE_URL}/transparents/simulate-payment`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${this.apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id: pixId }),
+        });
+        if (!res.ok) {
+            const err = await res.text();
+            this.logger.error(`AbacatePay simulate error: ${err}`);
+            throw new common_1.BadRequestException('Erro ao simular pagamento');
+        }
+        return { simulated: true };
+    }
     async handleWebhook(payload, secret) {
         if (this.webhookSecret && secret !== this.webhookSecret) {
             this.logger.warn('AbacatePay webhook: secret inválido');
