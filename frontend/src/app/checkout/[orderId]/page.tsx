@@ -1,10 +1,10 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { Lock, ShieldCheck, CalendarDays, MapPin, Ticket } from 'lucide-react';
+import { Lock, ShieldCheck, CalendarDays, MapPin, Ticket, Copy, Check, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ordersApi } from '@/lib/api';
 
@@ -22,23 +22,127 @@ function fmtCurrency(v: number) {
 function PaymentForm({ orderId, total }: { orderId: string; total: number }) {
   const stripe = useStripe();
   const elements = useElements();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [pixData, setPixData] = useState<{ qrCode: string; qrImage: string; expiresAt: number } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!pixData) return;
+    const tick = () => setSecondsLeft(Math.max(0, Math.floor(pixData.expiresAt - Date.now() / 1000)));
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [pixData]);
+
+  // Poll for payment after QR shown
+  useEffect(() => {
+    if (!pixData) return;
+    pollingRef.current = setInterval(async () => {
+      try {
+        const res = await ordersApi.get(orderId);
+        if (res.data.status === 'PAID') {
+          clearInterval(pollingRef.current!);
+          router.push(`/checkout/success?orderId=${orderId}`);
+        }
+      } catch {}
+    }, 2500);
+    return () => clearInterval(pollingRef.current!);
+  }, [pixData, orderId, router]);
+
+  const handleCopy = () => {
+    if (!pixData) return;
+    navigator.clipboard.writeText(pixData.qrCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stripe || !elements) return;
     setLoading(true);
-    const { error } = await stripe.confirmPayment({
+
+    const result = await stripe.confirmPayment({
       elements,
       confirmParams: {
         return_url: `${window.location.origin}/checkout/success?orderId=${orderId}`,
       },
+      redirect: 'if_required',
     });
+
+    const { error, paymentIntent } = result as any;
+
     if (error) {
       toast.error(error.message ?? 'Erro no pagamento');
       setLoading(false);
+    } else if (paymentIntent?.next_action?.type === 'pix_display_qr_code') {
+      const pix = paymentIntent.next_action.pix_display_qr_code;
+      setPixData({ qrCode: pix.data, qrImage: pix.image_url_png, expiresAt: pix.expires_at });
+      setLoading(false);
+    } else if (paymentIntent?.status === 'succeeded') {
+      router.push(`/checkout/success?orderId=${orderId}`);
     }
   };
+
+  // PIX QR Code panel
+  if (pixData) {
+    const mins = Math.floor(secondsLeft / 60);
+    const secs = secondsLeft % 60;
+    const expired = secondsLeft <= 0;
+
+    return (
+      <div>
+        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+          <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>PIX gerado com sucesso</p>
+          <p style={{ fontSize: '13px', color: '#555' }}>Escaneie o QR Code ou copie o código no app do seu banco</p>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+          <div style={{ padding: '16px', background: '#fff', borderRadius: '16px', display: 'inline-block' }}>
+            <img src={pixData.qrImage} alt="QR Code PIX" style={{ width: '180px', height: '180px', display: 'block' }} />
+          </div>
+        </div>
+
+        <button
+          onClick={handleCopy}
+          disabled={expired}
+          style={{
+            width: '100%', padding: '12px', marginBottom: '16px',
+            borderRadius: '12px', border: `1px solid ${copied ? '#67bed944' : '#252525'}`,
+            background: copied ? '#0d1e28' : '#1a1a1a',
+            color: copied ? '#67bed9' : '#888',
+            fontSize: '13px', fontWeight: 600, cursor: expired ? 'not-allowed' : 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            transition: 'all 0.2s',
+          }}
+        >
+          {copied ? <Check size={14} /> : <Copy size={14} />}
+          {copied ? 'Código copiado!' : 'Copiar código PIX (Copia e Cola)'}
+        </button>
+
+        <div style={{ textAlign: 'center' }}>
+          {expired ? (
+            <p style={{ fontSize: '13px', color: '#ff6b6b' }}>PIX expirado. Volte e tente novamente.</p>
+          ) : (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
+                <Loader2 size={14} color="#67bed9" style={{ animation: 'spin 1s linear infinite' }} />
+                <span style={{ fontSize: '13px', color: '#555' }}>Aguardando confirmação do pagamento...</span>
+              </div>
+              <p style={{ fontSize: '12px', color: '#333' }}>
+                Expira em {mins}:{secs.toString().padStart(2, '0')}
+              </p>
+            </>
+          )}
+        </div>
+
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit}>

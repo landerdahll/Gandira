@@ -24,8 +24,8 @@ export declare class OrdersController {
                 };
             } & {
                 id: string;
-                createdAt: Date;
                 total: import("@prisma/client/runtime/library").Decimal;
+                createdAt: Date;
                 quantity: number;
                 unitPrice: import("@prisma/client/runtime/library").Decimal;
                 batchId: string;
@@ -37,11 +37,8 @@ export declare class OrdersController {
             }[];
         } & {
             id: string;
-            expiresAt: Date;
-            createdAt: Date;
-            updatedAt: Date;
-            eventId: string;
             userId: string;
+            eventId: string;
             status: import(".prisma/client").$Enums.OrderStatus;
             subtotal: import("@prisma/client/runtime/library").Decimal;
             platformFee: import("@prisma/client/runtime/library").Decimal;
@@ -54,6 +51,9 @@ export declare class OrdersController {
             cancelReason: string | null;
             refundedAt: Date | null;
             stripeRefundId: string | null;
+            expiresAt: Date;
+            createdAt: Date;
+            updatedAt: Date;
         })[];
         meta: {
             total: number;
@@ -71,12 +71,12 @@ export declare class OrdersController {
         };
         items: ({
             batch: {
+                name: string;
                 id: string;
+                eventId: string;
+                status: import(".prisma/client").$Enums.BatchStatus;
                 createdAt: Date;
                 updatedAt: Date;
-                eventId: string;
-                name: string;
-                status: import(".prisma/client").$Enums.BatchStatus;
                 quantity: number;
                 description: string | null;
                 price: import("@prisma/client/runtime/library").Decimal;
@@ -88,8 +88,8 @@ export declare class OrdersController {
             };
         } & {
             id: string;
-            createdAt: Date;
             total: import("@prisma/client/runtime/library").Decimal;
+            createdAt: Date;
             quantity: number;
             unitPrice: import("@prisma/client/runtime/library").Decimal;
             batchId: string;
@@ -97,11 +97,11 @@ export declare class OrdersController {
         })[];
         tickets: {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
             eventId: string;
             status: import(".prisma/client").$Enums.TicketStatus;
             cancelledAt: Date | null;
+            createdAt: Date;
+            updatedAt: Date;
             batchId: string;
             orderId: string;
             token: string;
@@ -112,11 +112,8 @@ export declare class OrdersController {
         }[];
     } & {
         id: string;
-        expiresAt: Date;
-        createdAt: Date;
-        updatedAt: Date;
-        eventId: string;
         userId: string;
+        eventId: string;
         status: import(".prisma/client").$Enums.OrderStatus;
         subtotal: import("@prisma/client/runtime/library").Decimal;
         platformFee: import("@prisma/client/runtime/library").Decimal;
@@ -129,6 +126,9 @@ export declare class OrdersController {
         cancelReason: string | null;
         refundedAt: Date | null;
         stripeRefundId: string | null;
+        expiresAt: Date;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     cancel(id: string, user: any, reason?: string): Promise<void>;
 }

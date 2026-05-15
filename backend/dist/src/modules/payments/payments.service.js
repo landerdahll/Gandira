@@ -43,6 +43,9 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
                 eventTitle: order.event?.title ?? '',
             },
             automatic_payment_methods: { enabled: true },
+            payment_method_options: {
+                pix: { expires_after_seconds: 3600 },
+            },
         });
     }
     async refund(orderId, paymentIntentId) {
