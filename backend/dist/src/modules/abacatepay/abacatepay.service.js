@@ -71,13 +71,13 @@ let AbacatepayService = AbacatepayService_1 = class AbacatepayService {
         };
     }
     async simulatePixPayment(pixId) {
-        const res = await fetch(`${BASE_URL}/transparents/simulate-payment`, {
+        const res = await fetch(`${BASE_URL}/transparents/simulate-payment?id=${encodeURIComponent(pixId)}`, {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${this.apiKey}`,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ id: pixId }),
+            body: JSON.stringify({}),
         });
         if (!res.ok) {
             const err = await res.text();
