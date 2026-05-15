@@ -32,5 +32,7 @@ export declare class CouponsService {
         id: string;
         code: string;
         discount: number;
+        maxUses: number | null;
+        usedCount: number;
     }>;
 }

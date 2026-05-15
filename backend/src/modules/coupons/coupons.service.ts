@@ -61,6 +61,12 @@ export class CouponsService {
     if (coupon.expiresAt && coupon.expiresAt < new Date()) throw new BadRequestException('Cupom expirado');
     if (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses) throw new BadRequestException('Cupom esgotado');
 
-    return { id: coupon.id, code: coupon.code, discount: Number(coupon.discount) };
+    return {
+      id: coupon.id,
+      code: coupon.code,
+      discount: Number(coupon.discount),
+      maxUses: coupon.maxUses,
+      usedCount: coupon.usedCount,
+    };
   }
 }

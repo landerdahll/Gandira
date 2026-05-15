@@ -71,7 +71,13 @@ let CouponsService = class CouponsService {
             throw new common_1.BadRequestException('Cupom expirado');
         if (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses)
             throw new common_1.BadRequestException('Cupom esgotado');
-        return { id: coupon.id, code: coupon.code, discount: Number(coupon.discount) };
+        return {
+            id: coupon.id,
+            code: coupon.code,
+            discount: Number(coupon.discount),
+            maxUses: coupon.maxUses,
+            usedCount: coupon.usedCount,
+        };
     }
 };
 exports.CouponsService = CouponsService;

@@ -475,7 +475,7 @@ export default function EditEventPage() {
                       value={c.discount} onChange={e => setNewCoupon(i, 'discount', e.target.value)}
                       placeholder="Ex: 20" onFocus={focus} onBlur={blur} />
                   </Field>
-                  <Field label="Limite de usos">
+                  <Field label="Máx. de ingressos com desconto">
                     <input style={inp} type="number" min="1"
                       value={c.maxUses} onChange={e => setNewCoupon(i, 'maxUses', e.target.value)}
                       placeholder="Ilimitado" onFocus={focus} onBlur={blur} />

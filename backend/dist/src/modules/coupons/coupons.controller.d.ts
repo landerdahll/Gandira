@@ -40,6 +40,8 @@ export declare class CouponsPublicController {
         id: string;
         code: string;
         discount: number;
+        maxUses: number | null;
+        usedCount: number;
     }>;
 }
 export {};

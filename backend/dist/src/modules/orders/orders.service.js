@@ -47,8 +47,12 @@ let OrdersService = OrdersService_1 = class OrdersService {
         }
         let couponId;
         let discountPct = 0;
+        const totalQty = dto.items.reduce((sum, item) => sum + item.quantity, 0);
         if (dto.couponCode) {
             const coupon = await this.coupons.validate(dto.eventId, dto.couponCode);
+            if (coupon.maxUses !== null && coupon.usedCount + totalQty > coupon.maxUses) {
+                throw new common_1.BadRequestException(`Cupom não tem ingressos suficientes disponíveis (restam ${coupon.maxUses - coupon.usedCount})`);
+            }
             couponId = coupon.id;
             discountPct = coupon.discount;
         }
@@ -86,7 +90,7 @@ let OrdersService = OrdersService_1 = class OrdersService {
         if (couponId) {
             await this.prisma.coupon.update({
                 where: { id: couponId },
-                data: { usedCount: { increment: 1 } },
+                data: { usedCount: { increment: totalQty } },
             });
         }
         const paymentIntent = await this.payments.createPaymentIntent(order);

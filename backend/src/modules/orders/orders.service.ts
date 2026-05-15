@@ -64,8 +64,14 @@ export class OrdersService {
     // Validate coupon before entering transaction (avoids holding tx open during external checks)
     let couponId: string | undefined;
     let discountPct = 0;
+    const totalQty = dto.items.reduce((sum, item) => sum + item.quantity, 0);
     if (dto.couponCode) {
       const coupon = await this.coupons.validate(dto.eventId, dto.couponCode);
+      if (coupon.maxUses !== null && coupon.usedCount + totalQty > coupon.maxUses) {
+        throw new BadRequestException(
+          `Cupom não tem ingressos suficientes disponíveis (restam ${coupon.maxUses - coupon.usedCount})`,
+        );
+      }
       couponId = coupon.id;
       discountPct = coupon.discount;
     }
@@ -106,11 +112,11 @@ export class OrdersService {
       });
     });
 
-    // Increment coupon usage count
+    // Increment coupon usage by number of tickets purchased
     if (couponId) {
       await this.prisma.coupon.update({
         where: { id: couponId },
-        data: { usedCount: { increment: 1 } },
+        data: { usedCount: { increment: totalQty } },
       });
     }
 
