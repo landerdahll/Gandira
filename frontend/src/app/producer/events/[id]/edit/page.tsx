@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Trash2, Plus, ArrowLeft, Calendar, MapPin, ImageIcon, Ticket, Tag, Save, Upload, Link2, X } from 'lucide-react';
-import { eventsApi } from '@/lib/api';
+import { eventsApi, couponsApi } from '@/lib/api';
 
 const inp: React.CSSProperties = {
   width: '100%', background: '#0f0f0f', border: '1px solid #252525',
@@ -17,6 +17,10 @@ const CATEGORIES = ['Música', 'Festa', 'Festival', 'Outro'];
 const IMAGE_MAX_MB = 5;
 
 type ImageMode = 'upload' | 'url';
+
+interface CouponForm { code: string; discount: string; maxUses: string; expiresAt: string; }
+interface ExistingCoupon { id: string; code: string; discount: number; maxUses: number | null; usedCount: number; expiresAt: string | null; isActive: boolean; }
+function emptyCoupon(): CouponForm { return { code: '', discount: '', maxUses: '', expiresAt: '' }; }
 
 // Convert UTC ISO string → "YYYY-MM-DDTHH:mm" in Brazil local time for datetime-local input
 function addHours(dt: string, h: number): string {
@@ -45,6 +49,9 @@ export default function EditEventPage() {
   const [loadingEvent, setLoadingEvent] = useState(true);
   const [loading, setSaving] = useState(false);
   const [imageMode, setImageMode] = useState<ImageMode>('upload');
+  const [existingCoupons, setExistingCoupons] = useState<ExistingCoupon[]>([]);
+  const [newCoupons, setNewCoupons] = useState<CouponForm[]>([]);
+  const [savingCoupon, setSavingCoupon] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -57,6 +64,10 @@ export default function EditEventPage() {
   });
 
   useEffect(() => {
+    couponsApi.list(id)
+      .then(res => setExistingCoupons(res.data))
+      .catch(() => {}); // silently ignore if no permission yet
+
     eventsApi.getById(id)
       .then(res => {
         const e = res.data;
@@ -104,6 +115,46 @@ export default function EditEventPage() {
     (e.currentTarget.style.borderColor = '#67bed9');
   const blur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     (e.currentTarget.style.borderColor = '#252525');
+
+  function setNewCoupon(i: number, k: keyof CouponForm, v: string) {
+    setNewCoupons(c => c.map((item, idx) => idx === i ? { ...item, [k]: v } : item));
+  }
+
+  async function handleDeleteCoupon(couponId: string) {
+    try {
+      await couponsApi.remove(id, couponId);
+      setExistingCoupons(c => c.filter(x => x.id !== couponId));
+      toast.success('Cupom removido');
+    } catch {
+      toast.error('Erro ao remover cupom');
+    }
+  }
+
+  async function handleSaveNewCoupons() {
+    const valid = newCoupons.filter(c => c.code.trim() && c.discount);
+    if (valid.length === 0) return;
+    setSavingCoupon(true);
+    let saved = 0;
+    for (const c of valid) {
+      try {
+        const res = await couponsApi.create(id, {
+          code: c.code.trim(),
+          discount: parseFloat(c.discount),
+          ...(c.maxUses ? { maxUses: parseInt(c.maxUses) } : {}),
+          ...(c.expiresAt ? { expiresAt: new Date(c.expiresAt).toISOString() } : {}),
+        });
+        setExistingCoupons(prev => [res.data, ...prev]);
+        saved++;
+      } catch (e: any) {
+        toast.error(e.response?.data?.message ?? `Erro ao criar cupom ${c.code}`);
+      }
+    }
+    if (saved > 0) {
+      setNewCoupons([]);
+      toast.success(`${saved} cupom${saved > 1 ? 'ns' : ''} adicionado${saved > 1 ? 's' : ''}!`);
+    }
+    setSavingCoupon(false);
+  }
 
   async function handleImageFile(file: File) {
     if (!file) return;
@@ -362,6 +413,103 @@ export default function EditEventPage() {
                   onChange={e => setField('state', e.target.value.toUpperCase())} placeholder="RS"
                   onFocus={focus} onBlur={blur} />
               </Field>
+            </div>
+          </div>
+        </Card>
+
+        {/* ── Cupons ────────────────────────────────────────────────────── */}
+        <Card icon={<Tag size={15} />} title="Cupons de Desconto">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+
+            {/* Cupons existentes */}
+            {existingCoupons.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '4px' }}>
+                {existingCoupons.map(c => (
+                  <div key={c.id} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    background: '#0a0a0a', border: '1px solid #1e1e1e',
+                    borderRadius: '12px', padding: '12px 16px',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ fontFamily: 'monospace', fontSize: '14px', fontWeight: 700, color: '#67bed9', letterSpacing: '1px' }}>{c.code}</span>
+                      <span style={{ fontSize: '13px', color: '#888' }}>−{c.discount}%</span>
+                      <span style={{ fontSize: '12px', color: '#444' }}>{c.usedCount} uso{c.usedCount !== 1 ? 's' : ''}{c.maxUses ? ` / ${c.maxUses}` : ''}</span>
+                    </div>
+                    <button type="button" onClick={() => handleDeleteCoupon(c.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#444', display: 'flex', padding: '2px' }}
+                      onMouseEnter={e => (e.currentTarget.style.color = '#ff6b6b')}
+                      onMouseLeave={e => (e.currentTarget.style.color = '#444')}>
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {existingCoupons.length === 0 && newCoupons.length === 0 && (
+              <p style={{ fontSize: '13px', color: '#444', textAlign: 'center', padding: '8px 0' }}>
+                Nenhum cupom cadastrado para este evento.
+              </p>
+            )}
+
+            {/* Novos cupons a adicionar */}
+            {newCoupons.map((c, i) => (
+              <div key={i} style={{ background: '#0a0a0a', border: '1px solid #252525', borderRadius: '14px', overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 16px', borderBottom: '1px solid #1a1a1a' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#67bed9' }}>Novo cupom</span>
+                  <button type="button" onClick={() => setNewCoupons(nc => nc.filter((_, idx) => idx !== i))}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#444', display: 'flex', padding: '2px' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#ff6b6b')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#444')}>
+                    <X size={14} />
+                  </button>
+                </div>
+                <div style={{ padding: '14px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <Field label="Código *">
+                    <input style={{ ...inp, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '1px' }}
+                      value={c.code} onChange={e => setNewCoupon(i, 'code', e.target.value.toUpperCase())}
+                      placeholder="Ex: VIP20" onFocus={focus} onBlur={blur} />
+                  </Field>
+                  <Field label="Desconto (%) *">
+                    <input style={inp} type="number" min="1" max="100"
+                      value={c.discount} onChange={e => setNewCoupon(i, 'discount', e.target.value)}
+                      placeholder="Ex: 20" onFocus={focus} onBlur={blur} />
+                  </Field>
+                  <Field label="Limite de usos">
+                    <input style={inp} type="number" min="1"
+                      value={c.maxUses} onChange={e => setNewCoupon(i, 'maxUses', e.target.value)}
+                      placeholder="Ilimitado" onFocus={focus} onBlur={blur} />
+                  </Field>
+                  <Field label="Expiração">
+                    <input style={{ ...inp, colorScheme: 'dark' }} type="datetime-local"
+                      value={c.expiresAt} onChange={e => setNewCoupon(i, 'expiresAt', e.target.value)}
+                      onFocus={focus} onBlur={blur} />
+                  </Field>
+                </div>
+              </div>
+            ))}
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button type="button" onClick={() => setNewCoupons(c => [...c, emptyCoupon()])} style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
+                padding: '11px', borderRadius: '12px', border: '1px dashed #2a2a2a', background: 'none',
+                color: '#555', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = '#67bed9'; e.currentTarget.style.color = '#67bed9'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#555'; }}
+              >
+                <Plus size={14} /> Adicionar cupom
+              </button>
+
+              {newCoupons.length > 0 && (
+                <button type="button" onClick={handleSaveNewCoupons} disabled={savingCoupon} style={{
+                  padding: '11px 20px', borderRadius: '12px', border: 'none',
+                  background: '#67bed9', color: '#fff', fontSize: '13px', fontWeight: 700,
+                  cursor: savingCoupon ? 'not-allowed' : 'pointer', opacity: savingCoupon ? 0.6 : 1,
+                }}>
+                  {savingCoupon ? 'Salvando...' : 'Salvar cupons'}
+                </button>
+              )}
             </div>
           </div>
         </Card>

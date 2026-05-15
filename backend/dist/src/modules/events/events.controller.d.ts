@@ -39,9 +39,9 @@ export declare class EventsController {
             id: string;
             name: string;
             status: import(".prisma/client").$Enums.BatchStatus;
+            quantity: number;
             description: string | null;
             price: import("@prisma/client/runtime/library").Decimal;
-            quantity: number;
             sold: number;
             startsAt: Date;
             endsAt: Date;
@@ -51,7 +51,6 @@ export declare class EventsController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
         producerId: string;
         title: string;
@@ -71,12 +70,12 @@ export declare class EventsController {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
+        tags: string[];
     }>;
     create(dto: CreateEventDto, user: any): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
         producerId: string;
         title: string;
@@ -96,6 +95,7 @@ export declare class EventsController {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
+        tags: string[];
     }>;
     uploadImage(file: Express.Multer.File): Promise<{
         url: string;
@@ -103,14 +103,14 @@ export declare class EventsController {
     findForEdit(id: string, user: any): Promise<{
         batches: {
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
             eventId: string;
+            name: string;
             status: import(".prisma/client").$Enums.BatchStatus;
+            quantity: number;
             description: string | null;
             price: import("@prisma/client/runtime/library").Decimal;
-            quantity: number;
             sold: number;
             startsAt: Date;
             endsAt: Date;
@@ -121,7 +121,6 @@ export declare class EventsController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
         producerId: string;
         title: string;
@@ -141,12 +140,12 @@ export declare class EventsController {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
+        tags: string[];
     }>;
     update(id: string, dto: UpdateEventDto, user: any): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
         producerId: string;
         title: string;
@@ -166,6 +165,7 @@ export declare class EventsController {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
+        tags: string[];
     }>;
     myEvents(user: any, page: number, limit: number): Promise<{
         data: ({
@@ -181,7 +181,6 @@ export declare class EventsController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            tags: string[];
             status: import(".prisma/client").$Enums.EventStatus;
             producerId: string;
             title: string;
@@ -201,6 +200,7 @@ export declare class EventsController {
             doorsOpen: Date | null;
             ageRating: number;
             category: string | null;
+            tags: string[];
         })[];
         meta: {
             total: number;
@@ -212,7 +212,6 @@ export declare class EventsController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
         producerId: string;
         title: string;
@@ -232,6 +231,7 @@ export declare class EventsController {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
+        tags: string[];
     }>;
     cancel(id: string, user: any): Promise<void>;
 }

@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Minus, Plus, Lock, CheckCircle2 } from 'lucide-react';
+import { Minus, Plus, Lock, CheckCircle2, Tag, X, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/auth-context';
-import { ordersApi } from '@/lib/api';
+import { ordersApi, couponsApi } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
 
 interface Batch {
@@ -20,24 +20,56 @@ interface Batch {
   sortOrder?: number;
 }
 
+interface CouponData {
+  id: string;
+  code: string;
+  discount: number;
+}
+
 export function BatchSelector({ eventId, batches }: { eventId: string; batches: Batch[] }) {
   const router = useRouter();
   const { user } = useAuth();
   const [qty, setQty] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // Sort by sortOrder, then filter only ACTIVE and SOLD_OUT to display
+  const [couponInput, setCouponInput] = useState('');
+  const [couponData, setCouponData] = useState<CouponData | null>(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const [couponError, setCouponError] = useState('');
+
   const sorted = [...batches].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
   const activeBatches = sorted.filter((b) => b.status === 'ACTIVE');
-
-  // The ONLY selectable batch is the first ACTIVE one with stock
   const currentBatch = activeBatches.find((b) => b.quantity - b.sold > 0) ?? null;
   const maxQty = currentBatch ? Math.min(10, currentBatch.quantity - currentBatch.sold) : 0;
 
-  const totalPrice = currentBatch ? qty * Number(currentBatch.price) : 0;
+  const subtotal = currentBatch ? qty * Number(currentBatch.price) : 0;
+  const discount = couponData ? subtotal * (couponData.discount / 100) : 0;
+  const totalPrice = subtotal - discount;
 
   function changeQty(delta: number) {
     setQty(prev => Math.max(0, Math.min(maxQty, prev + delta)));
+  }
+
+  async function handleValidateCoupon() {
+    if (!couponInput.trim()) return;
+    setValidatingCoupon(true);
+    setCouponError('');
+    try {
+      const res = await couponsApi.validate(eventId, couponInput.trim());
+      setCouponData(res.data);
+      toast.success(`Cupom aplicado! −${res.data.discount}% de desconto`);
+    } catch (err: any) {
+      setCouponError(err.response?.data?.message ?? 'Cupom inválido');
+      setCouponData(null);
+    } finally {
+      setValidatingCoupon(false);
+    }
+  }
+
+  function removeCoupon() {
+    setCouponData(null);
+    setCouponInput('');
+    setCouponError('');
   }
 
   async function handleCheckout() {
@@ -56,7 +88,11 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
     }
     setLoading(true);
     try {
-      const res = await ordersApi.create({ eventId, items: [{ batchId: currentBatch.id, quantity: qty }] });
+      const res = await ordersApi.create({
+        eventId,
+        items: [{ batchId: currentBatch.id, quantity: qty }],
+        ...(couponData ? { couponCode: couponData.code } : {}),
+      });
       router.push(`/checkout/${res.data.orderId}?secret=${res.data.clientSecret}`);
     } catch (err: any) {
       toast.error(err.response?.data?.message ?? 'Erro ao criar pedido');
@@ -71,31 +107,20 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
       {sorted.map((batch, index) => {
         const isCurrent = batch.id === currentBatch?.id;
         const isSoldOut = batch.status === 'SOLD_OUT' || (batch.status === 'ACTIVE' && batch.quantity - batch.sold <= 0);
-        const isLocked = !isCurrent && !isSoldOut && batch.status === 'ACTIVE';
-        const isFuture = batch.status !== 'ACTIVE' && batch.status !== 'SOLD_OUT';
-
-        // Determine which previous active batch hasn't sold out yet (to lock this one)
-        const lockedByPrevious = activeBatches.findIndex(b => b.id === currentBatch?.id) < index &&
-          currentBatch !== null;
-
-        const locked = isFuture || lockedByPrevious;
+        const lockedByPrevious = activeBatches.findIndex(b => b.id === currentBatch?.id) < index && currentBatch !== null;
+        const locked = batch.status !== 'ACTIVE' && batch.status !== 'SOLD_OUT' || lockedByPrevious;
 
         return (
-          <div
-            key={batch.id}
-            style={{
-              borderRadius: '14px',
-              border: `1px solid ${isCurrent ? '#67bed933' : '#1e1e1e'}`,
-              background: isCurrent ? '#081419' : '#0f0f0f',
-              overflow: 'hidden',
-              opacity: locked || isSoldOut ? 0.55 : 1,
-              transition: 'all 0.2s',
-            }}
-          >
-            {/* Batch header */}
+          <div key={batch.id} style={{
+            borderRadius: '14px',
+            border: `1px solid ${isCurrent ? '#67bed933' : '#1e1e1e'}`,
+            background: isCurrent ? '#081419' : '#0f0f0f',
+            overflow: 'hidden',
+            opacity: locked || isSoldOut ? 0.55 : 1,
+            transition: 'all 0.2s',
+          }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '14px 16px 10px' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                {/* Status badge */}
                 <div style={{ marginBottom: '6px' }}>
                   {isSoldOut ? (
                     <Badge color="#555" bg="#1a1a1a">Esgotado</Badge>
@@ -108,9 +133,7 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
                 <p style={{ fontSize: '15px', fontWeight: 700, color: locked || isSoldOut ? '#555' : '#fff', marginBottom: '2px' }}>
                   {batch.name}
                 </p>
-                {batch.description && (
-                  <p style={{ fontSize: '12px', color: '#555' }}>{batch.description}</p>
-                )}
+                {batch.description && <p style={{ fontSize: '12px', color: '#555' }}>{batch.description}</p>}
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '12px' }}>
                 <p style={{ fontSize: '17px', fontWeight: 800, color: locked || isSoldOut ? '#444' : '#fff' }}>
@@ -119,86 +142,133 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
                 {Number(batch.price) > 0 && !isSoldOut && (
                   <p style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>+ taxas</p>
                 )}
-                {isSoldOut && (
-                  <p style={{ fontSize: '11px', color: '#444', marginTop: '2px' }}>Esgotado</p>
-                )}
               </div>
             </div>
 
-            {/* Quantity selector — only on current batch */}
             {isCurrent && (
               <div style={{
-                padding: '10px 16px 14px',
-                borderTop: '1px solid #1e1e1e',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
+                padding: '10px 16px 14px', borderTop: '1px solid #1e1e1e',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
                 <span style={{ fontSize: '13px', color: '#666' }}>Quantidade</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0' }}>
-                  <button
-                    onClick={() => changeQty(-1)}
-                    disabled={qty === 0}
-                    style={{
-                      width: '32px', height: '32px', borderRadius: '8px',
-                      border: '1px solid #252525', background: '#1a1a1a',
-                      color: qty === 0 ? '#333' : '#aaa',
-                      cursor: qty === 0 ? 'not-allowed' : 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                  >
-                    <Minus size={14} />
-                  </button>
-                  <span style={{
-                    width: '40px', textAlign: 'center',
-                    fontSize: '16px', fontWeight: 700, color: '#fff',
-                  }}>
-                    {qty}
-                  </span>
-                  <button
-                    onClick={() => changeQty(1)}
-                    disabled={qty >= maxQty}
-                    style={{
-                      width: '32px', height: '32px', borderRadius: '8px',
-                      border: '1px solid #252525', background: '#1a1a1a',
-                      color: qty >= maxQty ? '#333' : '#aaa',
-                      cursor: qty >= maxQty ? 'not-allowed' : 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                  >
-                    <Plus size={14} />
-                  </button>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <button onClick={() => changeQty(-1)} disabled={qty === 0} style={{
+                    width: '32px', height: '32px', borderRadius: '8px',
+                    border: '1px solid #252525', background: '#1a1a1a',
+                    color: qty === 0 ? '#333' : '#aaa',
+                    cursor: qty === 0 ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}><Minus size={14} /></button>
+                  <span style={{ width: '40px', textAlign: 'center', fontSize: '16px', fontWeight: 700, color: '#fff' }}>{qty}</span>
+                  <button onClick={() => changeQty(1)} disabled={qty >= maxQty} style={{
+                    width: '32px', height: '32px', borderRadius: '8px',
+                    border: '1px solid #252525', background: '#1a1a1a',
+                    color: qty >= maxQty ? '#333' : '#aaa',
+                    cursor: qty >= maxQty ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}><Plus size={14} /></button>
                 </div>
               </div>
             )}
 
-            {/* Locked message */}
             {locked && (
-              <div style={{
-                padding: '8px 16px 12px',
-                borderTop: '1px solid #161616',
-                display: 'flex', alignItems: 'center', gap: '6px',
-              }}>
+              <div style={{ padding: '8px 16px 12px', borderTop: '1px solid #161616', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Lock size={11} color="#444" />
-                <span style={{ fontSize: '12px', color: '#444' }}>
-                  Disponível após o esgotamento do lote anterior
-                </span>
+                <span style={{ fontSize: '12px', color: '#444' }}>Disponível após o esgotamento do lote anterior</span>
               </div>
             )}
           </div>
         );
       })}
 
-      {/* Total + buy */}
+      {/* ── Cupom de desconto ─────────────────────────────────────────── */}
+      {currentBatch && qty > 0 && (
+        <div style={{ background: '#0f0f0f', border: '1px solid #1e1e1e', borderRadius: '14px', padding: '14px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+            <Tag size={13} color="#67bed9" />
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Cupom de desconto
+            </span>
+          </div>
+
+          {couponData ? (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              background: '#0d1e28', border: '1px solid #67bed933',
+              borderRadius: '10px', padding: '10px 14px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CheckCircle2 size={14} color="#67bed9" />
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#67bed9' }}>{couponData.code}</span>
+                <span style={{ fontSize: '12px', color: '#555' }}>−{couponData.discount}%</span>
+              </div>
+              <button onClick={removeCoupon} style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: '#444', display: 'flex', padding: '2px',
+              }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#888')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#444')}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                value={couponInput}
+                onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponError(''); }}
+                onKeyDown={e => { if (e.key === 'Enter') handleValidateCoupon(); }}
+                placeholder="Digite o código"
+                style={{
+                  flex: 1, background: '#171717', border: `1px solid ${couponError ? '#ff6b6b55' : '#252525'}`,
+                  borderRadius: '10px', padding: '10px 12px',
+                  color: '#fff', fontSize: '13px', outline: 'none',
+                  fontFamily: 'monospace', letterSpacing: '1px',
+                }}
+                onFocus={e => (e.currentTarget.style.borderColor = '#67bed9')}
+                onBlur={e => (e.currentTarget.style.borderColor = couponError ? '#ff6b6b55' : '#252525')}
+              />
+              <button
+                onClick={handleValidateCoupon}
+                disabled={validatingCoupon || !couponInput.trim()}
+                style={{
+                  padding: '10px 16px', borderRadius: '10px', border: '1px solid #67bed955',
+                  background: 'transparent', color: '#67bed9',
+                  fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  opacity: validatingCoupon || !couponInput.trim() ? 0.5 : 1,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {validatingCoupon ? <Loader2 size={13} style={{ animation: 'spin 0.8s linear infinite' }} /> : 'Aplicar'}
+              </button>
+            </div>
+          )}
+
+          {couponError && (
+            <p style={{ fontSize: '12px', color: '#ff6b6b', marginTop: '6px' }}>{couponError}</p>
+          )}
+        </div>
+      )}
+
+      {/* ── Total + comprar ───────────────────────────────────────────── */}
       <div style={{ marginTop: '4px' }}>
         {qty > 0 && currentBatch && (
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '10px 4px', marginBottom: '8px',
-            borderBottom: '1px solid #1e1e1e',
-          }}>
-            <span style={{ fontSize: '13px', color: '#666' }}>{qty} ingresso{qty > 1 ? 's' : ''}</span>
-            <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>{formatCurrency(totalPrice)}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '10px 4px', marginBottom: '8px', borderBottom: '1px solid #1e1e1e' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '13px', color: '#666' }}>{qty} ingresso{qty > 1 ? 's' : ''}</span>
+              <span style={{ fontSize: '13px', color: '#888' }}>{formatCurrency(subtotal)}</span>
+            </div>
+            {couponData && discount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '13px', color: '#67bed9' }}>Desconto ({couponData.discount}%)</span>
+                <span style={{ fontSize: '13px', color: '#67bed9', fontWeight: 600 }}>−{formatCurrency(discount)}</span>
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: couponData ? '1px solid #1e1e1e' : 'none', paddingTop: couponData ? '6px' : 0 }}>
+              <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Total</span>
+              <span style={{ fontSize: '15px', fontWeight: 800, color: '#fff' }}>{formatCurrency(totalPrice)}</span>
+            </div>
           </div>
         )}
 
@@ -206,16 +276,11 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
           onClick={handleCheckout}
           disabled={loading || qty === 0}
           style={{
-            width: '100%',
-            padding: '14px',
-            borderRadius: '12px',
-            border: 'none',
+            width: '100%', padding: '14px', borderRadius: '12px', border: 'none',
             background: qty === 0 ? '#1a1a1a' : '#67bed9',
             color: qty === 0 ? '#444' : '#fff',
-            fontSize: '15px',
-            fontWeight: 700,
-            cursor: qty === 0 ? 'not-allowed' : 'pointer',
-            transition: 'all 0.2s',
+            fontSize: '15px', fontWeight: 700,
+            cursor: qty === 0 ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
           }}
         >
           {loading ? 'Aguarde...' : qty === 0 ? 'Selecione um ingresso' : 'Comprar agora'}
@@ -225,17 +290,7 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
   );
 }
 
-function Badge({
-  children,
-  color,
-  bg,
-  icon,
-}: {
-  children: React.ReactNode;
-  color: string;
-  bg: string;
-  icon?: React.ReactNode;
-}) {
+function Badge({ children, color, bg, icon }: { children: React.ReactNode; color: string; bg: string; icon?: React.ReactNode }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: '4px',

@@ -8,7 +8,6 @@ export declare class EventsService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
         producerId: string;
         title: string;
@@ -28,6 +27,7 @@ export declare class EventsService {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
+        tags: string[];
     }>;
     findAll(query: {
         city?: string;
@@ -69,9 +69,9 @@ export declare class EventsService {
             id: string;
             name: string;
             status: import(".prisma/client").$Enums.BatchStatus;
+            quantity: number;
             description: string | null;
             price: import("@prisma/client/runtime/library").Decimal;
-            quantity: number;
             sold: number;
             startsAt: Date;
             endsAt: Date;
@@ -81,7 +81,6 @@ export declare class EventsService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
         producerId: string;
         title: string;
@@ -101,6 +100,7 @@ export declare class EventsService {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
+        tags: string[];
     }>;
     findProducerEvents(_producerId: string, page?: number, limit?: number): Promise<{
         data: ({
@@ -116,7 +116,6 @@ export declare class EventsService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            tags: string[];
             status: import(".prisma/client").$Enums.EventStatus;
             producerId: string;
             title: string;
@@ -136,6 +135,7 @@ export declare class EventsService {
             doorsOpen: Date | null;
             ageRating: number;
             category: string | null;
+            tags: string[];
         })[];
         meta: {
             total: number;
@@ -146,14 +146,14 @@ export declare class EventsService {
     findByIdForProducer(eventId: string, _producerId: string): Promise<{
         batches: {
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
             eventId: string;
+            name: string;
             status: import(".prisma/client").$Enums.BatchStatus;
+            quantity: number;
             description: string | null;
             price: import("@prisma/client/runtime/library").Decimal;
-            quantity: number;
             sold: number;
             startsAt: Date;
             endsAt: Date;
@@ -164,7 +164,6 @@ export declare class EventsService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
         producerId: string;
         title: string;
@@ -184,12 +183,12 @@ export declare class EventsService {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
+        tags: string[];
     }>;
     update(eventId: string, producerId: string, dto: UpdateEventDto): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
         producerId: string;
         title: string;
@@ -209,12 +208,12 @@ export declare class EventsService {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
+        tags: string[];
     }>;
     publish(eventId: string, producerId: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
         producerId: string;
         title: string;
@@ -234,6 +233,7 @@ export declare class EventsService {
         doorsOpen: Date | null;
         ageRating: number;
         category: string | null;
+        tags: string[];
     }>;
     cancel(eventId: string, producerId: string): Promise<void>;
     private getOwnedEvent;

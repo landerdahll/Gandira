@@ -5,4 +5,5 @@ export declare class OrderItemDto {
 export declare class CreateOrderDto {
     eventId: string;
     items: OrderItemDto[];
+    couponCode?: string;
 }

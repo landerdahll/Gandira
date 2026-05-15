@@ -100,8 +100,19 @@ export const authApi = {
   resendVerification: (email: string) => api.post('/auth/resend-verification', { email }),
 };
 
+export const couponsApi = {
+  validate: (eventId: string, code: string) =>
+    api.post('/coupons/validate', { eventId, code }),
+  list: (eventId: string) => api.get(`/events/${eventId}/coupons`),
+  create: (eventId: string, data: { code: string; discount: number; maxUses?: number; expiresAt?: string }) =>
+    api.post(`/events/${eventId}/coupons`, data),
+  remove: (eventId: string, couponId: string) =>
+    api.delete(`/events/${eventId}/coupons/${couponId}`),
+};
+
 export const ordersApi = {
-  create: (data: any) => api.post('/orders', data),
+  create: (data: { eventId: string; items: { batchId: string; quantity: number }[]; couponCode?: string }) =>
+    api.post('/orders', data),
   list: (params?: any) => api.get('/orders', { params }),
   get: (id: string) => api.get(`/orders/${id}`),
   cancel: (id: string, reason?: string) => api.delete(`/orders/${id}`, { data: { reason } }),

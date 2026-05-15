@@ -17,13 +17,15 @@ const library_1 = require("@prisma/client/runtime/library");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const batches_service_1 = require("../batches/batches.service");
 const payments_service_1 = require("../payments/payments.service");
+const coupons_service_1 = require("../coupons/coupons.service");
 const ORDER_EXPIRY_MINUTES = 15;
 const PLATFORM_FEE_PERCENT = Number(process.env.PLATFORM_FEE_PERCENT ?? 10);
 let OrdersService = OrdersService_1 = class OrdersService {
-    constructor(prisma, batches, payments) {
+    constructor(prisma, batches, payments, coupons) {
         this.prisma = prisma;
         this.batches = batches;
         this.payments = payments;
+        this.coupons = coupons;
         this.logger = new common_1.Logger(OrdersService_1.name);
     }
     async create(dto, userId) {
@@ -43,6 +45,13 @@ let OrdersService = OrdersService_1 = class OrdersService {
         if (batchMap.size !== batchIds.length) {
             throw new common_1.BadRequestException('Um ou mais lotes inválidos para este evento');
         }
+        let couponId;
+        let discountPct = 0;
+        if (dto.couponCode) {
+            const coupon = await this.coupons.validate(dto.eventId, dto.couponCode);
+            couponId = coupon.id;
+            discountPct = coupon.discount;
+        }
         const order = await this.prisma.$transaction(async (tx) => {
             let subtotal = new library_1.Decimal(0);
             const lineItems = [];
@@ -54,7 +63,10 @@ let OrdersService = OrdersService_1 = class OrdersService {
                 lineItems.push({ batchId: item.batchId, quantity: item.quantity, unitPrice, total: lineTotal });
             }
             const platformFee = subtotal.mul(PLATFORM_FEE_PERCENT / 100).toDecimalPlaces(2);
-            const total = subtotal.add(platformFee);
+            const discountAmount = discountPct > 0
+                ? subtotal.mul(discountPct / 100).toDecimalPlaces(2)
+                : new library_1.Decimal(0);
+            const total = subtotal.add(platformFee).sub(discountAmount);
             const expiresAt = new Date(Date.now() + ORDER_EXPIRY_MINUTES * 60 * 1000);
             return tx.order.create({
                 data: {
@@ -62,15 +74,21 @@ let OrdersService = OrdersService_1 = class OrdersService {
                     eventId: dto.eventId,
                     subtotal,
                     platformFee,
+                    discountAmount,
                     total,
+                    couponId,
                     expiresAt,
-                    items: {
-                        create: lineItems,
-                    },
+                    items: { create: lineItems },
                 },
                 include: { items: true, event: { select: { title: true } } },
             });
         });
+        if (couponId) {
+            await this.prisma.coupon.update({
+                where: { id: couponId },
+                data: { usedCount: { increment: 1 } },
+            });
+        }
         const paymentIntent = await this.payments.createPaymentIntent(order);
         await this.prisma.order.update({
             where: { id: order.id },
@@ -193,6 +211,7 @@ exports.OrdersService = OrdersService = OrdersService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         batches_service_1.BatchesService,
-        payments_service_1.PaymentsService])
+        payments_service_1.PaymentsService,
+        coupons_service_1.CouponsService])
 ], OrdersService);
 //# sourceMappingURL=orders.service.js.map

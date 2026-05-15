@@ -5,11 +5,19 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Trash2, Plus, ArrowLeft, Calendar, MapPin, ImageIcon, Ticket, Tag, AlertTriangle, Rocket, Save, Upload, Link2, X } from 'lucide-react';
-import { eventsApi, batchesApi } from '@/lib/api';
+import { eventsApi, batchesApi, couponsApi } from '@/lib/api';
 
 interface Batch {
   name: string; price: string; quantity: string;
   startsAt: string; endsAt: string; description: string;
+}
+
+interface CouponForm {
+  code: string; discount: string; maxUses: string; expiresAt: string;
+}
+
+function emptyCoupon(): CouponForm {
+  return { code: '', discount: '', maxUses: '', expiresAt: '' };
 }
 
 const inp: React.CSSProperties = {
@@ -64,6 +72,7 @@ export default function NewEventPage() {
   });
 
   const [batches, setBatches] = useState<Batch[]>([emptyBatch()]);
+  const [coupons, setCoupons] = useState<CouponForm[]>([]);
 
   function setField(k: keyof typeof form, v: string) {
     setForm(f => ({ ...f, [k]: v }));
@@ -90,6 +99,12 @@ export default function NewEventPage() {
 
   function addBatch() { setBatches(b => [...b, emptyBatch()]); }
   function removeBatch(i: number) { setBatches(b => b.filter((_, idx) => idx !== i)); }
+
+  function addCoupon() { setCoupons(c => [...c, emptyCoupon()]); }
+  function removeCoupon(i: number) { setCoupons(c => c.filter((_, idx) => idx !== i)); }
+  function setCoupon(i: number, k: keyof CouponForm, v: string) {
+    setCoupons(c => c.map((item, idx) => idx === i ? { ...item, [k]: v } : item));
+  }
 
   const focus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     (e.currentTarget.style.borderColor = '#67bed9');
@@ -169,6 +184,19 @@ export default function NewEventPage() {
           })
         )
       );
+
+      // Create coupons (fire sequentially, ignore errors per coupon)
+      for (const c of coupons) {
+        if (!c.code.trim() || !c.discount) continue;
+        try {
+          await couponsApi.create(eventId, {
+            code: c.code.trim(),
+            discount: parseFloat(c.discount),
+            ...(c.maxUses ? { maxUses: parseInt(c.maxUses) } : {}),
+            ...(c.expiresAt ? { expiresAt: new Date(c.expiresAt).toISOString() } : {}),
+          });
+        } catch { /* ignore individual coupon errors */ }
+      }
 
       if (publishAfter) {
         await eventsApi.publish(eventId);
@@ -437,6 +465,62 @@ export default function NewEventPage() {
               onMouseLeave={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#555'; }}
             >
               <Plus size={14} /> Adicionar lote
+            </button>
+          </div>
+        </Card>
+
+        {/* ── Cupons ────────────────────────────────────────────────────── */}
+        <Card icon={<Tag size={15} />} title="Cupons de Desconto">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {coupons.length === 0 && (
+              <p style={{ fontSize: '13px', color: '#444', textAlign: 'center', padding: '8px 0' }}>
+                Nenhum cupom adicionado. Cupons permitem oferecer descontos a grupos específicos.
+              </p>
+            )}
+            {coupons.map((c, i) => (
+              <div key={i} style={{ background: '#0a0a0a', border: '1px solid #1e1e1e', borderRadius: '14px', overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 16px', borderBottom: '1px solid #1a1a1a' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#67bed9' }}>Cupom {i + 1}</span>
+                  <button type="button" onClick={() => removeCoupon(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#444', display: 'flex', padding: '2px' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#ff6b6b')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#444')}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+                <div style={{ padding: '14px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <Field label="Código *">
+                    <input style={{ ...inp, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '1px' }}
+                      value={c.code} onChange={e => setCoupon(i, 'code', e.target.value.toUpperCase())}
+                      placeholder="Ex: VIP20" onFocus={focus} onBlur={blur} />
+                  </Field>
+                  <Field label="Desconto (%) *">
+                    <input style={inp} type="number" min="1" max="100"
+                      value={c.discount} onChange={e => setCoupon(i, 'discount', e.target.value)}
+                      placeholder="Ex: 20" onFocus={focus} onBlur={blur} />
+                  </Field>
+                  <Field label="Limite de usos">
+                    <input style={inp} type="number" min="1"
+                      value={c.maxUses} onChange={e => setCoupon(i, 'maxUses', e.target.value)}
+                      placeholder="Ilimitado" onFocus={focus} onBlur={blur} />
+                  </Field>
+                  <Field label="Expiração">
+                    <input style={{ ...inp, colorScheme: 'dark' }} type="datetime-local"
+                      value={c.expiresAt} onChange={e => setCoupon(i, 'expiresAt', e.target.value)}
+                      onFocus={focus} onBlur={blur} />
+                  </Field>
+                </div>
+              </div>
+            ))}
+            <button type="button" onClick={addCoupon} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px',
+              width: '100%', padding: '11px', borderRadius: '12px',
+              border: '1px dashed #2a2a2a', background: 'none',
+              color: '#555', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = '#67bed9'; e.currentTarget.style.color = '#67bed9'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#555'; }}
+            >
+              <Plus size={14} /> Adicionar cupom
             </button>
           </div>
         </Card>

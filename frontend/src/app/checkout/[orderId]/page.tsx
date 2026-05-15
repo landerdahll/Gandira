@@ -115,6 +115,7 @@ function CheckoutContent() {
   const total = order ? Number(order.total) : 0;
   const subtotal = order ? Number(order.subtotal) : 0;
   const fee = order ? Number(order.platformFee) : 0;
+  const discount = order ? Number(order.discountAmount ?? 0) : 0;
   const items: any[] = order?.items ?? [];
 
   return (
@@ -197,6 +198,12 @@ function CheckoutContent() {
                   <span style={{ fontSize: '13px', color: '#555' }}>Taxa de serviço</span>
                   <span style={{ fontSize: '13px', color: '#888' }}>{fmtCurrency(fee)}</span>
                 </div>
+                {discount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '13px', color: '#67bed9' }}>Desconto (cupom)</span>
+                    <span style={{ fontSize: '13px', color: '#67bed9', fontWeight: 600 }}>−{fmtCurrency(discount)}</span>
+                  </div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', paddingTop: '12px', borderTop: '1px solid #252525' }}>
                   <span style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>Total</span>
                   <span style={{ fontSize: '18px', fontWeight: 800, color: '#67bed9' }}>{fmtCurrency(total)}</span>

@@ -12,12 +12,13 @@ const orders_controller_1 = require("./orders.controller");
 const orders_service_1 = require("./orders.service");
 const batches_module_1 = require("../batches/batches.module");
 const payments_module_1 = require("../payments/payments.module");
+const coupons_module_1 = require("../coupons/coupons.module");
 let OrdersModule = class OrdersModule {
 };
 exports.OrdersModule = OrdersModule;
 exports.OrdersModule = OrdersModule = __decorate([
     (0, common_1.Module)({
-        imports: [batches_module_1.BatchesModule, payments_module_1.PaymentsModule],
+        imports: [batches_module_1.BatchesModule, payments_module_1.PaymentsModule, coupons_module_1.CouponsModule],
         controllers: [orders_controller_1.OrdersController],
         providers: [orders_service_1.OrdersService],
         exports: [orders_service_1.OrdersService],

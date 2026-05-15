@@ -9,45 +9,35 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateOrderDto = exports.OrderItemDto = void 0;
+exports.CreateCouponDto = void 0;
 const class_validator_1 = require("class-validator");
-const class_transformer_1 = require("class-transformer");
 const swagger_1 = require("@nestjs/swagger");
-class OrderItemDto {
+class CreateCouponDto {
 }
-exports.OrderItemDto = OrderItemDto;
+exports.CreateCouponDto = CreateCouponDto;
 __decorate([
-    (0, swagger_1.ApiProperty)(),
+    (0, swagger_1.ApiProperty)({ example: 'VIP20' }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], OrderItemDto.prototype, "batchId", void 0);
+], CreateCouponDto.prototype, "code", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ minimum: 1, maximum: 10 }),
+    (0, swagger_1.ApiProperty)({ example: 20, description: 'Percentual de desconto (0–100)' }),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.Max)(100),
+    __metadata("design:type", Number)
+], CreateCouponDto.prototype, "discount", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false, example: 50, description: 'Limite de usos (nulo = ilimitado)' }),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),
     (0, class_validator_1.Min)(1),
-    (0, class_validator_1.Max)(10),
     __metadata("design:type", Number)
-], OrderItemDto.prototype, "quantity", void 0);
-class CreateOrderDto {
-}
-exports.CreateOrderDto = CreateOrderDto;
+], CreateCouponDto.prototype, "maxUses", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateOrderDto.prototype, "eventId", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ type: [OrderItemDto] }),
-    (0, class_validator_1.IsArray)(),
-    (0, class_validator_1.ArrayMinSize)(1),
-    (0, class_validator_1.ValidateNested)({ each: true }),
-    (0, class_transformer_1.Type)(() => OrderItemDto),
-    __metadata("design:type", Array)
-], CreateOrderDto.prototype, "items", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ required: false }),
+    (0, swagger_1.ApiProperty)({ required: false, description: 'Data de expiração (ISO 8601)' }),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
-], CreateOrderDto.prototype, "couponCode", void 0);
-//# sourceMappingURL=create-order.dto.js.map
+], CreateCouponDto.prototype, "expiresAt", void 0);
+//# sourceMappingURL=create-coupon.dto.js.map

@@ -2,13 +2,15 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BatchesService } from '../batches/batches.service';
 import { PaymentsService } from '../payments/payments.service';
+import { CouponsService } from '../coupons/coupons.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 export declare class OrdersService {
     private prisma;
     private batches;
     private payments;
+    private coupons;
     private readonly logger;
-    constructor(prisma: PrismaService, batches: BatchesService, payments: PaymentsService);
+    constructor(prisma: PrismaService, batches: BatchesService, payments: PaymentsService, coupons: CouponsService);
     create(dto: CreateOrderDto, userId: string): Promise<{
         orderId: string;
         total: Decimal;
@@ -31,11 +33,11 @@ export declare class OrdersService {
             } & {
                 id: string;
                 createdAt: Date;
-                orderId: string;
                 total: Decimal;
                 quantity: number;
-                batchId: string;
                 unitPrice: Decimal;
+                batchId: string;
+                orderId: string;
             })[];
             tickets: {
                 id: string;
@@ -43,17 +45,19 @@ export declare class OrdersService {
             }[];
         } & {
             id: string;
+            expiresAt: Date;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            expiresAt: Date;
             eventId: string;
-            stripePaymentIntentId: string | null;
+            userId: string;
             status: import(".prisma/client").$Enums.OrderStatus;
             subtotal: Decimal;
             platformFee: Decimal;
             total: Decimal;
+            stripePaymentIntentId: string | null;
             stripeChargeId: string | null;
+            couponId: string | null;
+            discountAmount: Decimal;
             cancelledAt: Date | null;
             cancelReason: string | null;
             refundedAt: Date | null;
@@ -76,14 +80,14 @@ export declare class OrdersService {
         items: ({
             batch: {
                 id: string;
-                name: string;
                 createdAt: Date;
                 updatedAt: Date;
                 eventId: string;
+                name: string;
                 status: import(".prisma/client").$Enums.BatchStatus;
+                quantity: number;
                 description: string | null;
                 price: Decimal;
-                quantity: number;
                 sold: number;
                 startsAt: Date;
                 endsAt: Date;
@@ -93,22 +97,22 @@ export declare class OrdersService {
         } & {
             id: string;
             createdAt: Date;
-            orderId: string;
             total: Decimal;
             quantity: number;
-            batchId: string;
             unitPrice: Decimal;
+            batchId: string;
+            orderId: string;
         })[];
         tickets: {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            token: string;
-            orderId: string;
             eventId: string;
             status: import(".prisma/client").$Enums.TicketStatus;
             cancelledAt: Date | null;
             batchId: string;
+            orderId: string;
+            token: string;
             holderName: string | null;
             holderEmail: string | null;
             holderCpf: string | null;
@@ -116,17 +120,19 @@ export declare class OrdersService {
         }[];
     } & {
         id: string;
+        expiresAt: Date;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
-        expiresAt: Date;
         eventId: string;
-        stripePaymentIntentId: string | null;
+        userId: string;
         status: import(".prisma/client").$Enums.OrderStatus;
         subtotal: Decimal;
         platformFee: Decimal;
         total: Decimal;
+        stripePaymentIntentId: string | null;
         stripeChargeId: string | null;
+        couponId: string | null;
+        discountAmount: Decimal;
         cancelledAt: Date | null;
         cancelReason: string | null;
         refundedAt: Date | null;

@@ -10,6 +10,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BatchesService } from '../batches/batches.service';
 import { PaymentsService } from '../payments/payments.service';
+import { CouponsService } from '../coupons/coupons.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 
 const ORDER_EXPIRY_MINUTES = 15;
@@ -23,6 +24,7 @@ export class OrdersService {
     private prisma: PrismaService,
     private batches: BatchesService,
     private payments: PaymentsService,
+    private coupons: CouponsService,
   ) {}
 
   /**
@@ -59,6 +61,15 @@ export class OrdersService {
       throw new BadRequestException('Um ou mais lotes inválidos para este evento');
     }
 
+    // Validate coupon before entering transaction (avoids holding tx open during external checks)
+    let couponId: string | undefined;
+    let discountPct = 0;
+    if (dto.couponCode) {
+      const coupon = await this.coupons.validate(dto.eventId, dto.couponCode);
+      couponId = coupon.id;
+      discountPct = coupon.discount;
+    }
+
     // All DB operations in a single transaction — stock reservation is atomic
     const order = await this.prisma.$transaction(async (tx) => {
       let subtotal = new Decimal(0);
@@ -73,7 +84,10 @@ export class OrdersService {
       }
 
       const platformFee = subtotal.mul(PLATFORM_FEE_PERCENT / 100).toDecimalPlaces(2);
-      const total = subtotal.add(platformFee);
+      const discountAmount = discountPct > 0
+        ? subtotal.mul(discountPct / 100).toDecimalPlaces(2)
+        : new Decimal(0);
+      const total = subtotal.add(platformFee).sub(discountAmount);
       const expiresAt = new Date(Date.now() + ORDER_EXPIRY_MINUTES * 60 * 1000);
 
       return tx.order.create({
@@ -82,15 +96,23 @@ export class OrdersService {
           eventId: dto.eventId,
           subtotal,
           platformFee,
+          discountAmount,
           total,
+          couponId,
           expiresAt,
-          items: {
-            create: lineItems,
-          },
+          items: { create: lineItems },
         },
         include: { items: true, event: { select: { title: true } } },
       });
     });
+
+    // Increment coupon usage count
+    if (couponId) {
+      await this.prisma.coupon.update({
+        where: { id: couponId },
+        data: { usedCount: { increment: 1 } },
+      });
+    }
 
     // Create Stripe PaymentIntent (outside DB tx — external call)
     const paymentIntent = await this.payments.createPaymentIntent(order);

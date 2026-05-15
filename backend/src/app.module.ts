@@ -15,6 +15,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
 import { CheckInModule } from './modules/checkin/checkin.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { MailModule } from './modules/mail/mail.module';
+import { CouponsModule } from './modules/coupons/coupons.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { MailModule } from './modules/mail/mail.module';
     TicketsModule,
     CheckInModule,
     ReportsModule,
+    CouponsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

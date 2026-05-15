@@ -24,6 +24,7 @@ const tickets_module_1 = require("./modules/tickets/tickets.module");
 const checkin_module_1 = require("./modules/checkin/checkin.module");
 const reports_module_1 = require("./modules/reports/reports.module");
 const mail_module_1 = require("./modules/mail/mail.module");
+const coupons_module_1 = require("./modules/coupons/coupons.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -55,6 +56,7 @@ exports.AppModule = AppModule = __decorate([
             tickets_module_1.TicketsModule,
             checkin_module_1.CheckInModule,
             reports_module_1.ReportsModule,
+            coupons_module_1.CouponsModule,
         ],
         providers: [
             { provide: core_1.APP_GUARD, useClass: throttler_1.ThrottlerGuard },
