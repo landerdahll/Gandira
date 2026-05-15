@@ -122,6 +122,10 @@ export const paymentsApi = {
   confirmOrder: (orderId: string) => api.post('/payments/confirm-order', { orderId }),
 };
 
+export const pixApi = {
+  create: (orderId: string) => api.post('/payments/pix/create', { orderId }),
+};
+
 export const ticketsApi = {
   list: (params?: any) => api.get('/tickets', { params }),
   get: (id: string) => api.get(`/tickets/${id}`),

@@ -16,6 +16,7 @@ import { CheckInModule } from './modules/checkin/checkin.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { MailModule } from './modules/mail/mail.module';
 import { CouponsModule } from './modules/coupons/coupons.module';
+import { AbacatepayModule } from './modules/abacatepay/abacatepay.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { CouponsModule } from './modules/coupons/coupons.module';
     CheckInModule,
     ReportsModule,
     CouponsModule,
+    AbacatepayModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
