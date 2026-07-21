@@ -31,6 +31,8 @@ export declare class AuthService {
         message: string;
     }>;
     private dispatchVerificationEmail;
+    private persistVerificationToken;
+    private sendVerificationEmail;
     login(dto: LoginDto, ipAddress?: string): Promise<{
         accessToken: string;
         refreshToken: string;
@@ -50,5 +52,6 @@ export declare class AuthService {
     forgotPassword(email: string): Promise<void>;
     resetPassword(token: string, newPassword: string): Promise<void>;
     private generateTokenPair;
+    private refreshTokenExpiresAt;
     private auditLog;
 }

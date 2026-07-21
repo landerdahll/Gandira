@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nest
 import * as QRCode from 'qrcode';
 import { PrismaService } from '../../prisma/prisma.service';
 import { generateSecureToken } from '../../common/utils/crypto.util';
+import { Prisma } from '@prisma/client';
+import { withSerializableRetry } from '../../common/utils/serializable-retry.util';
 
 interface GenerateTicketInput {
   orderId: string;
@@ -117,7 +119,7 @@ export class TicketsService {
    * Marca como usado em uma transação atômica para evitar dupla entrada.
    */
   async validateAndCheckIn(token: string, eventId: string, staffId: string) {
-    return this.prisma.$transaction(async (tx) => {
+    const result = await withSerializableRetry(() => this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const ticket = await tx.ticket.findUnique({
         where: { token },
         include: {
@@ -158,8 +160,13 @@ export class TicketsService {
       if (claimed.count !== 1) return { valid: false, reason: 'Ingresso indisponível ou alterado durante a leitura', holder };
       await tx.checkIn.create({ data: { ticketId: ticket.id, eventId, staffId, method: 'QR_CODE' } });
 
-      this.logger.log(`Ticket ${ticket.id} checked in at event ${eventId} by staff ${staffId}`);
-      return { valid: true, reason: 'Entrada autorizada', holder };
-    });
+      return { valid: true, reason: 'Entrada autorizada', holder, ticketId: ticket.id };
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }));
+    if (result.valid) {
+      this.logger.log(`Ticket ${result.ticketId} checked in at event ${eventId} by staff ${staffId}`);
+      const { ticketId: _ticketId, ...response } = result;
+      return response;
+    }
+    return result;
   }
 }

@@ -70,6 +70,7 @@ export declare class EventsController {
         category: string | null;
         tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
+        allowTicketTransfers: boolean;
         producerId: string;
     }>;
     create(dto: CreateEventDto, user: any): Promise<{
@@ -95,6 +96,7 @@ export declare class EventsController {
         category: string | null;
         tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
+        allowTicketTransfers: boolean;
         producerId: string;
     }>;
     uploadImage(file: Express.Multer.File): Promise<{
@@ -108,8 +110,8 @@ export declare class EventsController {
             updatedAt: Date;
             description: string | null;
             status: import(".prisma/client").$Enums.BatchStatus;
-            price: import("@prisma/client/runtime/library").Decimal;
             eventId: string;
+            price: import("@prisma/client/runtime/library").Decimal;
             quantity: number;
             sold: number;
             startsAt: Date;
@@ -140,6 +142,7 @@ export declare class EventsController {
         category: string | null;
         tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
+        allowTicketTransfers: boolean;
         producerId: string;
     }>;
     update(id: string, dto: UpdateEventDto, user: any): Promise<{
@@ -165,6 +168,7 @@ export declare class EventsController {
         category: string | null;
         tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
+        allowTicketTransfers: boolean;
         producerId: string;
     }>;
     myEvents(user: any, page: number, limit: number): Promise<{
@@ -200,6 +204,7 @@ export declare class EventsController {
             category: string | null;
             tags: string[];
             status: import(".prisma/client").$Enums.EventStatus;
+            allowTicketTransfers: boolean;
             producerId: string;
         })[];
         meta: {
@@ -231,6 +236,7 @@ export declare class EventsController {
         category: string | null;
         tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
+        allowTicketTransfers: boolean;
         producerId: string;
     }>;
     cancel(id: string, user: any): Promise<void>;

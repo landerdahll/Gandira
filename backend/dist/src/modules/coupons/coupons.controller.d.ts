@@ -12,8 +12,8 @@ export declare class CouponsController {
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
-        expiresAt: Date | null;
         eventId: string;
+        expiresAt: Date | null;
         code: string;
         discount: import("@prisma/client/runtime/library").Decimal;
         maxUses: number | null;
@@ -24,8 +24,8 @@ export declare class CouponsController {
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
-        expiresAt: Date | null;
         eventId: string;
+        expiresAt: Date | null;
         code: string;
         discount: import("@prisma/client/runtime/library").Decimal;
         maxUses: number | null;

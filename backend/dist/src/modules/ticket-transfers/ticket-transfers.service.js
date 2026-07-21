@@ -53,6 +53,7 @@ const crypto_util_1 = require("../../common/utils/crypto.util");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const mail_service_1 = require("../mail/mail.service");
 const schedule_1 = require("@nestjs/schedule");
+const serializable_retry_util_1 = require("../../common/utils/serializable-retry.util");
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const digest = (value) => (0, crypto_1.createHash)('sha256').update(value).digest('hex');
 const normalizeEmail = (value) => value.trim().toLowerCase();
@@ -64,11 +65,13 @@ let TicketTransfersService = TicketTransfersService_1 = class TicketTransfersSer
         this.logger = new common_1.Logger(TicketTransfersService_1.name);
     }
     get prisma() { return this.prismaService; }
+    hashInviteToken(rawToken) { return digest(rawToken); }
     async request(ticketId, senderUserId, rawEmail) {
         const recipientEmail = normalizeEmail(rawEmail);
         const invitationToken = (0, crypto_util_1.generateSecureToken)(32);
-        let notification;
-        const transfer = await this.prisma.$transaction(async (tx) => {
+        const nextToken = (0, crypto_util_1.generateSecureToken)(32);
+        const qrCodeUrl = await QRCode.toDataURL(nextToken, { errorCorrectionLevel: 'H', width: 400, margin: 2 });
+        const result = await (0, serializable_retry_util_1.withSerializableRetry)(() => this.prisma.$transaction(async (tx) => {
             const ticket = await tx.ticket.findUnique({
                 where: { id: ticketId },
                 include: { event: true, checkIn: true, order: { include: { user: true } }, batch: true, owner: true },
@@ -101,9 +104,12 @@ let TicketTransfersService = TicketTransfersService_1 = class TicketTransfersSer
                 } });
             await tx.ticketHistory.create({ data: { ticketId, transferId: created.id, action: 'TRANSFER_REQUESTED', actorUserId: senderUserId, metadata: { recipientEmail } } });
             if (recipient) {
-                const nextToken = (0, crypto_util_1.generateSecureToken)(32);
-                const qrCodeUrl = await QRCode.toDataURL(nextToken, { errorCorrectionLevel: 'H', width: 400, margin: 2 });
-                await tx.ticket.update({ where: { id: ticketId }, data: { ownerUserId: recipient.id, holderName: recipient.name, holderEmail: recipient.email, token: nextToken, qrCodeUrl, status: 'ACTIVE' } });
+                const completed = await tx.ticket.updateMany({
+                    where: { id: ticketId, ownerUserId: senderUserId, status: 'TRANSFER_PENDING' },
+                    data: { ownerUserId: recipient.id, holderName: recipient.name, holderEmail: recipient.email, token: nextToken, qrCodeUrl, status: 'ACTIVE' },
+                });
+                if (completed.count !== 1)
+                    throw new common_1.ConflictException('O ingresso foi alterado por outra operação. Tente novamente.');
                 await tx.ticketTransfer.update({ where: { id: created.id }, data: { newQrIdentifier: digest(nextToken) } });
                 await tx.ticketHistory.createMany({ data: [
                         { ticketId, transferId: created.id, action: 'QR_INVALIDATED', actorUserId: senderUserId },
@@ -114,11 +120,10 @@ let TicketTransfersService = TicketTransfersService_1 = class TicketTransfersSer
             else {
                 await tx.ticketHistory.create({ data: { ticketId, transferId: created.id, action: 'TRANSFER_INVITATION_SENT', actorUserId: senderUserId } });
             }
-            notification = { ticket, recipient, invitationToken };
-            return created;
-        }, { isolationLevel: client_1.Prisma.TransactionIsolationLevel.Serializable });
-        this.sendRequestedEmails(transfer, notification).catch(e => this.logger.error(`Falha nas notificações da transferência ${transfer.id}: ${e.message}`));
-        return { id: transfer.id, status: transfer.status, recipientEmail: transfer.recipientEmail, expiresAt: transfer.expiresAt };
+            return { transfer: created, notification: { ticket, recipient, invitationToken } };
+        }, { isolationLevel: client_1.Prisma.TransactionIsolationLevel.Serializable }));
+        this.sendRequestedEmails(result.transfer, result.notification).catch(e => this.logger.error(`Falha nas notificações da transferência ${result.transfer.id}: ${e.message}`));
+        return { id: result.transfer.id, status: result.transfer.status, recipientEmail: result.transfer.recipientEmail, expiresAt: result.transfer.expiresAt };
     }
     async inspectInvite(rawToken, email) {
         const transfer = await this.prisma.ticketTransfer.findUnique({ where: { invitationTokenHash: digest(rawToken) } });
@@ -130,31 +135,48 @@ let TicketTransfersService = TicketTransfersService_1 = class TicketTransfersSer
             throw new common_1.BadRequestException('O e-mail deve ser o mesmo do convite');
         return transfer;
     }
-    async completeInvite(rawToken, userId, email) {
+    async prepareInviteCompletion(rawToken, email) {
         await this.inspectInvite(rawToken, email);
-        const result = await this.prisma.$transaction(async (tx) => {
-            const transfer = await tx.ticketTransfer.findUnique({ where: { invitationTokenHash: digest(rawToken) }, include: { ticket: true, sender: true, event: true } });
-            if (!transfer || transfer.status !== 'PENDING_REGISTRATION')
-                throw new common_1.BadRequestException('Convite já utilizado ou cancelado');
-            const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
-            const nextToken = (0, crypto_util_1.generateSecureToken)(32);
-            const qrCodeUrl = await QRCode.toDataURL(nextToken, { errorCorrectionLevel: 'H', width: 400, margin: 2 });
-            const updated = await tx.ticketTransfer.updateMany({ where: { id: transfer.id, status: 'PENDING_REGISTRATION', invitationTokenHash: digest(rawToken) }, data: { status: 'COMPLETED', recipientUserId: userId, completedAt: new Date(), invitationTokenHash: null, newQrIdentifier: digest(nextToken) } });
-            if (updated.count !== 1)
-                throw new common_1.ConflictException('Este convite já foi processado');
-            await tx.ticket.update({ where: { id: transfer.ticketId }, data: { ownerUserId: userId, holderName: user.name, holderEmail: user.email, token: nextToken, qrCodeUrl, status: 'ACTIVE' } });
-            await tx.ticketHistory.createMany({ data: [
-                    { ticketId: transfer.ticketId, transferId: transfer.id, action: 'REGISTRATION_COMPLETED', actorUserId: userId },
-                    { ticketId: transfer.ticketId, transferId: transfer.id, action: 'QR_INVALIDATED', actorUserId: userId },
-                    { ticketId: transfer.ticketId, transferId: transfer.id, action: 'QR_REGENERATED', actorUserId: userId },
-                    { ticketId: transfer.ticketId, transferId: transfer.id, action: 'TRANSFER_COMPLETED', actorUserId: userId },
-                ] });
-            return { transfer, user };
-        }, { isolationLevel: client_1.Prisma.TransactionIsolationLevel.Serializable });
-        this.sendCompletedEmails(result.transfer, result.user).catch(e => this.logger.error(e.message));
+        const nextToken = (0, crypto_util_1.generateSecureToken)(32);
+        const qrCodeUrl = await QRCode.toDataURL(nextToken, { errorCorrectionLevel: 'H', width: 400, margin: 2 });
+        return { nextToken, qrCodeUrl };
+    }
+    async completeInviteInTransaction(tx, rawToken, user, prepared) {
+        const normalizedUserEmail = normalizeEmail(user.email);
+        const transfer = await tx.ticketTransfer.findUnique({ where: { invitationTokenHash: digest(rawToken) }, include: { ticket: true, sender: true, event: true } });
+        const now = new Date();
+        if (!transfer || transfer.status !== 'PENDING_REGISTRATION' || !transfer.expiresAt || transfer.expiresAt <= now) {
+            throw new common_1.BadRequestException('Convite inválido ou expirado');
+        }
+        if (normalizeEmail(transfer.recipientEmail) !== normalizedUserEmail)
+            throw new common_1.BadRequestException('O e-mail deve ser o mesmo do convite');
+        const updated = await tx.ticketTransfer.updateMany({
+            where: { id: transfer.id, status: 'PENDING_REGISTRATION', invitationTokenHash: digest(rawToken), expiresAt: { gt: now } },
+            data: { status: 'COMPLETED', recipientUserId: user.id, completedAt: now, invitationTokenHash: null, newQrIdentifier: digest(prepared.nextToken) },
+        });
+        if (updated.count !== 1)
+            throw new common_1.ConflictException('Este convite já foi processado');
+        const claimedTicket = await tx.ticket.updateMany({
+            where: { id: transfer.ticketId, status: 'TRANSFER_PENDING', ownerUserId: transfer.senderUserId },
+            data: { ownerUserId: user.id, holderName: user.name, holderEmail: user.email, token: prepared.nextToken, qrCodeUrl: prepared.qrCodeUrl, status: 'ACTIVE' },
+        });
+        if (claimedTicket.count !== 1)
+            throw new common_1.ConflictException('O ingresso foi alterado por outra operação');
+        await tx.ticketHistory.createMany({ data: [
+                { ticketId: transfer.ticketId, transferId: transfer.id, action: 'REGISTRATION_COMPLETED', actorUserId: user.id },
+                { ticketId: transfer.ticketId, transferId: transfer.id, action: 'QR_INVALIDATED', actorUserId: user.id },
+                { ticketId: transfer.ticketId, transferId: transfer.id, action: 'QR_REGENERATED', actorUserId: user.id },
+                { ticketId: transfer.ticketId, transferId: transfer.id, action: 'TRANSFER_COMPLETED', actorUserId: user.id },
+            ] });
+        return { transfer, user };
+    }
+    notifyInviteCompleted(transfer, user) {
+        this.sendCompletedEmails(transfer, user).catch(e => this.logger.error(e.message));
     }
     async cancel(id, senderUserId) {
-        const result = await this.prisma.$transaction(async (tx) => {
+        const nextToken = (0, crypto_util_1.generateSecureToken)(32);
+        const qrCodeUrl = await QRCode.toDataURL(nextToken, { errorCorrectionLevel: 'H', width: 400, margin: 2 });
+        const result = await (0, serializable_retry_util_1.withSerializableRetry)(() => this.prisma.$transaction(async (tx) => {
             const transfer = await tx.ticketTransfer.findUnique({ where: { id }, include: { ticket: true, event: true, sender: true } });
             if (!transfer)
                 throw new common_1.NotFoundException('Transferência não encontrada');
@@ -162,18 +184,21 @@ let TicketTransfersService = TicketTransfersService_1 = class TicketTransfersSer
                 throw new common_1.ForbiddenException('Acesso negado');
             if (transfer.status !== 'PENDING_REGISTRATION')
                 throw new common_1.BadRequestException('Somente transferências pendentes podem ser canceladas');
-            const nextToken = (0, crypto_util_1.generateSecureToken)(32);
-            const qrCodeUrl = await QRCode.toDataURL(nextToken, { errorCorrectionLevel: 'H', width: 400, margin: 2 });
             const changed = await tx.ticketTransfer.updateMany({ where: { id, status: 'PENDING_REGISTRATION' }, data: { status: 'CANCELLED', cancelledAt: new Date(), invitationTokenHash: null, cancellationReason: 'Cancelada pelo remetente', newQrIdentifier: digest(nextToken) } });
             if (!changed.count)
                 throw new common_1.ConflictException('A transferência já foi processada');
-            await tx.ticket.update({ where: { id: transfer.ticketId }, data: { status: 'ACTIVE', token: nextToken, qrCodeUrl } });
+            const restored = await tx.ticket.updateMany({
+                where: { id: transfer.ticketId, ownerUserId: senderUserId, status: 'TRANSFER_PENDING' },
+                data: { status: 'ACTIVE', token: nextToken, qrCodeUrl },
+            });
+            if (restored.count !== 1)
+                throw new common_1.ConflictException('O ingresso foi alterado por outra operação');
             await tx.ticketHistory.createMany({ data: [
                     { ticketId: transfer.ticketId, transferId: id, action: 'TRANSFER_CANCELLED', actorUserId: senderUserId },
                     { ticketId: transfer.ticketId, transferId: id, action: 'QR_REGENERATED', actorUserId: senderUserId },
                 ] });
             return transfer;
-        }, { isolationLevel: client_1.Prisma.TransactionIsolationLevel.Serializable });
+        }, { isolationLevel: client_1.Prisma.TransactionIsolationLevel.Serializable }));
         this.mail.sendTicketTransferEmail(result.recipientEmail, 'Transferência de ingresso cancelada', 'A transferência pendente foi cancelada pelo titular.').catch(() => undefined);
         return { status: 'CANCELLED' };
     }
@@ -183,18 +208,23 @@ let TicketTransfersService = TicketTransfersService_1 = class TicketTransfersSer
             await this.expire(item.id).catch(e => this.logger.error(`Falha ao expirar ${item.id}: ${e.message}`));
     }
     async expire(id) {
-        return this.prisma.$transaction(async (tx) => {
+        const token = (0, crypto_util_1.generateSecureToken)(32);
+        const qrCodeUrl = await QRCode.toDataURL(token, { errorCorrectionLevel: 'H', width: 400, margin: 2 });
+        return (0, serializable_retry_util_1.withSerializableRetry)(() => this.prisma.$transaction(async (tx) => {
             const transfer = await tx.ticketTransfer.findUnique({ where: { id } });
             if (!transfer || transfer.status !== 'PENDING_REGISTRATION')
                 return;
-            const token = (0, crypto_util_1.generateSecureToken)(32);
-            const qrCodeUrl = await QRCode.toDataURL(token, { errorCorrectionLevel: 'H', width: 400, margin: 2 });
             const changed = await tx.ticketTransfer.updateMany({ where: { id, status: 'PENDING_REGISTRATION' }, data: { status: 'EXPIRED', invitationTokenHash: null, cancellationReason: 'Convite expirado', newQrIdentifier: digest(token) } });
             if (!changed.count)
                 return;
-            await tx.ticket.update({ where: { id: transfer.ticketId }, data: { status: 'ACTIVE', token, qrCodeUrl } });
+            const restored = await tx.ticket.updateMany({
+                where: { id: transfer.ticketId, ownerUserId: transfer.senderUserId, status: 'TRANSFER_PENDING' },
+                data: { status: 'ACTIVE', token, qrCodeUrl },
+            });
+            if (restored.count !== 1)
+                throw new common_1.ConflictException('O ingresso foi alterado por outra operação');
             await tx.ticketHistory.createMany({ data: [{ ticketId: transfer.ticketId, transferId: id, action: 'TRANSFER_EXPIRED' }, { ticketId: transfer.ticketId, transferId: id, action: 'QR_REGENERATED' }] });
-        }, { isolationLevel: client_1.Prisma.TransactionIsolationLevel.Serializable });
+        }, { isolationLevel: client_1.Prisma.TransactionIsolationLevel.Serializable }));
     }
     async ticketStatus(ticketId, userId) {
         const ticket = await this.prisma.ticket.findFirst({ where: { id: ticketId, OR: [{ ownerUserId: userId }, { transfers: { some: { senderUserId: userId } } }] }, select: { id: true } });

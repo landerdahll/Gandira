@@ -52,6 +52,8 @@ const prisma_service_1 = require("../../prisma/prisma.service");
 const crypto_util_1 = require("../../common/utils/crypto.util");
 const mail_service_1 = require("../mail/mail.service");
 const ticket_transfers_service_1 = require("../ticket-transfers/ticket-transfers.service");
+const client_1 = require("@prisma/client");
+const serializable_retry_util_1 = require("../../common/utils/serializable-retry.util");
 const BCRYPT_ROUNDS = 12;
 let AuthService = AuthService_1 = class AuthService {
     constructor(prisma, jwt, config, mail, ticketTransfers) {
@@ -64,8 +66,9 @@ let AuthService = AuthService_1 = class AuthService {
     }
     async register(dto) {
         const normalizedEmail = dto.email.toLowerCase().trim();
-        if (dto.invitationToken)
-            await this.ticketTransfers.inspectInvite(dto.invitationToken, normalizedEmail);
+        const preparedInvite = dto.invitationToken
+            ? await this.ticketTransfers.prepareInviteCompletion(dto.invitationToken, normalizedEmail)
+            : null;
         const exists = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
         if (exists)
             throw new common_1.ConflictException('E-mail já cadastrado');
@@ -92,7 +95,17 @@ let AuthService = AuthService_1 = class AuthService {
         }
         const password = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
         const cpf = dto.cpf ? dto.cpf.replace(/\D/g, '') : undefined;
-        const user = await this.prisma.user.create({
+        const preparedVerification = dto.invitationToken ? {
+            token: (0, crypto_util_1.generateSecureToken)(),
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        } : null;
+        const preparedRefresh = dto.invitationToken ? {
+            token: (0, crypto_util_1.generateSecureToken)(40),
+            expiresAt: this.refreshTokenExpiresAt(),
+        } : null;
+        let completedInvite = null;
+        let invitedTokens = null;
+        const createUser = async (db) => db.user.create({
             data: {
                 name: dto.name,
                 email: normalizedEmail,
@@ -104,12 +117,51 @@ let AuthService = AuthService_1 = class AuthService {
             },
             select: { id: true, email: true, name: true, role: true, isVerified: true },
         });
+        let user;
+        if (dto.invitationToken && preparedInvite && preparedVerification && preparedRefresh) {
+            const registration = await (0, serializable_retry_util_1.withSerializableRetry)(() => this.prisma.$transaction(async (tx) => {
+                const invite = await tx.ticketTransfer.findUnique({
+                    where: { invitationTokenHash: this.ticketTransfers.hashInviteToken(dto.invitationToken) },
+                    select: { status: true, expiresAt: true, recipientEmail: true },
+                });
+                if (!invite || invite.status !== 'PENDING_REGISTRATION' || !invite.expiresAt || invite.expiresAt <= new Date()) {
+                    throw new common_1.BadRequestException('Convite inválido ou expirado');
+                }
+                if (invite.recipientEmail.toLowerCase().trim() !== normalizedEmail) {
+                    throw new common_1.BadRequestException('O e-mail deve ser o mesmo do convite');
+                }
+                if (await tx.user.findUnique({ where: { email: normalizedEmail }, select: { id: true } })) {
+                    throw new common_1.ConflictException('E-mail já cadastrado');
+                }
+                if (cpf && await tx.user.findUnique({ where: { cpf }, select: { id: true } })) {
+                    throw new common_1.ConflictException('CPF já cadastrado');
+                }
+                const created = await createUser(tx);
+                const accessToken = await this.jwt.signAsync({ sub: created.id, email: created.email, role: created.role });
+                await this.auditLog(created.id, 'USER_REGISTERED', 'User', created.id, undefined, tx);
+                await this.persistVerificationToken(tx, created.id, preparedVerification.token, preparedVerification.expiresAt);
+                await tx.refreshToken.create({ data: { userId: created.id, token: preparedRefresh.token, expiresAt: preparedRefresh.expiresAt } });
+                const inviteCompletion = await this.ticketTransfers.completeInviteInTransaction(tx, dto.invitationToken, created, preparedInvite);
+                return { user: created, completedInvite: inviteCompletion, accessToken };
+            }, { isolationLevel: client_1.Prisma.TransactionIsolationLevel.Serializable }));
+            user = registration.user;
+            completedInvite = registration.completedInvite;
+            invitedTokens = { accessToken: registration.accessToken, refreshToken: preparedRefresh.token };
+        }
+        else {
+            user = await createUser(this.prisma);
+        }
         this.logger.log(`New user registered: ${user.email}`);
-        await this.auditLog(user.id, 'USER_REGISTERED', 'User', user.id);
-        await this.dispatchVerificationEmail(user.id, user.email, user.name);
-        if (dto.invitationToken)
-            await this.ticketTransfers.completeInvite(dto.invitationToken, user.id, user.email);
-        const tokens = await this.generateTokenPair(user.id, user.email, user.role);
+        if (!dto.invitationToken) {
+            await this.auditLog(user.id, 'USER_REGISTERED', 'User', user.id);
+            await this.dispatchVerificationEmail(user.id, user.email, user.name);
+        }
+        else {
+            this.sendVerificationEmail(user.email, user.name, preparedVerification.token);
+        }
+        if (completedInvite)
+            this.ticketTransfers.notifyInviteCompleted(completedInvite.transfer, completedInvite.user);
+        const tokens = invitedTokens ?? await this.generateTokenPair(user.id, user.email, user.role);
         return { user, ...tokens };
     }
     async verifyEmail(token) {
@@ -137,10 +189,17 @@ let AuthService = AuthService_1 = class AuthService {
         return { message: 'E-mail de verificação reenviado.' };
     }
     async dispatchVerificationEmail(userId, email, name) {
-        await this.prisma.emailVerificationToken.deleteMany({ where: { userId } });
         const token = (0, crypto_util_1.generateSecureToken)();
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-        await this.prisma.emailVerificationToken.create({ data: { userId, token, expiresAt } });
+        await this.persistVerificationToken(this.prisma, userId, token, expiresAt, true);
+        this.sendVerificationEmail(email, name, token);
+    }
+    async persistVerificationToken(db, userId, token, expiresAt, replaceExisting = false) {
+        if (replaceExisting)
+            await db.emailVerificationToken.deleteMany({ where: { userId } });
+        await db.emailVerificationToken.create({ data: { userId, token, expiresAt } });
+    }
+    sendVerificationEmail(email, name, token) {
         const baseUrl = (this.config.get('FRONTEND_URL', 'http://localhost:3000')).split(',')[0].trim();
         this.mail.sendVerificationEmail(email, name, `${baseUrl}/auth/verify-email?token=${token}`)
             .catch(err => this.logger.error(`Falha ao enviar e-mail de verificação para ${email}: ${err.message}`));
@@ -237,16 +296,19 @@ let AuthService = AuthService_1 = class AuthService {
             this.jwt.signAsync(payload),
             (0, crypto_util_1.generateSecureToken)(40),
         ]);
-        const refreshExpiresIn = this.config.get('JWT_REFRESH_EXPIRES_IN', '7d');
-        const days = parseInt(refreshExpiresIn);
-        const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+        const expiresAt = this.refreshTokenExpiresAt();
         await this.prisma.refreshToken.create({
             data: { userId, token: refreshToken, expiresAt },
         });
         return { accessToken, refreshToken };
     }
-    async auditLog(userId, action, entity, entityId, metadata) {
-        await this.prisma.auditLog.create({
+    refreshTokenExpiresAt() {
+        const refreshExpiresIn = this.config.get('JWT_REFRESH_EXPIRES_IN', '7d');
+        const days = parseInt(refreshExpiresIn);
+        return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    }
+    async auditLog(userId, action, entity, entityId, metadata, db = this.prisma) {
+        await db.auditLog.create({
             data: { userId, action, entity, entityId, metadata },
         });
     }

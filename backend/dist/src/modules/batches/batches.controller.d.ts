@@ -11,8 +11,8 @@ export declare class BatchesController {
         updatedAt: Date;
         description: string | null;
         status: import(".prisma/client").$Enums.BatchStatus;
-        price: import("@prisma/client/runtime/library").Decimal;
         eventId: string;
+        price: import("@prisma/client/runtime/library").Decimal;
         quantity: number;
         sold: number;
         startsAt: Date;
@@ -27,8 +27,8 @@ export declare class BatchesController {
         updatedAt: Date;
         description: string | null;
         status: import(".prisma/client").$Enums.BatchStatus;
-        price: import("@prisma/client/runtime/library").Decimal;
         eventId: string;
+        price: import("@prisma/client/runtime/library").Decimal;
         quantity: number;
         sold: number;
         startsAt: Date;
@@ -43,8 +43,8 @@ export declare class BatchesController {
         updatedAt: Date;
         description: string | null;
         status: import(".prisma/client").$Enums.BatchStatus;
-        price: import("@prisma/client/runtime/library").Decimal;
         eventId: string;
+        price: import("@prisma/client/runtime/library").Decimal;
         quantity: number;
         sold: number;
         startsAt: Date;

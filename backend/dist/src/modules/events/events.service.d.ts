@@ -27,6 +27,7 @@ export declare class EventsService {
         category: string | null;
         tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
+        allowTicketTransfers: boolean;
         producerId: string;
     }>;
     findAll(query: {
@@ -100,6 +101,7 @@ export declare class EventsService {
         category: string | null;
         tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
+        allowTicketTransfers: boolean;
         producerId: string;
     }>;
     findProducerEvents(_producerId: string, page?: number, limit?: number): Promise<{
@@ -135,6 +137,7 @@ export declare class EventsService {
             category: string | null;
             tags: string[];
             status: import(".prisma/client").$Enums.EventStatus;
+            allowTicketTransfers: boolean;
             producerId: string;
         })[];
         meta: {
@@ -151,8 +154,8 @@ export declare class EventsService {
             updatedAt: Date;
             description: string | null;
             status: import(".prisma/client").$Enums.BatchStatus;
-            price: import("@prisma/client/runtime/library").Decimal;
             eventId: string;
+            price: import("@prisma/client/runtime/library").Decimal;
             quantity: number;
             sold: number;
             startsAt: Date;
@@ -183,6 +186,7 @@ export declare class EventsService {
         category: string | null;
         tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
+        allowTicketTransfers: boolean;
         producerId: string;
     }>;
     update(eventId: string, producerId: string, dto: UpdateEventDto): Promise<{
@@ -208,6 +212,7 @@ export declare class EventsService {
         category: string | null;
         tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
+        allowTicketTransfers: boolean;
         producerId: string;
     }>;
     publish(eventId: string, producerId: string): Promise<{
@@ -233,6 +238,7 @@ export declare class EventsService {
         category: string | null;
         tags: string[];
         status: import(".prisma/client").$Enums.EventStatus;
+        allowTicketTransfers: boolean;
         producerId: string;
     }>;
     cancel(eventId: string, producerId: string): Promise<void>;

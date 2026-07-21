@@ -48,6 +48,8 @@ const common_1 = require("@nestjs/common");
 const QRCode = __importStar(require("qrcode"));
 const prisma_service_1 = require("../../prisma/prisma.service");
 const crypto_util_1 = require("../../common/utils/crypto.util");
+const client_1 = require("@prisma/client");
+const serializable_retry_util_1 = require("../../common/utils/serializable-retry.util");
 let TicketsService = TicketsService_1 = class TicketsService {
     constructor(prisma) {
         this.prisma = prisma;
@@ -135,7 +137,7 @@ let TicketsService = TicketsService_1 = class TicketsService {
         return { ...ticket, accessState, qrCodeUrl: ticket.ownerUserId === userId && ticket.status === 'ACTIVE' ? ticket.qrCodeUrl : null };
     }
     async validateAndCheckIn(token, eventId, staffId) {
-        return this.prisma.$transaction(async (tx) => {
+        const result = await (0, serializable_retry_util_1.withSerializableRetry)(() => this.prisma.$transaction(async (tx) => {
             const ticket = await tx.ticket.findUnique({
                 where: { token },
                 include: {
@@ -170,9 +172,14 @@ let TicketsService = TicketsService_1 = class TicketsService {
             if (claimed.count !== 1)
                 return { valid: false, reason: 'Ingresso indisponível ou alterado durante a leitura', holder };
             await tx.checkIn.create({ data: { ticketId: ticket.id, eventId, staffId, method: 'QR_CODE' } });
-            this.logger.log(`Ticket ${ticket.id} checked in at event ${eventId} by staff ${staffId}`);
-            return { valid: true, reason: 'Entrada autorizada', holder };
-        });
+            return { valid: true, reason: 'Entrada autorizada', holder, ticketId: ticket.id };
+        }, { isolationLevel: client_1.Prisma.TransactionIsolationLevel.Serializable }));
+        if (result.valid) {
+            this.logger.log(`Ticket ${result.ticketId} checked in at event ${eventId} by staff ${staffId}`);
+            const { ticketId: _ticketId, ...response } = result;
+            return response;
+        }
+        return result;
     }
 };
 exports.TicketsService = TicketsService;

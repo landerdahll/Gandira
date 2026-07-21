@@ -38,9 +38,9 @@ export declare class OrdersService {
                 id: string;
                 createdAt: Date;
                 total: Decimal;
-                quantity: number;
                 orderId: string;
                 batchId: string;
+                quantity: number;
                 unitPrice: Decimal;
             })[];
         } & {
@@ -49,10 +49,10 @@ export declare class OrdersService {
             updatedAt: Date;
             status: import(".prisma/client").$Enums.OrderStatus;
             total: Decimal;
-            userId: string;
-            expiresAt: Date;
             eventId: string;
             cancelledAt: Date | null;
+            expiresAt: Date;
+            userId: string;
             subtotal: Decimal;
             platformFee: Decimal;
             stripePaymentIntentId: string | null;
@@ -75,15 +75,16 @@ export declare class OrdersService {
             createdAt: Date;
             updatedAt: Date;
             status: import(".prisma/client").$Enums.TicketStatus;
-            token: string;
             eventId: string;
+            cancelledAt: Date | null;
+            token: string;
+            orderId: string;
+            batchId: string;
+            ownerUserId: string;
             holderName: string | null;
             holderEmail: string | null;
             holderCpf: string | null;
             qrCodeUrl: string | null;
-            cancelledAt: Date | null;
-            orderId: string;
-            batchId: string;
         }[];
         event: {
             title: string;
@@ -100,8 +101,8 @@ export declare class OrdersService {
                 updatedAt: Date;
                 description: string | null;
                 status: import(".prisma/client").$Enums.BatchStatus;
-                price: Decimal;
                 eventId: string;
+                price: Decimal;
                 quantity: number;
                 sold: number;
                 startsAt: Date;
@@ -113,9 +114,9 @@ export declare class OrdersService {
             id: string;
             createdAt: Date;
             total: Decimal;
-            quantity: number;
             orderId: string;
             batchId: string;
+            quantity: number;
             unitPrice: Decimal;
         })[];
     } & {
@@ -124,10 +125,10 @@ export declare class OrdersService {
         updatedAt: Date;
         status: import(".prisma/client").$Enums.OrderStatus;
         total: Decimal;
-        userId: string;
-        expiresAt: Date;
         eventId: string;
         cancelledAt: Date | null;
+        expiresAt: Date;
+        userId: string;
         subtotal: Decimal;
         platformFee: Decimal;
         stripePaymentIntentId: string | null;
