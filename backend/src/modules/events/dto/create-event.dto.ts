@@ -7,6 +7,7 @@ import {
   MaxLength,
   IsArray,
   IsUrl,
+  IsBoolean,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -81,4 +82,9 @@ export class CreateEventDto {
   @IsOptional()
   @IsUrl()
   coverImage?: string;
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  allowTicketTransfers?: boolean;
 }

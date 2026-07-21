@@ -133,6 +133,15 @@ export const ticketsApi = {
   get: (id: string) => api.get(`/tickets/${id}`),
 };
 
+export const ticketTransfersApi = {
+  request: (ticketId: string, recipientEmail: string) => api.post(`/ticket-transfers/tickets/${ticketId}`, { recipientEmail }),
+  status: (ticketId: string) => api.get(`/ticket-transfers/tickets/${ticketId}`),
+  cancel: (id: string) => api.post(`/ticket-transfers/${id}/cancel`),
+  mine: () => api.get('/ticket-transfers'),
+  adminList: (params?: any) => api.get('/ticket-transfers/admin/list', { params }),
+  adminDetail: (id: string) => api.get(`/ticket-transfers/admin/${id}`),
+};
+
 export const checkinApi = {
   scan: (eventId: string, token: string) =>
     api.post(`/events/${eventId}/checkin/scan`, { token }),

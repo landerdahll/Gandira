@@ -14,6 +14,9 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string; 
   ACTIVE:    { label: 'Ativo',      bg: '#0a2018', color: '#4ade80', border: '#1a3828' },
   USED:      { label: 'Utilizado',  bg: '#1a1a1a', color: '#666',    border: '#252525' },
   CANCELLED: { label: 'Cancelado',  bg: '#2a0a0a', color: '#f87171', border: '#3a1a1a' },
+  TRANSFER_PENDING: { label: 'Transferência pendente', bg: '#2a1d08', color: '#fbbf24', border: '#49320d' },
+  TRANSFERRED: { label: 'Transferido', bg: '#1a1a1a', color: '#777', border: '#292929' },
+  RECEIVED: { label: 'Recebido por transferência', bg: '#0d1e28', color: '#67bed9', border: '#183747' },
 };
 
 export default function MyTicketsPage() {
@@ -117,8 +120,10 @@ export default function MyTicketsPage() {
 }
 
 function TicketCard({ ticket }: { ticket: any }) {
-  const status = STATUS_CONFIG[ticket.status] ?? STATUS_CONFIG.ACTIVE;
-  const isActive = ticket.status === 'ACTIVE';
+  const displayStatus = ticket.accessState ?? ticket.status;
+  const status = STATUS_CONFIG[displayStatus] ?? STATUS_CONFIG.ACTIVE;
+  const isActive = ticket.status === 'ACTIVE' && displayStatus !== 'TRANSFERRED';
+  const transfer = ticket.transfers?.[0];
 
   return (
     <Link href={`/my-tickets/${ticket.id}`} style={{ textDecoration: 'none' }}>
@@ -194,6 +199,9 @@ function TicketCard({ ticket }: { ticket: any }) {
           }}>
             {ticket.event?.title}
           </p>
+          {displayStatus === 'TRANSFER_PENDING' && <p style={{ fontSize: 12, color: '#b98a2b', margin: '0 0 8px' }}>Aguardando o cadastro de {transfer?.recipientEmail}.</p>}
+          {displayStatus === 'TRANSFERRED' && <p style={{ fontSize: 12, color: '#555', margin: '0 0 8px' }}>Transferido para {transfer?.recipient?.name ?? transfer?.recipientEmail}.</p>}
+          {displayStatus === 'RECEIVED' && <p style={{ fontSize: 12, color: '#67bed9', margin: '0 0 8px' }}>Transferido por {transfer?.sender?.name}.</p>}
 
           {/* Meta */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>

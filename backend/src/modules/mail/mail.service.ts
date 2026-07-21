@@ -19,6 +19,14 @@ export class MailService {
     }
   }
 
+  async sendTicketTransferEmail(to: string, subject: string, message: string, actionUrl?: string) {
+    const button = actionUrl ? `<p style="margin:28px 0"><a href="${actionUrl}" style="background:#67bed9;color:#fff;padding:14px 24px;border-radius:12px;text-decoration:none;font-weight:700">Abrir no Gandira</a></p>` : '';
+    const html = `<!doctype html><html><body style="margin:0;background:#0a0a0a;font-family:Arial,sans-serif;color:#fff"><div style="max-width:480px;margin:40px auto;background:#111;border:1px solid #1e1e1e;border-radius:16px;padding:32px"><img src="https://gandira.vercel.app/gandira-logo.png" alt="Gandira" style="height:36px"><h1 style="font-size:20px;margin:28px 0 12px">${subject}</h1><p style="color:#999;line-height:1.6">${message}</p>${button}<p style="color:#444;font-size:12px;margin-top:32px">© ${new Date().getFullYear()} Gandira</p></div></body></html>`;
+    if (this.devMode) { this.logger.warn(`E-mail de transferência (dev) — ${to}: ${subject}${actionUrl ? ` | ${actionUrl}` : ''}`); return; }
+    const { error } = await this.resend!.emails.send({ from: `Gandira <${this.fromAddress}>`, to, subject, html });
+    if (error) throw new Error(error.message);
+  }
+
   async sendVerificationEmail(to: string, name: string, verifyUrl: string) {
     const html = `
 <!DOCTYPE html>

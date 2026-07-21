@@ -1,19 +1,28 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar, MapPin, ArrowLeft, Share2, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Calendar, MapPin, ArrowLeft, Share2, CheckCircle2, XCircle, Clock, Send, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { ticketsApi } from '@/lib/api';
+import { ticketsApi, ticketTransfersApi } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string; border: string; icon: React.ReactNode }> = {
   ACTIVE:    { label: 'Ativo',      bg: '#0a2018', color: '#4ade80', border: '#1a3828', icon: <CheckCircle2 size={13} /> },
   USED:      { label: 'Utilizado',  bg: '#1a1a1a', color: '#666',    border: '#252525', icon: <CheckCircle2 size={13} /> },
   CANCELLED: { label: 'Cancelado',  bg: '#2a0a0a', color: '#f87171', border: '#3a1a1a', icon: <XCircle size={13} /> },
+  TRANSFER_PENDING: { label: 'Transferência pendente', bg: '#2a1d08', color: '#fbbf24', border: '#49320d', icon: <Clock size={13} /> },
+  TRANSFERRED: { label: 'Transferido', bg: '#1a1a1a', color: '#777', border: '#292929', icon: <Send size={13} /> },
+  RECEIVED: { label: 'Recebido por transferência', bg: '#0d1e28', color: '#67bed9', border: '#183747', icon: <Send size={13} /> },
 };
 
 export default function TicketDetailPage({ params }: { params: { id: string } }) {
+  const queryClient = useQueryClient();
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const { data: ticket, isLoading } = useQuery({
     queryKey: ['ticket', params.id],
     queryFn: () => ticketsApi.get(params.id).then((r) => r.data),
@@ -26,14 +35,35 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
     </div>
   );
 
-  const isActive = ticket.status === 'ACTIVE';
+  const displayStatus = ticket.accessState ?? ticket.status;
+  const isActive = ticket.status === 'ACTIVE' && displayStatus !== 'TRANSFERRED';
   const isUsed = ticket.status === 'USED';
-  const status = STATUS_CONFIG[ticket.status] ?? STATUS_CONFIG.ACTIVE;
+  const status = STATUS_CONFIG[displayStatus] ?? STATUS_CONFIG.ACTIVE;
+  const transfer = ticket.transfers?.[0];
   const price = Number(ticket.batch?.price ?? 0);
 
   const handleShare = () => {
     navigator.share?.({ title: ticket.event?.title, url: window.location.href });
   };
+
+  async function handleTransfer() {
+    if (!/^\S+@\S+\.\S+$/.test(recipientEmail)) return toast.error('Informe um e-mail válido');
+    if (!confirm(`Confirma a transferência para ${recipientEmail}? O QR Code atual será invalidado imediatamente. Se ainda não houver conta, o ingresso ficará bloqueado até o cadastro.`)) return;
+    setSubmitting(true);
+    try {
+      const { data } = await ticketTransfersApi.request(params.id, recipientEmail);
+      toast.success(data.status === 'COMPLETED' ? 'Ingresso transferido com sucesso' : 'Convite enviado; transferência pendente');
+      setShowTransfer(false);
+      await Promise.all([queryClient.invalidateQueries({ queryKey: ['ticket', params.id] }), queryClient.invalidateQueries({ queryKey: ['my-tickets'] })]);
+    } catch (e: any) { toast.error(e.response?.data?.message ?? 'Não foi possível transferir'); }
+    finally { setSubmitting(false); }
+  }
+
+  async function handleCancelTransfer() {
+    if (!transfer?.id || !confirm('Cancelar esta transferência pendente e gerar um novo QR Code?')) return;
+    try { await ticketTransfersApi.cancel(transfer.id); toast.success('Transferência cancelada'); await queryClient.invalidateQueries({ queryKey: ['ticket', params.id] }); }
+    catch (e: any) { toast.error(e.response?.data?.message ?? 'Não foi possível cancelar'); }
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0a', padding: '0 16px 60px' }}>
@@ -182,7 +212,7 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                <p style={{ fontSize: 14, color: '#555', margin: 0 }}>Ingresso cancelado</p>
+                <p style={{ fontSize: 14, color: '#555', margin: 0 }}>{displayStatus === 'TRANSFER_PENDING' ? `Aguardando o cadastro de ${transfer?.recipientEmail}.` : displayStatus === 'TRANSFERRED' ? `Este ingresso foi transferido para ${transfer?.recipient?.name ?? transfer?.recipientEmail}.` : 'Ingresso cancelado'}</p>
               </div>
             )}
           </div>
@@ -221,9 +251,17 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
               >
                 <Share2 size={15} /> Compartilhar
               </button>
+              <button onClick={() => setShowTransfer(true)} style={{ flex: 1, padding: '14px 0', background: 'none', border: 'none', borderLeft: '1px solid #1a1a1a', color: '#67bed9', cursor: 'pointer', fontWeight: 700 }}><Send size={14} style={{ verticalAlign: 'middle', marginRight: 7 }} />Transferir ingresso</button>
             </div>
           )}
+          {displayStatus === 'TRANSFER_PENDING' && <button onClick={handleCancelTransfer} style={{ width: '100%', padding: 14, background: '#211609', border: 0, color: '#fbbf24', cursor: 'pointer', fontWeight: 700 }}>Cancelar transferência</button>}
         </div>
+        {showTransfer && <div style={{ marginTop: 16, background: '#111', border: '1px solid #25343a', borderRadius: 16, padding: 20 }}>
+          <h2 style={{ color: '#fff', fontSize: 17, margin: '0 0 8px' }}>Transferir ingresso</h2>
+          <p style={{ color: '#777', fontSize: 13, lineHeight: 1.5 }}>Evento: {ticket.event?.title}<br />Ingresso: {ticket.batch?.name}<br /><strong style={{ color: '#fbbf24' }}>O QR Code atual será invalidado.</strong></p>
+          <input type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} placeholder="E-mail do destinatário" disabled={submitting} style={{ width: '100%', boxSizing: 'border-box', padding: 13, borderRadius: 10, border: '1px solid #333', background: '#171717', color: '#fff', margin: '8px 0 12px' }} />
+          <div style={{ display: 'flex', gap: 8 }}><button onClick={() => setShowTransfer(false)} disabled={submitting} style={{ flex: 1, padding: 12, borderRadius: 10, border: '1px solid #333', background: 'transparent', color: '#888' }}>Voltar</button><button onClick={handleTransfer} disabled={submitting} style={{ flex: 1, padding: 12, borderRadius: 10, border: 0, background: '#67bed9', color: '#fff', fontWeight: 700 }}>{submitting ? <Loader2 size={16} className="animate-spin" /> : 'Revisar e confirmar'}</button></div>
+        </div>}
       </div>
     </div>
   );

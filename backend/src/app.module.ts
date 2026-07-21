@@ -14,6 +14,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { CheckInModule } from './modules/checkin/checkin.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { TicketTransfersModule } from './modules/ticket-transfers/ticket-transfers.module';
 import { MailModule } from './modules/mail/mail.module';
 import { CouponsModule } from './modules/coupons/coupons.module';
 import { AbacatepayModule } from './modules/abacatepay/abacatepay.module';
@@ -48,6 +49,7 @@ import { AbacatepayModule } from './modules/abacatepay/abacatepay.module';
     TicketsModule,
     CheckInModule,
     ReportsModule,
+    TicketTransfersModule,
     CouponsModule,
     AbacatepayModule,
   ],

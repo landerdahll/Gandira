@@ -55,9 +55,17 @@ enum OrderStatus {
 
 enum TicketStatus {
   ACTIVE
+  TRANSFER_PENDING
   USED
   CANCELLED
   TRANSFERRED
+}
+
+enum TicketTransferStatus {
+  PENDING_REGISTRATION
+  COMPLETED
+  CANCELLED
+  EXPIRED
 }
 
 enum CheckInMethod {
@@ -89,6 +97,9 @@ model User {
   auditLogs           AuditLog[]
   passwordResetTokens       PasswordResetToken[]
   emailVerificationTokens   EmailVerificationToken[]
+  ownedTickets              Ticket[]         @relation("TicketOwner")
+  sentTicketTransfers       TicketTransfer[] @relation("TransferSender")
+  receivedTicketTransfers   TicketTransfer[] @relation("TransferRecipient")
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -138,12 +149,14 @@ model Event {
   tags        String[]    @default([])
 
   status      EventStatus @default(DRAFT)
+  allowTicketTransfers Boolean @default(true)
 
   batches     Batch[]
   orders      Order[]
   checkIns    CheckIn[]
   tickets     Ticket[]
   coupons     Coupon[]
+  ticketTransfers TicketTransfer[]
 
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -246,6 +259,8 @@ model Ticket {
   batch        Batch        @relation(fields: [batchId], references: [id])
   eventId      String
   event        Event        @relation(fields: [eventId], references: [id])
+  ownerUserId  String
+  owner        User         @relation("TicketOwner", fields: [ownerUserId], references: [id])
 
   // Token criptograficamente aleatório — conteúdo do QR Code
   token        String       @unique @default(cuid())
@@ -259,6 +274,8 @@ model Ticket {
   qrCodeUrl    String?
 
   checkIn      CheckIn?
+  transfers    TicketTransfer[]
+  history      TicketHistory[]
 
   cancelledAt  DateTime?
 
@@ -269,6 +286,54 @@ model Ticket {
   @@index([orderId])
   @@index([batchId])
   @@index([eventId, status])
+  @@index([ownerUserId, status])
+}
+
+model TicketTransfer {
+  id                   String               @id @default(cuid())
+  ticketId             String
+  ticket               Ticket               @relation(fields: [ticketId], references: [id])
+  eventId              String
+  event                Event                @relation(fields: [eventId], references: [id])
+  senderUserId         String
+  sender               User                 @relation("TransferSender", fields: [senderUserId], references: [id])
+  recipientUserId      String?
+  recipient            User?                @relation("TransferRecipient", fields: [recipientUserId], references: [id])
+  recipientEmail       String
+  status               TicketTransferStatus
+  invitationTokenHash  String?              @unique
+  requestedAt          DateTime             @default(now())
+  completedAt          DateTime?
+  cancelledAt          DateTime?
+  expiresAt            DateTime?
+  previousQrIdentifier String?
+  newQrIdentifier      String?
+  cancellationReason   String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  history TicketHistory[]
+
+  @@index([ticketId, status])
+  @@index([senderUserId, requestedAt])
+  @@index([recipientUserId, requestedAt])
+  @@index([recipientEmail])
+  @@index([eventId, requestedAt])
+}
+
+model TicketHistory {
+  id         String          @id @default(cuid())
+  ticketId   String
+  ticket     Ticket          @relation(fields: [ticketId], references: [id])
+  transferId String?
+  transfer   TicketTransfer? @relation(fields: [transferId], references: [id])
+  action     String
+  actorUserId String?
+  metadata   Json?
+  createdAt  DateTime        @default(now())
+
+  @@index([ticketId, createdAt])
+  @@index([transferId, createdAt])
 }
 
 model CheckIn {

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -69,8 +69,15 @@ const baseInput: React.CSSProperties = {
 };
 
 export default function RegisterPage() {
+  return <Suspense fallback={<div style={{ minHeight: '100vh', background: '#080808' }} />}><RegisterForm /></Suspense>;
+}
+
+function RegisterForm() {
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const invitationToken = searchParams.get('transferInvite');
+  const invitedEmail = searchParams.get('email');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -80,7 +87,7 @@ export default function RegisterPage() {
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  } = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: { email: invitedEmail ?? '' } });
 
   function formatPhone(digits: string): string {
     if (!digits) return '';
@@ -102,10 +109,11 @@ export default function RegisterPage() {
         phone: data.phone,
         gender: data.gender,
         birthDate: data.birthDate,
+        ...(invitationToken && { invitationToken }),
       });
       await login({ email: data.email, password: data.password });
-      toast.success('Conta criada! Verifique seu e-mail para liberar a compra de ingressos.');
-      router.push('/auth/verify-email');
+      toast.success(invitationToken ? 'Conta criada e ingresso recebido!' : 'Conta criada! Verifique seu e-mail para liberar a compra de ingressos.');
+      router.push(invitationToken ? '/my-tickets' : '/auth/verify-email');
     } catch (e: any) {
       const msg = e.response?.data?.message;
       toast.error(Array.isArray(msg) ? msg[0] : (msg ?? 'Erro ao criar conta'));
@@ -173,6 +181,7 @@ export default function RegisterPage() {
                 placeholder="seu@email.com"
                 style={baseInput}
                 onFocus={onFocus} onBlur={onBlur}
+                readOnly={Boolean(invitationToken)}
               />
             </Field>
 

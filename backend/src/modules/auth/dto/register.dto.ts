@@ -52,4 +52,9 @@ export class RegisterDto {
   @IsOptional()
   @IsDateString()
   birthDate?: string;
+
+  @ApiPropertyOptional({ description: 'Token de convite de transferência' })
+  @IsOptional()
+  @IsString()
+  invitationToken?: string;
 }

@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { adminApi } from '@/lib/api';
 import { Search, Users, ShieldCheck, UserCheck, Phone, Calendar, Mail, ChevronDown, KeyRound, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
 
 const GENDER_LABELS: Record<string, string> = {
   MALE: 'Masculino',
@@ -136,6 +137,7 @@ export default function AdminUsersPage() {
 
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
+        <Link href="/admin/transfers" style={{ float: 'right', color: '#67bed9', textDecoration: 'none', fontSize: 14 }}>Histórico de transferências →</Link>
         <div className="admin-header-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
