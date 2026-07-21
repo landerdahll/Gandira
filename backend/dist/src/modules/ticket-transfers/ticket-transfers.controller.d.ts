@@ -20,12 +20,8 @@ export declare class TicketTransfersController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import(".prisma/client").$Enums.TicketTransferStatus;
-        ticketId: string;
-        eventId: string;
-        senderUserId: string;
-        recipientUserId: string | null;
         recipientEmail: string;
+        status: import(".prisma/client").$Enums.TicketTransferStatus;
         invitationTokenHash: string | null;
         requestedAt: Date;
         completedAt: Date | null;
@@ -34,6 +30,10 @@ export declare class TicketTransfersController {
         previousQrIdentifier: string | null;
         newQrIdentifier: string | null;
         cancellationReason: string | null;
+        ticketId: string;
+        eventId: string;
+        senderUserId: string;
+        recipientUserId: string | null;
     }) | null>;
     cancel(id: string, user: any): Promise<{
         status: string;
@@ -55,12 +55,8 @@ export declare class TicketTransfersController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import(".prisma/client").$Enums.TicketTransferStatus;
-        ticketId: string;
-        eventId: string;
-        senderUserId: string;
-        recipientUserId: string | null;
         recipientEmail: string;
+        status: import(".prisma/client").$Enums.TicketTransferStatus;
         invitationTokenHash: string | null;
         requestedAt: Date;
         completedAt: Date | null;
@@ -69,6 +65,10 @@ export declare class TicketTransfersController {
         previousQrIdentifier: string | null;
         newQrIdentifier: string | null;
         cancellationReason: string | null;
+        ticketId: string;
+        eventId: string;
+        senderUserId: string;
+        recipientUserId: string | null;
     })[]>;
     adminList(query: any, page: number, limit: number): Promise<{
         data: ({
@@ -89,13 +89,13 @@ export declare class TicketTransfersController {
                     createdAt: Date;
                     updatedAt: Date;
                     status: import(".prisma/client").$Enums.OrderStatus;
-                    total: import("@prisma/client/runtime/library").Decimal;
-                    eventId: string;
                     cancelledAt: Date | null;
                     expiresAt: Date;
+                    eventId: string;
                     userId: string;
                     subtotal: import("@prisma/client/runtime/library").Decimal;
                     platformFee: import("@prisma/client/runtime/library").Decimal;
+                    total: import("@prisma/client/runtime/library").Decimal;
                     stripePaymentIntentId: string | null;
                     stripeChargeId: string | null;
                     couponId: string | null;
@@ -122,8 +122,8 @@ export declare class TicketTransfersController {
                 createdAt: Date;
                 updatedAt: Date;
                 status: import(".prisma/client").$Enums.TicketStatus;
-                eventId: string;
                 cancelledAt: Date | null;
+                eventId: string;
                 token: string;
                 orderId: string;
                 batchId: string;
@@ -145,12 +145,8 @@ export declare class TicketTransfersController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            status: import(".prisma/client").$Enums.TicketTransferStatus;
-            ticketId: string;
-            eventId: string;
-            senderUserId: string;
-            recipientUserId: string | null;
             recipientEmail: string;
+            status: import(".prisma/client").$Enums.TicketTransferStatus;
             invitationTokenHash: string | null;
             requestedAt: Date;
             completedAt: Date | null;
@@ -159,6 +155,10 @@ export declare class TicketTransfersController {
             previousQrIdentifier: string | null;
             newQrIdentifier: string | null;
             cancellationReason: string | null;
+            ticketId: string;
+            eventId: string;
+            senderUserId: string;
+            recipientUserId: string | null;
         })[];
         meta: {
             total: number;
@@ -171,6 +171,8 @@ export declare class TicketTransfersController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            status: import(".prisma/client").$Enums.EventStatus;
+            producerId: string;
             title: string;
             description: string;
             slug: string;
@@ -189,9 +191,7 @@ export declare class TicketTransfersController {
             ageRating: number;
             category: string | null;
             tags: string[];
-            status: import(".prisma/client").$Enums.EventStatus;
             allowTicketTransfers: boolean;
-            producerId: string;
         };
         ticket: {
             batch: {
@@ -199,9 +199,9 @@ export declare class TicketTransfersController {
                 name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                description: string | null;
                 status: import(".prisma/client").$Enums.BatchStatus;
                 eventId: string;
+                description: string | null;
                 price: import("@prisma/client/runtime/library").Decimal;
                 quantity: number;
                 sold: number;
@@ -220,13 +220,13 @@ export declare class TicketTransfersController {
                 createdAt: Date;
                 updatedAt: Date;
                 status: import(".prisma/client").$Enums.OrderStatus;
-                total: import("@prisma/client/runtime/library").Decimal;
-                eventId: string;
                 cancelledAt: Date | null;
                 expiresAt: Date;
+                eventId: string;
                 userId: string;
                 subtotal: import("@prisma/client/runtime/library").Decimal;
                 platformFee: import("@prisma/client/runtime/library").Decimal;
+                total: import("@prisma/client/runtime/library").Decimal;
                 stripePaymentIntentId: string | null;
                 stripeChargeId: string | null;
                 couponId: string | null;
@@ -253,8 +253,8 @@ export declare class TicketTransfersController {
             createdAt: Date;
             updatedAt: Date;
             status: import(".prisma/client").$Enums.TicketStatus;
-            eventId: string;
             cancelledAt: Date | null;
+            eventId: string;
             token: string;
             orderId: string;
             batchId: string;
@@ -276,21 +276,17 @@ export declare class TicketTransfersController {
             id: string;
             createdAt: Date;
             ticketId: string;
+            transferId: string | null;
             action: string;
             actorUserId: string | null;
             metadata: import("@prisma/client/runtime/library").JsonValue | null;
-            transferId: string | null;
         }[];
     } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import(".prisma/client").$Enums.TicketTransferStatus;
-        ticketId: string;
-        eventId: string;
-        senderUserId: string;
-        recipientUserId: string | null;
         recipientEmail: string;
+        status: import(".prisma/client").$Enums.TicketTransferStatus;
         invitationTokenHash: string | null;
         requestedAt: Date;
         completedAt: Date | null;
@@ -299,5 +295,9 @@ export declare class TicketTransfersController {
         previousQrIdentifier: string | null;
         newQrIdentifier: string | null;
         cancellationReason: string | null;
+        ticketId: string;
+        eventId: string;
+        senderUserId: string;
+        recipientUserId: string | null;
     }>;
 }

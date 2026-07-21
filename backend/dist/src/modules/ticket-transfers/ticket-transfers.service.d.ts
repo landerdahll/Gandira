@@ -28,12 +28,8 @@ export declare class TicketTransfersService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import(".prisma/client").$Enums.TicketTransferStatus;
-        ticketId: string;
-        eventId: string;
-        senderUserId: string;
-        recipientUserId: string | null;
         recipientEmail: string;
+        status: import(".prisma/client").$Enums.TicketTransferStatus;
         invitationTokenHash: string | null;
         requestedAt: Date;
         completedAt: Date | null;
@@ -42,6 +38,10 @@ export declare class TicketTransfersService {
         previousQrIdentifier: string | null;
         newQrIdentifier: string | null;
         cancellationReason: string | null;
+        ticketId: string;
+        eventId: string;
+        senderUserId: string;
+        recipientUserId: string | null;
     }>;
     prepareInviteCompletion(rawToken: string, email: string): Promise<{
         nextToken: string;
@@ -56,6 +56,8 @@ export declare class TicketTransfersService {
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
+                status: import(".prisma/client").$Enums.EventStatus;
+                producerId: string;
                 title: string;
                 description: string;
                 slug: string;
@@ -74,17 +76,15 @@ export declare class TicketTransfersService {
                 ageRating: number;
                 category: string | null;
                 tags: string[];
-                status: import(".prisma/client").$Enums.EventStatus;
                 allowTicketTransfers: boolean;
-                producerId: string;
             };
             ticket: {
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
                 status: import(".prisma/client").$Enums.TicketStatus;
-                eventId: string;
                 cancelledAt: Date | null;
+                eventId: string;
                 token: string;
                 orderId: string;
                 batchId: string;
@@ -114,12 +114,8 @@ export declare class TicketTransfersService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            status: import(".prisma/client").$Enums.TicketTransferStatus;
-            ticketId: string;
-            eventId: string;
-            senderUserId: string;
-            recipientUserId: string | null;
             recipientEmail: string;
+            status: import(".prisma/client").$Enums.TicketTransferStatus;
             invitationTokenHash: string | null;
             requestedAt: Date;
             completedAt: Date | null;
@@ -128,6 +124,10 @@ export declare class TicketTransfersService {
             previousQrIdentifier: string | null;
             newQrIdentifier: string | null;
             cancellationReason: string | null;
+            ticketId: string;
+            eventId: string;
+            senderUserId: string;
+            recipientUserId: string | null;
         };
         user: InviteRecipient;
     }>;
@@ -148,12 +148,8 @@ export declare class TicketTransfersService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import(".prisma/client").$Enums.TicketTransferStatus;
-        ticketId: string;
-        eventId: string;
-        senderUserId: string;
-        recipientUserId: string | null;
         recipientEmail: string;
+        status: import(".prisma/client").$Enums.TicketTransferStatus;
         invitationTokenHash: string | null;
         requestedAt: Date;
         completedAt: Date | null;
@@ -162,6 +158,10 @@ export declare class TicketTransfersService {
         previousQrIdentifier: string | null;
         newQrIdentifier: string | null;
         cancellationReason: string | null;
+        ticketId: string;
+        eventId: string;
+        senderUserId: string;
+        recipientUserId: string | null;
     }) | null>;
     mine(userId: string): Prisma.PrismaPromise<({
         event: {
@@ -180,12 +180,8 @@ export declare class TicketTransfersService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import(".prisma/client").$Enums.TicketTransferStatus;
-        ticketId: string;
-        eventId: string;
-        senderUserId: string;
-        recipientUserId: string | null;
         recipientEmail: string;
+        status: import(".prisma/client").$Enums.TicketTransferStatus;
         invitationTokenHash: string | null;
         requestedAt: Date;
         completedAt: Date | null;
@@ -194,6 +190,10 @@ export declare class TicketTransfersService {
         previousQrIdentifier: string | null;
         newQrIdentifier: string | null;
         cancellationReason: string | null;
+        ticketId: string;
+        eventId: string;
+        senderUserId: string;
+        recipientUserId: string | null;
     })[]>;
     adminList(query: any): Promise<{
         data: ({
@@ -214,13 +214,13 @@ export declare class TicketTransfersService {
                     createdAt: Date;
                     updatedAt: Date;
                     status: import(".prisma/client").$Enums.OrderStatus;
-                    total: Prisma.Decimal;
-                    eventId: string;
                     cancelledAt: Date | null;
                     expiresAt: Date;
+                    eventId: string;
                     userId: string;
                     subtotal: Prisma.Decimal;
                     platformFee: Prisma.Decimal;
+                    total: Prisma.Decimal;
                     stripePaymentIntentId: string | null;
                     stripeChargeId: string | null;
                     couponId: string | null;
@@ -247,8 +247,8 @@ export declare class TicketTransfersService {
                 createdAt: Date;
                 updatedAt: Date;
                 status: import(".prisma/client").$Enums.TicketStatus;
-                eventId: string;
                 cancelledAt: Date | null;
+                eventId: string;
                 token: string;
                 orderId: string;
                 batchId: string;
@@ -270,12 +270,8 @@ export declare class TicketTransfersService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            status: import(".prisma/client").$Enums.TicketTransferStatus;
-            ticketId: string;
-            eventId: string;
-            senderUserId: string;
-            recipientUserId: string | null;
             recipientEmail: string;
+            status: import(".prisma/client").$Enums.TicketTransferStatus;
             invitationTokenHash: string | null;
             requestedAt: Date;
             completedAt: Date | null;
@@ -284,6 +280,10 @@ export declare class TicketTransfersService {
             previousQrIdentifier: string | null;
             newQrIdentifier: string | null;
             cancellationReason: string | null;
+            ticketId: string;
+            eventId: string;
+            senderUserId: string;
+            recipientUserId: string | null;
         })[];
         meta: {
             total: number;
@@ -296,6 +296,8 @@ export declare class TicketTransfersService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            status: import(".prisma/client").$Enums.EventStatus;
+            producerId: string;
             title: string;
             description: string;
             slug: string;
@@ -314,9 +316,7 @@ export declare class TicketTransfersService {
             ageRating: number;
             category: string | null;
             tags: string[];
-            status: import(".prisma/client").$Enums.EventStatus;
             allowTicketTransfers: boolean;
-            producerId: string;
         };
         ticket: {
             batch: {
@@ -324,9 +324,9 @@ export declare class TicketTransfersService {
                 name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                description: string | null;
                 status: import(".prisma/client").$Enums.BatchStatus;
                 eventId: string;
+                description: string | null;
                 price: Prisma.Decimal;
                 quantity: number;
                 sold: number;
@@ -345,13 +345,13 @@ export declare class TicketTransfersService {
                 createdAt: Date;
                 updatedAt: Date;
                 status: import(".prisma/client").$Enums.OrderStatus;
-                total: Prisma.Decimal;
-                eventId: string;
                 cancelledAt: Date | null;
                 expiresAt: Date;
+                eventId: string;
                 userId: string;
                 subtotal: Prisma.Decimal;
                 platformFee: Prisma.Decimal;
+                total: Prisma.Decimal;
                 stripePaymentIntentId: string | null;
                 stripeChargeId: string | null;
                 couponId: string | null;
@@ -378,8 +378,8 @@ export declare class TicketTransfersService {
             createdAt: Date;
             updatedAt: Date;
             status: import(".prisma/client").$Enums.TicketStatus;
-            eventId: string;
             cancelledAt: Date | null;
+            eventId: string;
             token: string;
             orderId: string;
             batchId: string;
@@ -401,21 +401,17 @@ export declare class TicketTransfersService {
             id: string;
             createdAt: Date;
             ticketId: string;
+            transferId: string | null;
             action: string;
             actorUserId: string | null;
             metadata: Prisma.JsonValue | null;
-            transferId: string | null;
         }[];
     } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import(".prisma/client").$Enums.TicketTransferStatus;
-        ticketId: string;
-        eventId: string;
-        senderUserId: string;
-        recipientUserId: string | null;
         recipientEmail: string;
+        status: import(".prisma/client").$Enums.TicketTransferStatus;
         invitationTokenHash: string | null;
         requestedAt: Date;
         completedAt: Date | null;
@@ -424,6 +420,10 @@ export declare class TicketTransfersService {
         previousQrIdentifier: string | null;
         newQrIdentifier: string | null;
         cancellationReason: string | null;
+        ticketId: string;
+        eventId: string;
+        senderUserId: string;
+        recipientUserId: string | null;
     }>;
     private sendRequestedEmails;
     private sendCompletedEmails;

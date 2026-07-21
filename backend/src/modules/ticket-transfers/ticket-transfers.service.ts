@@ -39,6 +39,7 @@ export class TicketTransfersService {
       if (normalizeEmail(ticket.owner.email) === recipientEmail) throw new BadRequestException('Não é possível transferir para o próprio e-mail');
       if (!ticket.event.allowTicketTransfers) throw new BadRequestException('Este evento não permite transferências');
       if (ticket.event.startDate <= new Date()) throw new BadRequestException('O evento já começou');
+      if (ticket.status === 'TRANSFER_PENDING') throw new ConflictException('O ingresso já possui uma transferência em andamento');
       if (ticket.status !== 'ACTIVE' || ticket.checkIn) throw new BadRequestException('Este ingresso não está disponível para transferência');
       if (ticket.order.status !== 'PAID') throw new BadRequestException('O pedido deste ingresso não está ativo');
 

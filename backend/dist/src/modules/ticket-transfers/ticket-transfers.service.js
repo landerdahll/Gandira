@@ -86,6 +86,8 @@ let TicketTransfersService = TicketTransfersService_1 = class TicketTransfersSer
                 throw new common_1.BadRequestException('Este evento não permite transferências');
             if (ticket.event.startDate <= new Date())
                 throw new common_1.BadRequestException('O evento já começou');
+            if (ticket.status === 'TRANSFER_PENDING')
+                throw new common_1.ConflictException('O ingresso já possui uma transferência em andamento');
             if (ticket.status !== 'ACTIVE' || ticket.checkIn)
                 throw new common_1.BadRequestException('Este ingresso não está disponível para transferência');
             if (ticket.order.status !== 'PAID')
