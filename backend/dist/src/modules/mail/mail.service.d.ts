@@ -6,6 +6,7 @@ export declare class MailService {
     private fromAddress;
     private devMode;
     constructor(config: ConfigService);
+    sendTicketTransferEmail(to: string, subject: string, message: string, actionUrl?: string): Promise<void>;
     sendVerificationEmail(to: string, name: string, verifyUrl: string): Promise<void>;
     sendOrderConfirmation(to: string, name: string, data: {
         eventTitle: string;

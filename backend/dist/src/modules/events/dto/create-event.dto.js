@@ -100,4 +100,10 @@ __decorate([
     (0, class_validator_1.IsUrl)(),
     __metadata("design:type", String)
 ], CreateEventDto.prototype, "coverImage", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ default: true }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateEventDto.prototype, "allowTicketTransfers", void 0);
 //# sourceMappingURL=create-event.dto.js.map

@@ -20,6 +20,9 @@ uploads/
 *.log
 npm-debug.log*
 
+# Database backups
+*.backup
+
 # OS
 .DS_Store
 Thumbs.db

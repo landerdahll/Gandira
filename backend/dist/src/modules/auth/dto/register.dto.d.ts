@@ -7,4 +7,5 @@ export declare class RegisterDto {
     cpf?: string;
     gender?: Gender;
     birthDate?: string;
+    invitationToken?: string;
 }

@@ -8,8 +8,6 @@ export declare class EventsService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import(".prisma/client").$Enums.EventStatus;
-        producerId: string;
         title: string;
         description: string;
         slug: string;
@@ -28,6 +26,8 @@ export declare class EventsService {
         ageRating: number;
         category: string | null;
         tags: string[];
+        status: import(".prisma/client").$Enums.EventStatus;
+        producerId: string;
     }>;
     findAll(query: {
         city?: string;
@@ -68,10 +68,10 @@ export declare class EventsService {
         batches: {
             id: string;
             name: string;
-            status: import(".prisma/client").$Enums.BatchStatus;
-            quantity: number;
             description: string | null;
+            status: import(".prisma/client").$Enums.BatchStatus;
             price: import("@prisma/client/runtime/library").Decimal;
+            quantity: number;
             sold: number;
             startsAt: Date;
             endsAt: Date;
@@ -81,8 +81,6 @@ export declare class EventsService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import(".prisma/client").$Enums.EventStatus;
-        producerId: string;
         title: string;
         description: string;
         slug: string;
@@ -101,23 +99,23 @@ export declare class EventsService {
         ageRating: number;
         category: string | null;
         tags: string[];
+        status: import(".prisma/client").$Enums.EventStatus;
+        producerId: string;
     }>;
     findProducerEvents(_producerId: string, page?: number, limit?: number): Promise<{
         data: ({
-            _count: {
-                orders: number;
-                tickets: number;
-            };
             batches: {
                 price: import("@prisma/client/runtime/library").Decimal;
                 sold: number;
             }[];
+            _count: {
+                orders: number;
+                tickets: number;
+            };
         } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            status: import(".prisma/client").$Enums.EventStatus;
-            producerId: string;
             title: string;
             description: string;
             slug: string;
@@ -136,6 +134,8 @@ export declare class EventsService {
             ageRating: number;
             category: string | null;
             tags: string[];
+            status: import(".prisma/client").$Enums.EventStatus;
+            producerId: string;
         })[];
         meta: {
             total: number;
@@ -146,14 +146,14 @@ export declare class EventsService {
     findByIdForProducer(eventId: string, _producerId: string): Promise<{
         batches: {
             id: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
-            eventId: string;
-            name: string;
-            status: import(".prisma/client").$Enums.BatchStatus;
-            quantity: number;
             description: string | null;
+            status: import(".prisma/client").$Enums.BatchStatus;
             price: import("@prisma/client/runtime/library").Decimal;
+            eventId: string;
+            quantity: number;
             sold: number;
             startsAt: Date;
             endsAt: Date;
@@ -164,8 +164,6 @@ export declare class EventsService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import(".prisma/client").$Enums.EventStatus;
-        producerId: string;
         title: string;
         description: string;
         slug: string;
@@ -184,13 +182,13 @@ export declare class EventsService {
         ageRating: number;
         category: string | null;
         tags: string[];
+        status: import(".prisma/client").$Enums.EventStatus;
+        producerId: string;
     }>;
     update(eventId: string, producerId: string, dto: UpdateEventDto): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import(".prisma/client").$Enums.EventStatus;
-        producerId: string;
         title: string;
         description: string;
         slug: string;
@@ -209,13 +207,13 @@ export declare class EventsService {
         ageRating: number;
         category: string | null;
         tags: string[];
+        status: import(".prisma/client").$Enums.EventStatus;
+        producerId: string;
     }>;
     publish(eventId: string, producerId: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        status: import(".prisma/client").$Enums.EventStatus;
-        producerId: string;
         title: string;
         description: string;
         slug: string;
@@ -234,6 +232,8 @@ export declare class EventsService {
         ageRating: number;
         category: string | null;
         tags: string[];
+        status: import(".prisma/client").$Enums.EventStatus;
+        producerId: string;
     }>;
     cancel(eventId: string, producerId: string): Promise<void>;
     private getOwnedEvent;

@@ -64,4 +64,10 @@ __decorate([
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "birthDate", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Token de convite de transferência' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], RegisterDto.prototype, "invitationToken", void 0);
 //# sourceMappingURL=register.dto.js.map

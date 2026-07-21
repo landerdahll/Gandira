@@ -9,27 +9,27 @@ export declare class CouponsController {
     constructor(coupons: CouponsService);
     create(eventId: string, dto: CreateCouponDto, user: any): Promise<{
         id: string;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        expiresAt: Date | null;
+        eventId: string;
         code: string;
         discount: import("@prisma/client/runtime/library").Decimal;
         maxUses: number | null;
         usedCount: number;
-        expiresAt: Date | null;
-        isActive: boolean;
-        createdAt: Date;
-        updatedAt: Date;
-        eventId: string;
     }>;
     list(eventId: string, user: any): Promise<{
         id: string;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        expiresAt: Date | null;
+        eventId: string;
         code: string;
         discount: import("@prisma/client/runtime/library").Decimal;
         maxUses: number | null;
         usedCount: number;
-        expiresAt: Date | null;
-        isActive: boolean;
-        createdAt: Date;
-        updatedAt: Date;
-        eventId: string;
     }[]>;
     remove(eventId: string, couponId: string, user: any): Promise<void>;
 }

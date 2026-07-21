@@ -56,11 +56,13 @@ let TicketsService = TicketsService_1 = class TicketsService {
     async generateTicket(input, tx) {
         const db = tx ?? this.prisma;
         const token = (0, crypto_util_1.generateSecureToken)(32);
+        const order = await db.order.findUniqueOrThrow({ where: { id: input.orderId }, select: { userId: true } });
         const ticket = await db.ticket.create({
             data: {
                 orderId: input.orderId,
                 batchId: input.batchId,
                 eventId: input.eventId,
+                ownerUserId: order.userId,
                 token,
                 status: 'ACTIVE',
             },
@@ -79,11 +81,12 @@ let TicketsService = TicketsService_1 = class TicketsService {
         return { ...ticket, qrCodeUrl };
     }
     async findUserTickets(userId, page = 1, limit = 20) {
+        const db = this.prisma;
         const take = Math.min(limit, 50);
         const skip = (page - 1) * take;
         const [data, total] = await Promise.all([
-            this.prisma.ticket.findMany({
-                where: { order: { userId } },
+            db.ticket.findMany({
+                where: { OR: [{ ownerUserId: userId }, { transfers: { some: { senderUserId: userId } } }] },
                 skip,
                 take,
                 orderBy: { createdAt: 'desc' },
@@ -91,27 +94,45 @@ let TicketsService = TicketsService_1 = class TicketsService {
                     event: { select: { title: true, slug: true, startDate: true, venue: true, coverImage: true } },
                     batch: { select: { name: true, ticketType: true } },
                     checkIn: { select: { checkedAt: true } },
+                    owner: { select: { id: true, name: true } },
+                    transfers: {
+                        where: { OR: [{ senderUserId: userId }, { recipientUserId: userId }] },
+                        orderBy: { requestedAt: 'desc' }, take: 1,
+                        include: { sender: { select: { name: true } }, recipient: { select: { name: true } } },
+                    },
                 },
             }),
-            this.prisma.ticket.count({ where: { order: { userId } } }),
+            db.ticket.count({ where: { OR: [{ ownerUserId: userId }, { transfers: { some: { senderUserId: userId } } }] } }),
         ]);
-        return { data, meta: { total, page, lastPage: Math.ceil(total / take) } };
+        return { data: data.map((ticket) => ({
+                ...ticket,
+                accessState: ticket.ownerUserId === userId
+                    ? (ticket.transfers[0]?.recipientUserId === userId ? 'RECEIVED' : ticket.status)
+                    : (ticket.transfers[0]?.status === 'PENDING_REGISTRATION' ? 'TRANSFER_PENDING' : 'TRANSFERRED'),
+                qrCodeUrl: undefined,
+            })), meta: { total, page, lastPage: Math.ceil(total / take) } };
     }
     async findOne(ticketId, userId) {
         const ticket = await this.prisma.ticket.findUnique({
             where: { id: ticketId },
             include: {
                 order: { select: { userId: true } },
+                owner: { select: { id: true, name: true } },
                 event: { select: { title: true, startDate: true, venue: true, address: true } },
                 batch: { select: { name: true, ticketType: true, price: true } },
                 checkIn: { select: { checkedAt: true, method: true } },
+                transfers: { where: { OR: [{ senderUserId: userId }, { recipientUserId: userId }] }, orderBy: { requestedAt: 'desc' }, take: 1, include: { sender: { select: { name: true } }, recipient: { select: { name: true } } } },
             },
         });
         if (!ticket)
             throw new common_1.NotFoundException('Ingresso não encontrado');
-        if (ticket.order.userId !== userId)
+        const related = ticket.ownerUserId === userId || ticket.transfers.some((t) => t.senderUserId === userId);
+        if (!related)
             throw new common_1.ForbiddenException('Acesso negado');
-        return ticket;
+        const accessState = ticket.ownerUserId === userId
+            ? (ticket.transfers[0]?.recipientUserId === userId ? 'RECEIVED' : ticket.status)
+            : (ticket.transfers[0]?.status === 'PENDING_REGISTRATION' ? 'TRANSFER_PENDING' : 'TRANSFERRED');
+        return { ...ticket, accessState, qrCodeUrl: ticket.ownerUserId === userId && ticket.status === 'ACTIVE' ? ticket.qrCodeUrl : null };
     }
     async validateAndCheckIn(token, eventId, staffId) {
         return this.prisma.$transaction(async (tx) => {
@@ -142,10 +163,13 @@ let TicketsService = TicketsService_1 = class TicketsService {
             }
             if (ticket.status !== 'ACTIVE')
                 return { valid: false, reason: `Status inválido: ${ticket.status}`, holder };
-            await Promise.all([
-                tx.ticket.update({ where: { id: ticket.id }, data: { status: 'USED' } }),
-                tx.checkIn.create({ data: { ticketId: ticket.id, eventId, staffId, method: 'QR_CODE' } }),
-            ]);
+            const claimed = await tx.ticket.updateMany({
+                where: { id: ticket.id, token, status: 'ACTIVE' },
+                data: { status: 'USED' },
+            });
+            if (claimed.count !== 1)
+                return { valid: false, reason: 'Ingresso indisponível ou alterado durante a leitura', holder };
+            await tx.checkIn.create({ data: { ticketId: ticket.id, eventId, staffId, method: 'QR_CODE' } });
             this.logger.log(`Ticket ${ticket.id} checked in at event ${eventId} by staff ${staffId}`);
             return { valid: true, reason: 'Entrada autorizada', holder };
         });

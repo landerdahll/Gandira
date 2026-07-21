@@ -23,6 +23,7 @@ const payments_module_1 = require("./modules/payments/payments.module");
 const tickets_module_1 = require("./modules/tickets/tickets.module");
 const checkin_module_1 = require("./modules/checkin/checkin.module");
 const reports_module_1 = require("./modules/reports/reports.module");
+const ticket_transfers_module_1 = require("./modules/ticket-transfers/ticket-transfers.module");
 const mail_module_1 = require("./modules/mail/mail.module");
 const coupons_module_1 = require("./modules/coupons/coupons.module");
 const abacatepay_module_1 = require("./modules/abacatepay/abacatepay.module");
@@ -57,6 +58,7 @@ exports.AppModule = AppModule = __decorate([
             tickets_module_1.TicketsModule,
             checkin_module_1.CheckInModule,
             reports_module_1.ReportsModule,
+            ticket_transfers_module_1.TicketTransfersModule,
             coupons_module_1.CouponsModule,
             abacatepay_module_1.AbacatepayModule,
         ],

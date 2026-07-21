@@ -13,4 +13,5 @@ export declare class CreateEventDto {
     category?: string;
     tags?: string[];
     coverImage?: string;
+    allowTicketTransfers?: boolean;
 }

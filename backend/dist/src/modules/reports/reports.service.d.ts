@@ -39,8 +39,8 @@ export declare class ReportsService {
             available: number;
             occupancyRate: string;
             id: string;
-            status: import(".prisma/client").$Enums.BatchStatus;
             name: string;
+            status: import(".prisma/client").$Enums.BatchStatus;
             price: import("@prisma/client/runtime/library").Decimal;
             quantity: number;
             sold: number;
@@ -63,12 +63,12 @@ export declare class ReportsService {
             totalTicketsSold: number;
         };
         recentOrders: ({
+            user: {
+                email: string;
+                name: string;
+            };
             event: {
                 title: string;
-            };
-            user: {
-                name: string;
-                email: string;
             };
             items: ({
                 batch: {
@@ -77,28 +77,28 @@ export declare class ReportsService {
             } & {
                 id: string;
                 createdAt: Date;
-                orderId: string;
-                batchId: string;
                 total: import("@prisma/client/runtime/library").Decimal;
                 quantity: number;
+                orderId: string;
+                batchId: string;
                 unitPrice: import("@prisma/client/runtime/library").Decimal;
             })[];
         } & {
             id: string;
-            status: import(".prisma/client").$Enums.OrderStatus;
             createdAt: Date;
             updatedAt: Date;
+            status: import(".prisma/client").$Enums.OrderStatus;
+            total: import("@prisma/client/runtime/library").Decimal;
+            userId: string;
+            expiresAt: Date;
             eventId: string;
             cancelledAt: Date | null;
             subtotal: import("@prisma/client/runtime/library").Decimal;
             platformFee: import("@prisma/client/runtime/library").Decimal;
-            total: import("@prisma/client/runtime/library").Decimal;
-            discountAmount: import("@prisma/client/runtime/library").Decimal;
-            expiresAt: Date;
-            userId: string;
             stripePaymentIntentId: string | null;
             stripeChargeId: string | null;
             couponId: string | null;
+            discountAmount: import("@prisma/client/runtime/library").Decimal;
             cancelReason: string | null;
             refundedAt: Date | null;
             stripeRefundId: string | null;

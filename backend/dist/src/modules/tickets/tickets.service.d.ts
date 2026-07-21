@@ -10,76 +10,14 @@ export declare class TicketsService {
     constructor(prisma: PrismaService);
     generateTicket(input: GenerateTicketInput, tx?: any): Promise<any>;
     findUserTickets(userId: string, page?: number, limit?: number): Promise<{
-        data: ({
-            event: {
-                title: string;
-                slug: string;
-                coverImage: string | null;
-                venue: string;
-                startDate: Date;
-            };
-            batch: {
-                name: string;
-                ticketType: import(".prisma/client").$Enums.TicketType;
-            };
-            checkIn: {
-                checkedAt: Date;
-            } | null;
-        } & {
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            eventId: string;
-            status: import(".prisma/client").$Enums.TicketStatus;
-            cancelledAt: Date | null;
-            batchId: string;
-            orderId: string;
-            token: string;
-            holderName: string | null;
-            holderEmail: string | null;
-            holderCpf: string | null;
-            qrCodeUrl: string | null;
-        })[];
+        data: any;
         meta: {
-            total: number;
+            total: any;
             page: number;
             lastPage: number;
         };
     }>;
-    findOne(ticketId: string, userId: string): Promise<{
-        event: {
-            title: string;
-            venue: string;
-            address: string;
-            startDate: Date;
-        };
-        batch: {
-            name: string;
-            price: import("@prisma/client/runtime/library").Decimal;
-            ticketType: import(".prisma/client").$Enums.TicketType;
-        };
-        order: {
-            userId: string;
-        };
-        checkIn: {
-            method: import(".prisma/client").$Enums.CheckInMethod;
-            checkedAt: Date;
-        } | null;
-    } & {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        eventId: string;
-        status: import(".prisma/client").$Enums.TicketStatus;
-        cancelledAt: Date | null;
-        batchId: string;
-        orderId: string;
-        token: string;
-        holderName: string | null;
-        holderEmail: string | null;
-        holderCpf: string | null;
-        qrCodeUrl: string | null;
-    }>;
+    findOne(ticketId: string, userId: string): Promise<any>;
     validateAndCheckIn(token: string, eventId: string, staffId: string): Promise<{
         valid: boolean;
         reason: string;

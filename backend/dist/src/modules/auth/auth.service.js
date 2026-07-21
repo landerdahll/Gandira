@@ -51,17 +51,22 @@ const bcrypt = __importStar(require("bcrypt"));
 const prisma_service_1 = require("../../prisma/prisma.service");
 const crypto_util_1 = require("../../common/utils/crypto.util");
 const mail_service_1 = require("../mail/mail.service");
+const ticket_transfers_service_1 = require("../ticket-transfers/ticket-transfers.service");
 const BCRYPT_ROUNDS = 12;
 let AuthService = AuthService_1 = class AuthService {
-    constructor(prisma, jwt, config, mail) {
+    constructor(prisma, jwt, config, mail, ticketTransfers) {
         this.prisma = prisma;
         this.jwt = jwt;
         this.config = config;
         this.mail = mail;
+        this.ticketTransfers = ticketTransfers;
         this.logger = new common_1.Logger(AuthService_1.name);
     }
     async register(dto) {
-        const exists = await this.prisma.user.findUnique({ where: { email: dto.email } });
+        const normalizedEmail = dto.email.toLowerCase().trim();
+        if (dto.invitationToken)
+            await this.ticketTransfers.inspectInvite(dto.invitationToken, normalizedEmail);
+        const exists = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
         if (exists)
             throw new common_1.ConflictException('E-mail já cadastrado');
         if (dto.cpf) {
@@ -90,7 +95,7 @@ let AuthService = AuthService_1 = class AuthService {
         const user = await this.prisma.user.create({
             data: {
                 name: dto.name,
-                email: dto.email.toLowerCase().trim(),
+                email: normalizedEmail,
                 password,
                 phone: dto.phone,
                 cpf,
@@ -102,6 +107,8 @@ let AuthService = AuthService_1 = class AuthService {
         this.logger.log(`New user registered: ${user.email}`);
         await this.auditLog(user.id, 'USER_REGISTERED', 'User', user.id);
         await this.dispatchVerificationEmail(user.id, user.email, user.name);
+        if (dto.invitationToken)
+            await this.ticketTransfers.completeInvite(dto.invitationToken, user.id, user.email);
         const tokens = await this.generateTokenPair(user.id, user.email, user.role);
         return { user, ...tokens };
     }
@@ -250,6 +257,7 @@ exports.AuthService = AuthService = AuthService_1 = __decorate([
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         jwt_1.JwtService,
         config_1.ConfigService,
-        mail_service_1.MailService])
+        mail_service_1.MailService,
+        ticket_transfers_service_1.TicketTransfersService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

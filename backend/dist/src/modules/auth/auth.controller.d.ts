@@ -18,8 +18,8 @@ export declare class AuthController {
     register(dto: RegisterDto, res: Response): Promise<{
         user: {
             id: string;
-            name: string;
             email: string;
+            name: string;
             role: import(".prisma/client").$Enums.Role;
             isVerified: boolean;
         };
