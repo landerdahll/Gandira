@@ -36,3 +36,55 @@ describe('TicketTransfersService invitation security', () => {
     expect(prisma.ticketTransfer.findUnique.mock.calls[0][0].where.invitationTokenHash).not.toBe(rawToken);
   });
 });
+
+describe('TicketTransfersService demo email mode', () => {
+  const transfer = { id: 'tr1', recipientEmail: 'guest@example.com' };
+  const notification = {
+    invitationToken: 'temporary-invite-token',
+    recipient: null,
+    ticket: {
+      owner: { email: 'owner@example.com', name: 'Owner' },
+      event: { title: 'Demo Event' },
+    },
+  };
+
+  function setup(demoMode: string) {
+    const mail = { sendTicketTransferEmail: jest.fn().mockResolvedValue(undefined) };
+    const config = {
+      get: jest.fn((key: string, fallback: string) => ({
+        DEMO_EMAIL_MODE: demoMode,
+        FRONTEND_URL: 'https://demo.gandira.test',
+      }[key] ?? fallback)),
+    };
+    const service = new TicketTransfersService({} as any, mail as any, config as any);
+    return { service, mail };
+  }
+
+  it('gera e registra o link completo do convite sem deixar de enviar pela Resend', async () => {
+    const { service, mail } = setup('true');
+    const logger = jest.spyOn((service as any).logger, 'log');
+
+    await (service as any).sendRequestedEmails(transfer, notification);
+
+    const inviteUrl = 'https://demo.gandira.test/auth/register?transferInvite=temporary-invite-token&email=guest%40example.com';
+    expect(mail.sendTicketTransferEmail).toHaveBeenCalledWith(
+      transfer.recipientEmail,
+      expect.any(String),
+      expect.any(String),
+      inviteUrl,
+    );
+    expect(logger).toHaveBeenCalledWith(expect.stringContaining('[DEMO EMAIL MODE] Convite de transferência'));
+    expect(logger).toHaveBeenCalledWith(expect.stringContaining('Destinatário: g***@e***.com'));
+    expect(logger).toHaveBeenCalledWith(expect.stringContaining(`Link: ${inviteUrl}`));
+  });
+
+  it('não registra tokens de convite quando DEMO_EMAIL_MODE=false', async () => {
+    const { service, mail } = setup('false');
+    const logger = jest.spyOn((service as any).logger, 'log');
+
+    await (service as any).sendRequestedEmails(transfer, notification);
+
+    expect(mail.sendTicketTransferEmail).toHaveBeenCalledTimes(2);
+    expect(logger).not.toHaveBeenCalledWith(expect.stringContaining('[DEMO EMAIL MODE]'));
+  });
+});

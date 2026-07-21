@@ -12,7 +12,7 @@ describe('AuthService registration with transfer invite', () => {
     invitationToken: 'raw-invite',
   };
 
-  function setup(completeInvite: jest.Mock) {
+  function setup(completeInvite: jest.Mock, configValues: Record<string, string> = {}) {
     const committedUsers: any[] = [];
     const tx: any = {
       ticketTransfer: {
@@ -24,14 +24,14 @@ describe('AuthService registration with transfer invite', () => {
       },
       user: {
         findUnique: jest.fn().mockResolvedValue(null),
-        create: jest.fn(async ({ data }: any) => ({ id: 'user-new', ...data, role: 'CUSTOMER', isVerified: false })),
+        create: jest.fn(async ({ data }: any) => ({ id: 'user-new', ...data, role: 'CUSTOMER', isVerified: data.isVerified ?? false })),
       },
       auditLog: { create: jest.fn().mockResolvedValue({}) },
       emailVerificationToken: { create: jest.fn().mockResolvedValue({}) },
       refreshToken: { create: jest.fn().mockResolvedValue({}) },
     };
     const prisma: any = {
-      user: { findUnique: jest.fn().mockResolvedValue(null), create: jest.fn() },
+      user: { findUnique: jest.fn().mockResolvedValue(null), create: tx.user.create },
       refreshToken: { create: jest.fn().mockResolvedValue({}) },
       auditLog: { create: jest.fn() },
       emailVerificationToken: { create: jest.fn(), deleteMany: jest.fn() },
@@ -55,13 +55,53 @@ describe('AuthService registration with transfer invite', () => {
       notifyInviteCompleted: jest.fn(),
     };
     const jwt: any = { signAsync: jest.fn().mockResolvedValue('access-token') };
-    const config: any = { get: jest.fn((_key: string, fallback: string) => fallback) };
+    const config: any = { get: jest.fn((key: string, fallback: string) => configValues[key] ?? fallback) };
     const service = new AuthService(prisma, jwt, config, mail, transfers);
     return { service, prisma, tx, mail, transfers, jwt, committedUsers };
   }
 
   beforeEach(() => (bcrypt.hash as jest.Mock).mockResolvedValue('password-hash'));
   afterEach(() => jest.restoreAllMocks());
+
+  it('marca cadastro comum como verificado e registra o link quando DEMO_EMAIL_MODE=true', async () => {
+    const context = setup(jest.fn(), { DEMO_EMAIL_MODE: 'true', FRONTEND_URL: 'https://demo.gandira.test' });
+    const logger = jest.spyOn((context.service as any).logger, 'log');
+
+    const result = await context.service.register({ ...dto, invitationToken: undefined });
+
+    expect(result.user.isVerified).toBe(true);
+    expect(context.prisma.user.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ isVerified: true }),
+    }));
+    expect(context.mail.sendVerificationEmail).toHaveBeenCalledWith(
+      dto.email,
+      dto.name,
+      expect.stringMatching(/^https:\/\/demo\.gandira\.test\/auth\/verify-email\?token=/),
+    );
+    expect(logger).toHaveBeenCalledWith(expect.stringContaining('[DEMO EMAIL MODE] Confirmação de e-mail'));
+    expect(logger).toHaveBeenCalledWith(expect.stringContaining('Destinatário: r***@e***.com'));
+  });
+
+  it('preserva cadastro não verificado quando DEMO_EMAIL_MODE=false', async () => {
+    const context = setup(jest.fn(), { DEMO_EMAIL_MODE: 'false' });
+
+    const result = await context.service.register({ ...dto, invitationToken: undefined });
+
+    expect(result.user.isVerified).toBe(false);
+    expect(context.prisma.user.create.mock.calls[0][0].data).not.toHaveProperty('isVerified');
+  });
+
+  it('conclui convite criando o destinatário já verificado no modo demo', async () => {
+    const completion = { transfer: { id: 'transfer-1' }, user: { id: 'user-new', email: dto.email, name: dto.name } };
+    const completeInvite = jest.fn().mockResolvedValue(completion);
+    const context = setup(completeInvite, { DEMO_EMAIL_MODE: 'true' });
+
+    const result = await context.service.register(dto);
+
+    expect(result.user.isVerified).toBe(true);
+    expect(completeInvite).toHaveBeenCalled();
+    expect(context.transfers.notifyInviteCompleted).toHaveBeenCalledWith(completion.transfer, completion.user);
+  });
 
   it('reverte usuário, audit log e token de verificação quando completeInvite falha', async () => {
     const context = setup(jest.fn().mockRejectedValue(new ConflictException('claim perdido')));

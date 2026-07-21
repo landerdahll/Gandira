@@ -54,6 +54,7 @@ const mail_service_1 = require("../mail/mail.service");
 const ticket_transfers_service_1 = require("../ticket-transfers/ticket-transfers.service");
 const client_1 = require("@prisma/client");
 const serializable_retry_util_1 = require("../../common/utils/serializable-retry.util");
+const demo_email_util_1 = require("../../common/utils/demo-email.util");
 const BCRYPT_ROUNDS = 12;
 let AuthService = AuthService_1 = class AuthService {
     constructor(prisma, jwt, config, mail, ticketTransfers) {
@@ -65,6 +66,8 @@ let AuthService = AuthService_1 = class AuthService {
         this.logger = new common_1.Logger(AuthService_1.name);
     }
     async register(dto) {
+        const demoEmailMode = (0, demo_email_util_1.isDemoEmailMode)(this.config);
+        this.logger.log(`[DEMO EMAIL MODE] Ativo: ${demoEmailMode}`);
         const normalizedEmail = dto.email.toLowerCase().trim();
         const preparedInvite = dto.invitationToken
             ? await this.ticketTransfers.prepareInviteCompletion(dto.invitationToken, normalizedEmail)
@@ -114,6 +117,7 @@ let AuthService = AuthService_1 = class AuthService {
                 cpf,
                 gender: dto.gender,
                 birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
+                ...(demoEmailMode ? { isVerified: true } : {}),
             },
             select: { id: true, email: true, name: true, role: true, isVerified: true },
         });
@@ -201,7 +205,11 @@ let AuthService = AuthService_1 = class AuthService {
     }
     sendVerificationEmail(email, name, token) {
         const baseUrl = (this.config.get('FRONTEND_URL', 'http://localhost:3000')).split(',')[0].trim();
-        this.mail.sendVerificationEmail(email, name, `${baseUrl}/auth/verify-email?token=${token}`)
+        const verifyUrl = `${baseUrl}/auth/verify-email?token=${token}`;
+        if ((0, demo_email_util_1.isDemoEmailMode)(this.config)) {
+            this.logger.log(`[DEMO EMAIL MODE] Confirmação de e-mail\nDestinatário: ${(0, demo_email_util_1.maskEmail)(email)}\nLink: ${verifyUrl}`);
+        }
+        this.mail.sendVerificationEmail(email, name, verifyUrl)
             .catch(err => this.logger.error(`Falha ao enviar e-mail de verificação para ${email}: ${err.message}`));
     }
     async login(dto, ipAddress) {

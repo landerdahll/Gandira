@@ -8,6 +8,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { Interval } from '@nestjs/schedule';
 import { withSerializableRetry } from '../../common/utils/serializable-retry.util';
+import { isDemoEmailMode, maskEmail } from '../../common/utils/demo-email.util';
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
@@ -213,6 +214,9 @@ export class TicketTransfersService {
       ]);
     } else {
       const inviteUrl = `${base}/auth/register?transferInvite=${n.invitationToken}&email=${encodeURIComponent(transfer.recipientEmail)}`;
+      if (isDemoEmailMode(this.config)) {
+        this.logger.log(`[DEMO EMAIL MODE] Convite de transferência\nDestinatário: ${maskEmail(transfer.recipientEmail)}\nLink: ${inviteUrl}`);
+      }
       await Promise.all([
         this.mail.sendTicketTransferEmail(n.ticket.owner.email, 'Transferência aguardando cadastro', `O convite foi enviado para ${transfer.recipientEmail}.`),
         this.mail.sendTicketTransferEmail(transfer.recipientEmail, 'Você recebeu um ingresso — crie sua conta no Gandira', `${n.ticket.owner.name} enviou um ingresso de ${n.ticket.event.title}. Cadastre-se em até 7 dias para recebê-lo.`, inviteUrl),

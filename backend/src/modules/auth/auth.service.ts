@@ -17,6 +17,7 @@ import { MailService } from '../mail/mail.service';
 import { TicketTransfersService } from '../ticket-transfers/ticket-transfers.service';
 import { Prisma } from '@prisma/client';
 import { withSerializableRetry } from '../../common/utils/serializable-retry.util';
+import { isDemoEmailMode, maskEmail } from '../../common/utils/demo-email.util';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -33,6 +34,8 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
+    const demoEmailMode = isDemoEmailMode(this.config);
+    this.logger.log(`[DEMO EMAIL MODE] Ativo: ${demoEmailMode}`);
     const normalizedEmail = dto.email.toLowerCase().trim();
     const preparedInvite = dto.invitationToken
       ? await this.ticketTransfers.prepareInviteCompletion(dto.invitationToken, normalizedEmail)
@@ -84,6 +87,7 @@ export class AuthService {
           cpf,
           gender: dto.gender,
           birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
+          ...(demoEmailMode ? { isVerified: true } : {}),
         },
         select: { id: true, email: true, name: true, role: true, isVerified: true },
       });
@@ -188,7 +192,11 @@ export class AuthService {
 
   private sendVerificationEmail(email: string, name: string, token: string) {
     const baseUrl = (this.config.get<string>('FRONTEND_URL', 'http://localhost:3000')).split(',')[0].trim();
-    this.mail.sendVerificationEmail(email, name, `${baseUrl}/auth/verify-email?token=${token}`)
+    const verifyUrl = `${baseUrl}/auth/verify-email?token=${token}`;
+    if (isDemoEmailMode(this.config)) {
+      this.logger.log(`[DEMO EMAIL MODE] Confirmação de e-mail\nDestinatário: ${maskEmail(email)}\nLink: ${verifyUrl}`);
+    }
+    this.mail.sendVerificationEmail(email, name, verifyUrl)
       .catch(err => this.logger.error(`Falha ao enviar e-mail de verificação para ${email}: ${err.message}`));
   }
 
