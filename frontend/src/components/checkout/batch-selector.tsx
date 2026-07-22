@@ -36,6 +36,7 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
   const [couponData, setCouponData] = useState<CouponData | null>(null);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [couponError, setCouponError] = useState('');
+  const [clubCouponBlocked, setClubCouponBlocked] = useState(false);
 
   const sorted = [...batches].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
   const activeBatches = sorted.filter((b) => b.status === 'ACTIVE');
@@ -51,6 +52,7 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
   }
 
   async function handleValidateCoupon() {
+    if (clubCouponBlocked) return;
     if (!couponInput.trim()) return;
     setValidatingCoupon(true);
     setCouponError('');
@@ -95,7 +97,16 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
       });
       router.push(`/checkout/${res.data.orderId}?secret=${res.data.clientSecret}`);
     } catch (err: any) {
-      toast.error(err.response?.data?.message ?? 'Erro ao criar pedido');
+      const error = err.response?.data;
+      if (error?.code === 'CLUB_BENEFIT_COUPON_NOT_ALLOWED') {
+        setCouponData(null);
+        setCouponInput('');
+        setClubCouponBlocked(true);
+        setCouponError('O Clube Outrahora está disponível para este evento e não acumula com cupom. Clique novamente para continuar com o benefício automático.');
+        toast.success('Benefício do Clube Outrahora identificado');
+      } else {
+        toast.error(error?.message ?? 'Erro ao criar pedido');
+      }
     } finally {
       setLoading(false);
     }
@@ -191,6 +202,15 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
             </span>
           </div>
 
+          {user?.clubMembership?.isActive && (
+            <div style={{ marginBottom: 10, padding: '10px 12px', borderRadius: 10, background: '#0d1e28', border: '1px solid #67bed933' }}>
+              <p style={{ margin: 0, color: '#67bed9', fontSize: 12, fontWeight: 700 }}>Clube Outrahora</p>
+              <p style={{ margin: '3px 0 0', color: '#78909a', fontSize: 11, lineHeight: 1.4 }}>
+                O benefício será verificado e aplicado automaticamente ao criar o pedido. Não é cumulativo com cupom.
+              </p>
+            </div>
+          )}
+
           {couponData ? (
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -219,24 +239,25 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
                 onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponError(''); }}
                 onKeyDown={e => { if (e.key === 'Enter') handleValidateCoupon(); }}
                 placeholder="Digite o código"
+                disabled={clubCouponBlocked}
                 style={{
                   flex: 1, background: '#171717', border: `1px solid ${couponError ? '#ff6b6b55' : '#252525'}`,
                   borderRadius: '10px', padding: '10px 12px',
                   color: '#fff', fontSize: '13px', outline: 'none',
-                  fontFamily: 'monospace', letterSpacing: '1px',
+                  fontFamily: 'monospace', letterSpacing: '1px', opacity: clubCouponBlocked ? 0.5 : 1,
                 }}
                 onFocus={e => (e.currentTarget.style.borderColor = '#67bed9')}
                 onBlur={e => (e.currentTarget.style.borderColor = couponError ? '#ff6b6b55' : '#252525')}
               />
               <button
                 onClick={handleValidateCoupon}
-                disabled={validatingCoupon || !couponInput.trim()}
+                disabled={clubCouponBlocked || validatingCoupon || !couponInput.trim()}
                 style={{
                   padding: '10px 16px', borderRadius: '10px', border: '1px solid #67bed955',
                   background: 'transparent', color: '#67bed9',
                   fontSize: '13px', fontWeight: 700, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: '6px',
-                  opacity: validatingCoupon || !couponInput.trim() ? 0.5 : 1,
+                  opacity: clubCouponBlocked || validatingCoupon || !couponInput.trim() ? 0.5 : 1,
                   whiteSpace: 'nowrap',
                 }}
               >

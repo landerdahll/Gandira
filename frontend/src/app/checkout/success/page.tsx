@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { CheckCircle2, Ticket, Loader2, CalendarDays, MapPin } from 'lucide-react';
+import { CheckCircle2, Ticket, Loader2, CalendarDays, MapPin, Award } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { ordersApi, paymentsApi } from '@/lib/api';
 
@@ -123,6 +123,17 @@ function SuccessContent() {
                   <p style={{ fontSize: '16px', fontWeight: 700, color: '#fff', marginBottom: '10px' }}>
                     {order.event?.title}
                   </p>
+                  {order.clubBenefit?.applied && (
+                    <div style={{ marginBottom: 14, padding: '10px 12px', borderRadius: 10, background: '#0d1e28', border: '1px solid #67bed933' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                        <Award size={14} color="#67bed9" />
+                        <strong style={{ color: '#67bed9', fontSize: 12 }}>Benefício Clube Outrahora confirmado</strong>
+                      </div>
+                      <p style={{ margin: '5px 0 0', color: '#78909a', fontSize: 11 }}>
+                        Desconto de {Number(order.clubBenefit.discountPercentage).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}% em 1 ingresso de {order.clubBenefit.batchName}.
+                      </p>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '16px' }}>
                     {order.event?.startDate && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

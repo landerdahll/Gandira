@@ -11,6 +11,13 @@ interface User {
   role: 'CUSTOMER' | 'PRODUCER' | 'STAFF' | 'ADMIN';
   avatarUrl?: string | null;
   isVerified: boolean;
+  clubMembership?: {
+    isMember: boolean;
+    isActive: boolean;
+    canUseBenefit: boolean;
+    discountPercentage: string | null;
+    label: string;
+  };
 }
 
 interface AuthContextType {

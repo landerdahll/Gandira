@@ -4,10 +4,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar, MapPin, ArrowLeft, Share2, CheckCircle2, XCircle, Clock, Send, Loader2 } from 'lucide-react';
+import { Calendar, MapPin, ArrowLeft, Share2, CheckCircle2, XCircle, Clock, Send, Loader2, Award } from 'lucide-react';
 import Link from 'next/link';
 import { ticketsApi, ticketTransfersApi } from '@/lib/api';
 import toast from 'react-hot-toast';
+import { canTransferTicket } from '@/lib/club-checkout';
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string; border: string; icon: React.ReactNode }> = {
   ACTIVE:    { label: 'Ativo',      bg: '#0a2018', color: '#4ade80', border: '#1a3828', icon: <CheckCircle2 size={13} /> },
@@ -218,6 +219,15 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
           </div>
 
           {/* Ticket metadata */}
+          {ticket.clubBenefitApplied && (
+            <div style={{ padding: '12px 20px', background: '#0d1e28', borderTop: '1px solid #67bed922', display: 'flex', alignItems: 'center', gap: 9 }}>
+              <Award size={15} color="#67bed9" />
+              <div>
+                <p style={{ margin: 0, color: '#67bed9', fontSize: 12, fontWeight: 700 }}>Ingresso beneficiado pelo Clube Outrahora</p>
+                <p style={{ margin: '2px 0 0', color: '#66808a', fontSize: 11 }}>Benefício pessoal: este ingresso não pode ser transferido.</p>
+              </div>
+            </div>
+          )}
           <div style={{
             background: '#0d0d0d', borderTop: '1px solid #161616',
             padding: '14px 20px',
@@ -251,7 +261,12 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
               >
                 <Share2 size={15} /> Compartilhar
               </button>
-              <button onClick={() => setShowTransfer(true)} style={{ flex: 1, padding: '14px 0', background: 'none', border: 'none', borderLeft: '1px solid #1a1a1a', color: '#67bed9', cursor: 'pointer', fontWeight: 700 }}><Send size={14} style={{ verticalAlign: 'middle', marginRight: 7 }} />Transferir ingresso</button>
+              <button
+                onClick={() => canTransferTicket(ticket) && setShowTransfer(true)}
+                disabled={!canTransferTicket(ticket)}
+                title={ticket.clubBenefitApplied ? 'Ingressos beneficiados pelo Clube não podem ser transferidos' : undefined}
+                style={{ flex: 1, padding: '14px 0', background: 'none', border: 'none', borderLeft: '1px solid #1a1a1a', color: ticket.clubBenefitApplied ? '#444' : '#67bed9', cursor: ticket.clubBenefitApplied ? 'not-allowed' : 'pointer', fontWeight: 700 }}
+              ><Send size={14} style={{ verticalAlign: 'middle', marginRight: 7 }} />{ticket.clubBenefitApplied ? 'Transferência indisponível' : 'Transferir ingresso'}</button>
             </div>
           )}
           {displayStatus === 'TRANSFER_PENDING' && <button onClick={handleCancelTransfer} style={{ width: '100%', padding: 14, background: '#211609', border: 0, color: '#fbbf24', cursor: 'pointer', fontWeight: 700 }}>Cancelar transferência</button>}

@@ -4,9 +4,11 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { Lock, ShieldCheck, CalendarDays, MapPin, Ticket, Copy, Check, Loader2 } from 'lucide-react';
+import { Lock, ShieldCheck, CalendarDays, MapPin, Ticket, Copy, Check, Loader2, Award } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ordersApi, pixApi } from '@/lib/api';
+import { formatClubDiscountPercentage } from '@/lib/club-membership';
+import { getDiscountLabel } from '@/lib/club-checkout';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -330,6 +332,21 @@ function CheckoutContent() {
                 )}
               </div>
 
+              {order?.clubBenefit?.applied && (
+                <div style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 12, background: '#0d1e28', border: '1px solid #67bed933' }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <Award size={16} color="#67bed9" />
+                    <strong style={{ color: '#67bed9', fontSize: 13 }}>Clube Outrahora · {formatClubDiscountPercentage(order.clubBenefit.discountPercentage)}</strong>
+                  </div>
+                  <p style={{ color: '#78909a', fontSize: 12, lineHeight: 1.5, margin: '6px 0 0' }}>
+                    Benefício aplicado automaticamente em 1 ingresso do lote {order.clubBenefit.batchName}. O ingresso beneficiado não poderá ser transferido.
+                  </p>
+                  <p style={{ color: '#9eb3bc', fontSize: 12, margin: '5px 0 0' }}>
+                    {fmtCurrency(Number(order.clubBenefit.originalAmount))} → {fmtCurrency(Number(order.clubBenefit.finalAmount))}
+                  </p>
+                </div>
+              )}
+
               {/* Items */}
               <div style={{ borderTop: '1px solid #1e1e1e', paddingTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {items.map((item: any) => (
@@ -359,7 +376,9 @@ function CheckoutContent() {
                 </div>
                 {discount > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '13px', color: '#67bed9' }}>Desconto (cupom)</span>
+                    <span style={{ fontSize: '13px', color: '#67bed9' }}>
+                      {getDiscountLabel(order.discountType)}
+                    </span>
                     <span style={{ fontSize: '13px', color: '#67bed9', fontWeight: 600 }}>−{fmtCurrency(discount)}</span>
                   </div>
                 )}

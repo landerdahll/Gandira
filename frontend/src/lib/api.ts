@@ -110,6 +110,23 @@ export const couponsApi = {
     api.delete(`/events/${eventId}/coupons/${couponId}`),
 };
 
+export type DiscountType = 'NONE' | 'COUPON' | 'CLUB';
+export type ClubBenefitReason = 'AVAILABLE' | 'NOT_MEMBER' | 'INACTIVE_MEMBER' | 'ALREADY_USED' | 'RESERVED_BY_OTHER_REQUEST' | 'NO_PAID_TICKETS';
+
+export interface ClubBenefitSummary {
+  applied: boolean;
+  reason: ClubBenefitReason;
+  status?: 'RESERVED' | 'CONFIRMED' | 'RELEASED';
+  discountPercentage?: string | null;
+  batchId?: string | null;
+  batchName?: string | null;
+  originalAmount?: string | null;
+  discountAmount?: string | null;
+  finalAmount?: string | null;
+  quantityDiscounted?: number;
+  ticketId?: string | null;
+}
+
 export const ordersApi = {
   create: (data: { eventId: string; items: { batchId: string; quantity: number }[]; couponCode?: string }) =>
     api.post('/orders', data),
