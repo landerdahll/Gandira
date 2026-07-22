@@ -70,7 +70,7 @@ function ResetPasswordForm() {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <img src="/gandira-logo.png" alt="Gandira" style={{ height: '44px', objectFit: 'contain' }} />
+            <img src="/pago.svg" alt="Pago" style={{ height: '44px', objectFit: 'contain' }} />
           </Link>
         </div>
 

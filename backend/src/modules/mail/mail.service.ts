@@ -20,10 +20,10 @@ export class MailService {
   }
 
   async sendTicketTransferEmail(to: string, subject: string, message: string, actionUrl?: string) {
-    const button = actionUrl ? `<p style="margin:28px 0"><a href="${actionUrl}" style="background:#67bed9;color:#fff;padding:14px 24px;border-radius:12px;text-decoration:none;font-weight:700">Abrir no Gandira</a></p>` : '';
-    const html = `<!doctype html><html><body style="margin:0;background:#0a0a0a;font-family:Arial,sans-serif;color:#fff"><div style="max-width:480px;margin:40px auto;background:#111;border:1px solid #1e1e1e;border-radius:16px;padding:32px"><img src="https://gandira.vercel.app/gandira-logo.png" alt="Gandira" style="height:36px"><h1 style="font-size:20px;margin:28px 0 12px">${subject}</h1><p style="color:#999;line-height:1.6">${message}</p>${button}<p style="color:#444;font-size:12px;margin-top:32px">© ${new Date().getFullYear()} Gandira</p></div></body></html>`;
+    const button = actionUrl ? `<p style="margin:28px 0"><a href="${actionUrl}" style="background:#67bed9;color:#fff;padding:14px 24px;border-radius:12px;text-decoration:none;font-weight:700">Abrir no Pago</a></p>` : '';
+    const html = `<!doctype html><html><body style="margin:0;background:#0a0a0a;font-family:Arial,sans-serif;color:#fff"><div style="max-width:480px;margin:40px auto;background:#111;border:1px solid #1e1e1e;border-radius:16px;padding:32px"><img src="https://gandira.vercel.app/gandira-logo.png" alt="Pago" style="height:36px"><h1 style="font-size:20px;margin:28px 0 12px">${subject}</h1><p style="color:#999;line-height:1.6">${message}</p>${button}<p style="color:#444;font-size:12px;margin-top:32px">© ${new Date().getFullYear()} Pago</p></div></body></html>`;
     if (this.devMode) { this.logger.warn(`E-mail de transferência (dev) — ${to}: ${subject}${actionUrl ? ` | ${actionUrl}` : ''}`); return; }
-    const { error } = await this.resend!.emails.send({ from: `Gandira <${this.fromAddress}>`, to, subject, html });
+    const { error } = await this.resend!.emails.send({ from: `Pago <${this.fromAddress}>`, to, subject, html });
     if (error) throw new Error(error.message);
   }
 
@@ -38,7 +38,7 @@ export class MailService {
       <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1e1e1e;border-radius:16px;overflow:hidden;max-width:480px;width:100%;">
         <tr>
           <td style="padding:28px 32px;border-bottom:1px solid #1a1a1a;">
-            <img src="https://gandira.vercel.app/gandira-logo.png" alt="Gandira" style="height:36px;display:block;" />
+            <img src="https://gandira.vercel.app/gandira-logo.png" alt="Pago" style="height:36px;display:block;" />
           </td>
         </tr>
         <tr>
@@ -58,7 +58,7 @@ export class MailService {
               </tr>
             </table>
             <p style="margin:28px 0 0;font-size:12px;color:#444;line-height:1.6;">
-              Se você não criou uma conta na Gandira, ignore este e-mail.
+              Se você não criou uma conta no Pago, ignore este e-mail.
             </p>
             <p style="margin:12px 0 0;font-size:12px;color:#333;word-break:break-all;">
               Link direto: <a href="${verifyUrl}" style="color:#67bed9;text-decoration:none;">${verifyUrl}</a>
@@ -68,7 +68,7 @@ export class MailService {
         <tr>
           <td style="padding:20px 32px;border-top:1px solid #1a1a1a;">
             <p style="margin:0;font-size:12px;color:#333;text-align:center;">
-              © ${new Date().getFullYear()} Gandira — Todos os direitos reservados
+              © ${new Date().getFullYear()} Pago — Todos os direitos reservados
             </p>
           </td>
         </tr>
@@ -86,9 +86,9 @@ export class MailService {
     }
 
     const { error } = await this.resend!.emails.send({
-      from: `Gandira <${this.fromAddress}>`,
+      from: `Pago <${this.fromAddress}>`,
       to,
-      subject: 'Confirme seu e-mail — Gandira',
+      subject: 'Confirme seu e-mail — Pago',
       html,
     });
 
@@ -132,7 +132,7 @@ export class MailService {
       <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1e1e1e;border-radius:16px;overflow:hidden;max-width:480px;width:100%;">
         <tr>
           <td style="padding:28px 32px;border-bottom:1px solid #1a1a1a;">
-            <img src="https://gandira.vercel.app/gandira-logo.png" alt="Gandira" style="height:36px;display:block;" />
+            <img src="https://gandira.vercel.app/gandira-logo.png" alt="Pago" style="height:36px;display:block;" />
           </td>
         </tr>
         <tr>
@@ -178,7 +178,7 @@ export class MailService {
         <tr>
           <td style="padding:20px 32px;border-top:1px solid #1a1a1a;">
             <p style="margin:0;font-size:12px;color:#333;text-align:center;">
-              © ${new Date().getFullYear()} Gandira — Todos os direitos reservados
+              © ${new Date().getFullYear()} Pago — Todos os direitos reservados
             </p>
           </td>
         </tr>
@@ -194,7 +194,7 @@ export class MailService {
     }
 
     const { error } = await this.resend!.emails.send({
-      from: `Gandira <${this.fromAddress}>`,
+      from: `Pago <${this.fromAddress}>`,
       to,
       subject: `Ingresso confirmado — ${data.eventTitle}`,
       html,
@@ -218,14 +218,14 @@ export class MailService {
       <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1e1e1e;border-radius:16px;overflow:hidden;max-width:480px;width:100%;">
         <tr>
           <td style="padding:28px 32px;border-bottom:1px solid #1a1a1a;">
-            <img src="https://gandira.vercel.app/gandira-logo.png" alt="Gandira" style="height:36px;display:block;" />
+            <img src="https://gandira.vercel.app/gandira-logo.png" alt="Pago" style="height:36px;display:block;" />
           </td>
         </tr>
         <tr>
           <td style="padding:32px;">
             <p style="margin:0 0 8px;font-size:20px;font-weight:700;color:#fff;">Redefinição de senha</p>
             <p style="margin:0 0 24px;font-size:14px;color:#666;line-height:1.6;">
-              Olá, ${name}. Recebemos uma solicitação para redefinir a senha da sua conta Gandira.
+              Olá, ${name}. Recebemos uma solicitação para redefinir a senha da sua conta Pago.
             </p>
             <p style="margin:0 0 24px;font-size:14px;color:#666;line-height:1.6;">
               Clique no botão abaixo para criar uma nova senha. O link é válido por <strong style="color:#aaa">1 hora</strong>.
@@ -251,7 +251,7 @@ export class MailService {
         <tr>
           <td style="padding:20px 32px;border-top:1px solid #1a1a1a;">
             <p style="margin:0;font-size:12px;color:#333;text-align:center;">
-              © ${new Date().getFullYear()} Gandira — Todos os direitos reservados
+              © ${new Date().getFullYear()} Pago — Todos os direitos reservados
             </p>
           </td>
         </tr>
@@ -269,9 +269,9 @@ export class MailService {
     }
 
     const { error } = await this.resend!.emails.send({
-      from: `Gandira <${this.fromAddress}>`,
+      from: `Pago <${this.fromAddress}>`,
       to,
-      subject: 'Redefinição de senha — Gandira',
+      subject: 'Redefinição de senha — Pago',
       html,
     });
 

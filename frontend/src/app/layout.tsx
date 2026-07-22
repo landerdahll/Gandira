@@ -19,9 +19,10 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: { default: 'Gandira', template: '%s | Gandira' },
+  title: { default: 'Pago', template: '%s | Pago' },
   description: 'Ingressos para os melhores eventos',
-  openGraph: { type: 'website', locale: 'pt_BR', siteName: 'Gandira' },
+  icons: { icon: '/pago.svg' },
+  openGraph: { type: 'website', locale: 'pt_BR', siteName: 'Pago' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

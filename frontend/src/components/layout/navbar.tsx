@@ -47,7 +47,7 @@ export function Navbar() {
 
         {/* Logo */}
         <Link href="/" style={{ textDecoration: 'none', flexShrink: 0 }}>
-          <img src="/gandira-logo.png" alt="Gandira" style={{ height: '31px', objectFit: 'contain', display: 'block' }} />
+          <img src="/pago.svg" alt="Pago" style={{ height: '31px', objectFit: 'contain', display: 'block' }} />
         </Link>
 
         {/* ── Desktop right side ─────────────────────────────────────── */}

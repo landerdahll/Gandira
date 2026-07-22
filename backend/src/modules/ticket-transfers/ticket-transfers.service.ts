@@ -210,7 +210,7 @@ export class TicketTransfersService {
     if (n.recipient) {
       await Promise.all([
         this.mail.sendTicketTransferEmail(n.ticket.owner.email, 'Seu ingresso foi transferido', `${n.ticket.event.title} foi transferido para ${n.recipient.name}. O QR Code anterior não é mais válido.`),
-        this.mail.sendTicketTransferEmail(n.recipient.email, 'Você recebeu um ingresso no Gandira', `${n.ticket.owner.name} transferiu um ingresso de ${n.ticket.event.title} para você.`, `${base}/my-tickets`),
+        this.mail.sendTicketTransferEmail(n.recipient.email, 'Você recebeu um ingresso no Pago', `${n.ticket.owner.name} transferiu um ingresso de ${n.ticket.event.title} para você.`, `${base}/my-tickets`),
       ]);
     } else {
       const inviteUrl = `${base}/auth/register?transferInvite=${n.invitationToken}&email=${encodeURIComponent(transfer.recipientEmail)}`;
@@ -219,7 +219,7 @@ export class TicketTransfersService {
       }
       await Promise.all([
         this.mail.sendTicketTransferEmail(n.ticket.owner.email, 'Transferência aguardando cadastro', `O convite foi enviado para ${transfer.recipientEmail}.`),
-        this.mail.sendTicketTransferEmail(transfer.recipientEmail, 'Você recebeu um ingresso — crie sua conta no Gandira', `${n.ticket.owner.name} enviou um ingresso de ${n.ticket.event.title}. Cadastre-se em até 7 dias para recebê-lo.`, inviteUrl),
+        this.mail.sendTicketTransferEmail(transfer.recipientEmail, 'Você recebeu um ingresso — crie sua conta no Pago', `${n.ticket.owner.name} enviou um ingresso de ${n.ticket.event.title}. Cadastre-se em até 7 dias para recebê-lo.`, inviteUrl),
       ]);
     }
   }
@@ -227,7 +227,7 @@ export class TicketTransfersService {
     const base = (this.config.get<string>('FRONTEND_URL', 'http://localhost:3000')).split(',')[0].trim();
     await Promise.all([
       this.mail.sendTicketTransferEmail(transfer.sender.email, 'Seu ingresso foi transferido', `${transfer.event.title} foi transferido para ${user.name}. O QR Code anterior não é mais válido.`),
-      this.mail.sendTicketTransferEmail(user.email, 'Você recebeu um ingresso no Gandira', `${transfer.sender.name} transferiu um ingresso de ${transfer.event.title} para você.`, `${base}/my-tickets`),
+      this.mail.sendTicketTransferEmail(user.email, 'Você recebeu um ingresso no Pago', `${transfer.sender.name} transferiu um ingresso de ${transfer.event.title} para você.`, `${base}/my-tickets`),
     ]);
   }
 }

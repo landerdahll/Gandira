@@ -291,7 +291,7 @@ function CheckoutContent() {
 
           {/* Logo */}
           <div style={{ marginBottom: '8px' }}>
-            <img src="/gandira-logo.png" alt="Gandira" style={{ height: '32px', objectFit: 'contain' }} />
+            <img src="/pago.svg" alt="Pago" style={{ height: '32px', objectFit: 'contain' }} />
           </div>
 
           {/* Event card */}

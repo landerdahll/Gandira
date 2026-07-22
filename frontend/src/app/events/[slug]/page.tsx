@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const event = await getEvent(params.slug);
   if (!event) return {};
   return {
-    title: `${event.title} — Gandira`,
+    title: `${event.title} — Pago`,
     description: event.description?.slice(0, 160),
     openGraph: { images: event.coverImage ? [event.coverImage] : [] },
   };

@@ -79,7 +79,7 @@ function SuccessContent() {
     }}>
       {/* Logo */}
       <div style={{ marginBottom: '40px' }}>
-        <img src="/gandira-logo.png" alt="Gandira" style={{ height: '36px', objectFit: 'contain' }} />
+        <img src="/pago.svg" alt="Pago" style={{ height: '36px', objectFit: 'contain' }} />
       </div>
 
       <div style={{ width: '100%', maxWidth: '420px', textAlign: 'center' }}>
