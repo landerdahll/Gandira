@@ -32,7 +32,24 @@ export class UsersService {
       },
     });
     if (!user) throw new NotFoundException('Usuário não encontrado');
-    return user;
+
+    const clubMember = await this.prisma.clubMember.findUnique({
+      where: { email: user.email.trim().toLowerCase() },
+      select: { isActive: true, discountPercentage: true },
+    });
+    const isMember = Boolean(clubMember);
+    const isActive = clubMember?.isActive ?? false;
+
+    return {
+      ...user,
+      clubMembership: {
+        isMember,
+        isActive,
+        canUseBenefit: isMember && isActive,
+        discountPercentage: clubMember?.discountPercentage.toFixed(2) ?? null,
+        label: 'Clube Outrahora',
+      },
+    };
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {

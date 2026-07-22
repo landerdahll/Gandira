@@ -6,6 +6,13 @@ export declare class UsersController {
     private cloudinary;
     constructor(users: UsersService, cloudinary: CloudinaryService);
     me(user: any): Promise<{
+        clubMembership: {
+            isMember: boolean;
+            isActive: boolean;
+            canUseBenefit: boolean;
+            discountPercentage: string | null;
+            label: string;
+        };
         id: string;
         email: string;
         name: string;

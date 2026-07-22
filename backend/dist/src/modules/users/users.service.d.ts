@@ -15,6 +15,13 @@ export declare class UsersService {
     private prisma;
     constructor(prisma: PrismaService);
     getProfile(userId: string): Promise<{
+        clubMembership: {
+            isMember: boolean;
+            isActive: boolean;
+            canUseBenefit: boolean;
+            discountPercentage: string | null;
+            label: string;
+        };
         id: string;
         email: string;
         name: string;
