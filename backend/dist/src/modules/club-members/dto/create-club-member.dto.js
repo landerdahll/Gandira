@@ -11,17 +11,18 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateClubMemberDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
+const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 class CreateClubMemberDto {
 }
 exports.CreateClubMemberDto = CreateClubMemberDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: '529.982.247-25' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(11),
-    (0, class_validator_1.MaxLength)(14),
+    (0, swagger_1.ApiProperty)({ example: 'maria@example.com' }),
+    (0, class_transformer_1.Transform)(({ value }) => typeof value === 'string' ? value.trim() : value),
+    (0, class_validator_1.IsEmail)(),
+    (0, class_validator_1.MaxLength)(254),
     __metadata("design:type", String)
-], CreateClubMemberDto.prototype, "cpf", void 0);
+], CreateClubMemberDto.prototype, "email", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ example: 'Maria da Silva' }),
     (0, class_validator_1.IsOptional)(),
@@ -29,13 +30,6 @@ __decorate([
     (0, class_validator_1.MaxLength)(100),
     __metadata("design:type", String)
 ], CreateClubMemberDto.prototype, "name", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'maria@example.com' }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsEmail)(),
-    (0, class_validator_1.MaxLength)(254),
-    __metadata("design:type", String)
-], CreateClubMemberDto.prototype, "email", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ example: '(48) 99999-9999' }),
     (0, class_validator_1.IsOptional)(),

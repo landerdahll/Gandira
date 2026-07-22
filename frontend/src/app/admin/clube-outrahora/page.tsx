@@ -35,9 +35,8 @@ interface BenefitUsage {
 
 interface ClubMember {
   id: string;
-  cpf: string;
+  email: string;
   name?: string | null;
-  email?: string | null;
   phone?: string | null;
   isActive: boolean;
   activatedAt?: string | null;
@@ -48,7 +47,7 @@ interface ClubMember {
   usages?: BenefitUsage[];
 }
 
-const emptyForm = { cpf: '', name: '', email: '', phone: '' };
+const emptyForm = { name: '', email: '', phone: '' };
 
 export default function ClubeOutrahoraPage() {
   const [members, setMembers] = useState<ClubMember[]>([]);
@@ -111,9 +110,8 @@ export default function ClubeOutrahoraPage() {
     setSaving(true);
     try {
       await clubMembersApi.create({
-        cpf: form.cpf,
+        email: form.email.trim(),
         ...(form.name.trim() ? { name: form.name.trim() } : {}),
-        ...(form.email.trim() ? { email: form.email.trim() } : {}),
         ...(form.phone.trim() ? { phone: form.phone } : {}),
       });
       toast.success('Membro cadastrado com sucesso');
@@ -123,7 +121,7 @@ export default function ClubeOutrahoraPage() {
       setRefreshKey((value) => value + 1);
     } catch (error: any) {
       toast.error(error.response?.status === 409
-        ? 'Este CPF já está cadastrado no Clube Outrahora'
+        ? 'Este e-mail já está cadastrado no Clube Outrahora'
         : apiMessage(error, 'Erro ao cadastrar membro'));
     } finally {
       setSaving(false);
@@ -160,7 +158,7 @@ export default function ClubeOutrahoraPage() {
             <ShieldCheck size={22} color="#67bed9" />
             <h1 style={{ fontSize: 25, fontWeight: 800 }}>Clube Outrahora</h1>
           </div>
-          <p style={{ color: '#666', fontSize: 14, marginTop: 5 }}>Gestão da lista de benefícios por CPF</p>
+          <p style={{ color: '#666', fontSize: 14, marginTop: 5 }}>Gestão da lista de benefícios por e-mail</p>
         </div>
         <button onClick={() => setCreateOpen(true)} style={primaryButton}>
           <Plus size={16} /> Cadastrar membro
@@ -178,7 +176,7 @@ export default function ClubeOutrahoraPage() {
         <input
           value={search}
           onChange={(event) => changeSearch(event.target.value)}
-          placeholder="Buscar por CPF, telefone, nome ou e-mail..."
+          placeholder="Buscar por nome, e-mail ou telefone..."
           style={{ ...inputStyle, width: '100%', paddingLeft: 42, boxSizing: 'border-box' }}
         />
       </div>
@@ -194,14 +192,14 @@ export default function ClubeOutrahoraPage() {
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 850 }}>
-              <thead><tr>{['Membro', 'CPF', 'Telefone', 'Conta vinculada', 'Status', 'Ações'].map((title) => <th key={title} style={th}>{title}</th>)}</tr></thead>
+              <thead><tr>{['Membro', 'E-mail', 'Telefone', 'Conta vinculada', 'Status', 'Ações'].map((title) => <th key={title} style={th}>{title}</th>)}</tr></thead>
               <tbody>{members.map((member) => (
                 <tr key={member.id} style={{ borderTop: '1px solid #1d1d1d' }}>
                   <td style={td}>
                     <button onClick={() => openDetail(member.id)} style={memberButton}>{member.name || 'Nome não informado'}</button>
                     <small style={small}>{member.email || 'E-mail não informado'}</small>
                   </td>
-                  <td style={{ ...td, fontFamily: 'monospace' }}>{maskCpf(member.cpf)}</td>
+                  <td style={td}>{member.email}</td>
                   <td style={td}>{formatPhone(member.phone)}</td>
                   <td style={td}>{member.hasLinkedAccount
                     ? <Badge color="#67bed9" background="#0d1e28"><Link2 size={11} /> Vinculada</Badge>
@@ -232,9 +230,8 @@ export default function ClubeOutrahoraPage() {
       {createOpen && (
         <Modal title="Cadastrar membro" onClose={() => { if (!saving) setCreateOpen(false); }}>
           <form onSubmit={submitMember} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <Field label="CPF *"><input required value={form.cpf} onChange={(event) => setForm({ ...form, cpf: formatCpfInput(event.target.value) })} placeholder="000.000.000-00" style={inputStyle} /></Field>
             <Field label="Nome"><input value={form.name} maxLength={100} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Nome completo" style={inputStyle} /></Field>
-            <Field label="E-mail"><input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="email@exemplo.com" style={inputStyle} /></Field>
+            <Field label="E-mail *"><input required type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="email@exemplo.com" style={inputStyle} /></Field>
             <Field label="Telefone"><input value={form.phone} onChange={(event) => setForm({ ...form, phone: formatPhoneInput(event.target.value) })} placeholder="(00) 00000-0000" style={inputStyle} /></Field>
             <p style={{ color: '#555', fontSize: 12 }}>O membro será cadastrado inicialmente como ativo.</p>
             <button type="submit" disabled={saving} style={primaryButton}>{saving ? 'Cadastrando...' : 'Cadastrar membro'}</button>
@@ -257,11 +254,10 @@ function MemberDetail({ member, acting, onToggle }: { member: ClubMember; acting
   const usages = member.usages ?? [];
   return <div>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
-      <Info label="CPF" value={maskCpf(member.cpf)} mono />
       <Info label="Status" value={member.isActive ? 'Ativo' : 'Inativo'} />
       <Info label="Nome" value={member.name || 'Não informado'} />
       <Info label="Telefone" value={formatPhone(member.phone)} />
-      <Info label="E-mail" value={member.email || 'Não informado'} />
+      <Info label="E-mail" value={member.email} />
       <Info label="Criado em" value={formatDate(member.createdAt)} />
       <Info label="Ativado em" value={formatDate(member.activatedAt)} />
       <Info label="Desativado em" value={formatDate(member.deactivatedAt)} />
@@ -273,7 +269,7 @@ function MemberDetail({ member, acting, onToggle }: { member: ClubMember; acting
         <p style={{ fontWeight: 700, color: '#fff' }}>{member.linkedAccount.name}</p>
         <p>{member.linkedAccount.email}</p>
         <p style={{ color: member.linkedAccount.isActive ? '#67bed9' : '#ff8b8b', marginTop: 5 }}>Conta {member.linkedAccount.isActive ? 'ativa' : 'inativa'}</p>
-      </div> : <p style={{ color: '#666', fontSize: 14 }}>Nenhuma conta Pago utiliza este CPF.</p>}
+      </div> : <p style={{ color: '#666', fontSize: 14 }}>Nenhuma conta Pago utiliza este e-mail.</p>}
     </section>
 
     <section style={detailSection}>
@@ -321,8 +317,6 @@ function Info({ label, value, mono = false }: { label: string; value: string; mo
 function Badge({ children, color, background }: { children: React.ReactNode; color: string; background: string }) { return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color, background, padding: '4px 9px', borderRadius: 999, fontSize: 11, fontWeight: 700 }}>{children}</span>; }
 function StatusBadge({ active }: { active: boolean }) { return active ? <Badge color="#67bed9" background="#0d1e28">Ativo</Badge> : <Badge color="#888" background="#1b1b1b">Inativo</Badge>; }
 
-function maskCpf(value: string) { const digits = value.replace(/\D/g, ''); return digits.length === 11 ? `***.${digits.slice(3, 6)}.${digits.slice(6, 9)}-**` : '***.***.***-**'; }
-function formatCpfInput(value: string) { const d = value.replace(/\D/g, '').slice(0, 11); return d.replace(/^(\d{3})(\d)/, '$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3').replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4'); }
 function formatPhoneInput(value: string) { const d = value.replace(/\D/g, '').slice(0, 11); if (d.length <= 2) return d; if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`; return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`; }
 function formatPhone(value?: string | null) { return value ? formatPhoneInput(value) : 'Não informado'; }
 function formatDate(value?: string | null) { return value ? new Date(value).toLocaleString('pt-BR') : '—'; }

@@ -5,10 +5,9 @@ const club_members_service_1 = require("./club-members.service");
 describe('ClubMembersService', () => {
     const activeMember = {
         id: 'member-1',
-        cpf: '52998224725',
         name: 'Maria',
         email: 'maria@example.com',
-        phone: '(48) 99999-9999',
+        phone: '48999999999',
         isActive: true,
         activatedAt: new Date(),
         deactivatedAt: null,
@@ -36,49 +35,57 @@ describe('ClubMembersService', () => {
             },
             user: {
                 findMany: jest.fn().mockResolvedValue([{
-                        id: 'user-1', cpf: activeMember.cpf, name: 'Maria',
-                        email: 'maria@example.com', isActive: true,
+                        id: 'user-1', name: 'Maria', email: ' MARIA@EXAMPLE.COM ', isActive: true,
                     }]),
             },
             $transaction: jest.fn(async (callback) => callback(tx)),
         };
         return { service: new club_members_service_1.ClubMembersService(prisma), prisma, tx };
     }
-    it('cadastra CPF normalizado e audita somente o valor mascarado', async () => {
+    it('cadastra e-mail normalizado e audita somente o valor mascarado', async () => {
         const { service, tx } = setup();
         const result = await service.create({
-            cpf: '529.982.247-25', name: '  Maria  ', email: 'MARIA@EXAMPLE.COM', phone: ' (48) 99999-9999 ',
+            email: '  MARIA@EXAMPLE.COM  ', name: '  Maria  ', phone: ' (48) 99999-9999 ',
         }, 'admin-1');
         expect(tx.clubMember.create).toHaveBeenCalledWith({
             data: expect.objectContaining({
-                cpf: '52998224725', name: 'Maria', email: 'maria@example.com', phone: '48999999999', isActive: true,
+                email: 'maria@example.com', name: 'Maria', phone: '48999999999', isActive: true,
             }),
         });
         expect(tx.auditLog.create).toHaveBeenCalledWith({
             data: expect.objectContaining({
                 userId: 'admin-1', action: 'CLUB_MEMBER_CREATED',
-                metadata: { cpf: '***.982.247-**', isActive: true },
+                metadata: { email: 'm***@e***.com', isActive: true },
             }),
         });
-        expect(JSON.stringify(tx.auditLog.create.mock.calls)).not.toContain('52998224725');
+        expect(JSON.stringify(tx.auditLog.create.mock.calls)).not.toContain('maria@example.com');
         expect(result).toEqual(expect.objectContaining({ hasLinkedAccount: true }));
     });
-    it('rejeita CPF com checksum inválido antes de escrever', async () => {
-        const { service, tx } = setup();
-        await expect(service.create({ cpf: '111.111.111-11' }, 'admin-1')).rejects.toBeInstanceOf(common_1.BadRequestException);
-        expect(tx.clubMember.create).not.toHaveBeenCalled();
-    });
-    it('lista membros e indica a conta vinculada pelo CPF', async () => {
+    it('lista membros e vincula a conta por e-mail ignorando caixa e espaços', async () => {
         const { service, prisma } = setup();
-        const result = await service.list(1, 20, '529.982');
+        const result = await service.list(1, 20, 'MARIA@EXAMPLE.COM');
         expect(prisma.clubMember.findMany).toHaveBeenCalledWith(expect.objectContaining({
-            where: { OR: expect.arrayContaining([{ cpf: { contains: '529982' } }]) },
+            where: { OR: expect.arrayContaining([{ email: { contains: 'MARIA@EXAMPLE.COM', mode: 'insensitive' } }]) },
+        }));
+        expect(prisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
+            where: { OR: [{ email: { contains: 'maria@example.com', mode: 'insensitive' } }] },
         }));
         expect(result.data[0]).toEqual(expect.objectContaining({
             hasLinkedAccount: true,
             linkedAccount: expect.objectContaining({ id: 'user-1' }),
         }));
         expect(result.summary).toEqual({ active: 3, inactive: 2, total: 5 });
+    });
+    it('não vincula conta com e-mail normalizado diferente', async () => {
+        const { service, prisma } = setup();
+        prisma.user.findMany.mockResolvedValue([{
+                id: 'user-2', name: 'Outra pessoa', email: 'outra@example.com', isActive: true,
+            }]);
+        const result = await service.list();
+        expect(result.data[0]).toEqual(expect.objectContaining({
+            hasLinkedAccount: false,
+            linkedAccount: null,
+        }));
     });
     it('normaliza busca por telefone para somente dígitos', async () => {
         const { service, prisma } = setup();
@@ -100,7 +107,7 @@ describe('ClubMembersService', () => {
         });
         expect(tx.auditLog.create).toHaveBeenCalledWith({
             data: expect.objectContaining({
-                action: 'CLUB_MEMBER_DEACTIVATED', metadata: { cpf: '***.982.247-**', isActive: false },
+                action: 'CLUB_MEMBER_DEACTIVATED', metadata: { email: 'm***@e***.com', isActive: false },
             }),
         });
     });

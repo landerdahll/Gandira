@@ -192,8 +192,8 @@ model Batch {
   status     BatchStatus @default(ACTIVE)
   sortOrder  Int         @default(0)
 
-  tickets    Ticket[]
-  orderItems OrderItem[]
+  tickets           Ticket[]
+  orderItems        OrderItem[]
   clubBenefitUsages ClubBenefitUsage[]
 
   createdAt DateTime @default(now())
@@ -430,9 +430,8 @@ model AuditLog {
 
 model ClubMember {
   id            String    @id @default(cuid())
-  cpf           String    @unique @db.VarChar(11)
+  email         String    @unique
   name          String?
-  email         String?
   phone         String?
   isActive      Boolean   @default(true)
   activatedAt   DateTime  @default(now())
@@ -444,7 +443,6 @@ model ClubMember {
   updatedAt DateTime @updatedAt
 
   @@index([name])
-  @@index([email])
   @@index([phone])
   @@index([isActive])
 }
@@ -462,7 +460,7 @@ model ClubBenefitUsage {
   confirmedOrderId String? @unique
   confirmedOrder   Order?  @relation("ClubBenefitConfirmedOrder", fields: [confirmedOrderId], references: [id], onDelete: SetNull)
   batchId          String?
-  batch            Batch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  batch            Batch?  @relation(fields: [batchId], references: [id], onDelete: SetNull)
 
   originalAmount Decimal? @db.Decimal(10, 2)
   discountAmount Decimal? @db.Decimal(10, 2)

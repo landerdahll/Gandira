@@ -14,7 +14,7 @@ exports.ClubMembersService = void 0;
 const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../../prisma/prisma.service");
-const cpf_util_1 = require("../../common/utils/cpf.util");
+const demo_email_util_1 = require("../../common/utils/demo-email.util");
 let ClubMembersService = ClubMembersService_1 = class ClubMembersService {
     constructor(prisma) {
         this.prisma = prisma;
@@ -24,12 +24,11 @@ let ClubMembersService = ClubMembersService_1 = class ClubMembersService {
         const take = Math.min(Math.max(limit, 1), 100);
         const safePage = Math.max(page, 1);
         const normalizedSearch = search?.trim();
-        const digitSearch = normalizedSearch ? (0, cpf_util_1.normalizeCpf)(normalizedSearch) : '';
+        const digitSearch = normalizedSearch?.replace(/\D/g, '') ?? '';
         const where = normalizedSearch
             ? {
                 OR: [
                     ...(digitSearch ? [
-                        { cpf: { contains: digitSearch } },
                         { phone: { contains: digitSearch } },
                     ] : []),
                     { name: { contains: normalizedSearch, mode: 'insensitive' } },
@@ -50,7 +49,7 @@ let ClubMembersService = ClubMembersService_1 = class ClubMembersService {
                 _count: { _all: true },
             }),
         ]);
-        const linkedAccounts = await this.findLinkedAccounts(members.map(({ cpf }) => cpf));
+        const linkedAccounts = await this.findLinkedAccounts(members.map(({ email }) => email));
         const active = statusCounts.find(({ isActive }) => isActive)?._count._all ?? 0;
         const inactive = statusCounts.find(({ isActive }) => !isActive)?._count._all ?? 0;
         return {
@@ -76,21 +75,18 @@ let ClubMembersService = ClubMembersService_1 = class ClubMembersService {
         });
         if (!member)
             throw new common_1.NotFoundException('Membro do Clube Outrahora não encontrado');
-        const accounts = await this.findLinkedAccounts([member.cpf]);
+        const accounts = await this.findLinkedAccounts([member.email]);
         return this.withLinkedAccount(member, accounts);
     }
     async create(dto, adminUserId) {
-        const cpf = (0, cpf_util_1.normalizeCpf)(dto.cpf);
-        if (!(0, cpf_util_1.isValidCpf)(cpf))
-            throw new common_1.BadRequestException('CPF inválido');
+        const email = this.normalizeEmail(dto.email);
         try {
             const member = await this.prisma.$transaction(async (tx) => {
                 const created = await tx.clubMember.create({
                     data: {
-                        cpf,
+                        email,
                         name: this.optionalText(dto.name),
-                        email: dto.email?.toLowerCase().trim() || null,
-                        phone: dto.phone ? (0, cpf_util_1.normalizeCpf)(dto.phone) : null,
+                        phone: dto.phone?.replace(/\D/g, '') || null,
                         isActive: true,
                         activatedAt: new Date(),
                     },
@@ -101,17 +97,17 @@ let ClubMembersService = ClubMembersService_1 = class ClubMembersService {
                         action: 'CLUB_MEMBER_CREATED',
                         entity: 'ClubMember',
                         entityId: created.id,
-                        metadata: { cpf: (0, cpf_util_1.maskCpf)(cpf), isActive: true },
+                        metadata: { email: (0, demo_email_util_1.maskEmail)(email), isActive: true },
                     },
                 });
                 return created;
             });
-            this.logger.log(`Membro do Clube criado: ${(0, cpf_util_1.maskCpf)(cpf)}`);
+            this.logger.log(`Membro do Clube criado: ${(0, demo_email_util_1.maskEmail)(email)}`);
             return this.findOne(member.id);
         }
         catch (error) {
             if (error instanceof client_1.Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-                throw new common_1.ConflictException('CPF já cadastrado no Clube Outrahora');
+                throw new common_1.ConflictException('E-mail já cadastrado no Clube Outrahora');
             }
             throw error;
         }
@@ -153,30 +149,38 @@ let ClubMembersService = ClubMembersService_1 = class ClubMembersService {
                     action: isActive ? 'CLUB_MEMBER_ACTIVATED' : 'CLUB_MEMBER_DEACTIVATED',
                     entity: 'ClubMember',
                     entityId: id,
-                    metadata: { cpf: (0, cpf_util_1.maskCpf)(member.cpf), isActive },
+                    metadata: { email: (0, demo_email_util_1.maskEmail)(member.email), isActive },
                 },
             });
         });
-        this.logger.log(`Membro do Clube ${isActive ? 'ativado' : 'desativado'}: ${(0, cpf_util_1.maskCpf)(member.cpf)}`);
+        this.logger.log(`Membro do Clube ${isActive ? 'ativado' : 'desativado'}: ${(0, demo_email_util_1.maskEmail)(member.email)}`);
         return this.findOne(id);
     }
-    async findLinkedAccounts(cpfs) {
-        if (cpfs.length === 0)
+    async findLinkedAccounts(memberEmails) {
+        const emails = [...new Set(memberEmails.map((email) => this.normalizeEmail(email)))];
+        if (emails.length === 0)
             return new Map();
         const users = await this.prisma.user.findMany({
-            where: { cpf: { in: cpfs } },
-            select: { id: true, cpf: true, name: true, email: true, isActive: true },
+            where: {
+                OR: emails.map((email) => ({ email: { contains: email, mode: 'insensitive' } })),
+            },
+            select: { id: true, name: true, email: true, isActive: true },
         });
-        return new Map(users.filter((user) => user.cpf).map((user) => [user.cpf, {
+        return new Map(users
+            .filter((user) => emails.includes(this.normalizeEmail(user.email)))
+            .map((user) => [this.normalizeEmail(user.email), {
                 id: user.id, name: user.name, email: user.email, isActive: user.isActive,
             }]));
     }
     withLinkedAccount(member, accounts) {
-        const linkedAccount = accounts.get(member.cpf) ?? null;
+        const linkedAccount = accounts.get(this.normalizeEmail(member.email)) ?? null;
         return { ...member, hasLinkedAccount: Boolean(linkedAccount), linkedAccount };
     }
     optionalText(value) {
         return value?.trim() || null;
+    }
+    normalizeEmail(value) {
+        return value.trim().toLowerCase();
     }
 };
 exports.ClubMembersService = ClubMembersService;

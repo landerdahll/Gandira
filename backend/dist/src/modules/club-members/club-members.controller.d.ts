@@ -6,15 +6,14 @@ export declare class ClubMembersController {
     list(page: number, limit: number, search?: string): Promise<{
         data: ({
             id: string;
-            cpf: string;
+            email: string;
             name: string | null;
-            email: string | null;
             phone: string | null;
             isActive: boolean;
-            activatedAt: Date;
-            deactivatedAt: Date | null;
             createdAt: Date;
             updatedAt: Date;
+            activatedAt: Date;
+            deactivatedAt: Date | null;
         } & {
             hasLinkedAccount: boolean;
             linkedAccount: {
@@ -61,11 +60,11 @@ export declare class ClubMembersController {
             updatedAt: Date;
             status: import(".prisma/client").$Enums.ClubBenefitUsageStatus;
             eventId: string;
+            batchId: string | null;
             discountAmount: import("@prisma/client/runtime/library").Decimal | null;
             clubMemberId: string;
             reservedOrderId: string | null;
             confirmedOrderId: string | null;
-            batchId: string | null;
             originalAmount: import("@prisma/client/runtime/library").Decimal | null;
             finalAmount: import("@prisma/client/runtime/library").Decimal | null;
             reservedAt: Date | null;
@@ -76,15 +75,14 @@ export declare class ClubMembersController {
         })[];
     } & {
         id: string;
-        cpf: string;
+        email: string;
         name: string | null;
-        email: string | null;
         phone: string | null;
         isActive: boolean;
-        activatedAt: Date;
-        deactivatedAt: Date | null;
         createdAt: Date;
         updatedAt: Date;
+        activatedAt: Date;
+        deactivatedAt: Date | null;
     } & {
         hasLinkedAccount: boolean;
         linkedAccount: {
@@ -118,11 +116,11 @@ export declare class ClubMembersController {
             updatedAt: Date;
             status: import(".prisma/client").$Enums.ClubBenefitUsageStatus;
             eventId: string;
+            batchId: string | null;
             discountAmount: import("@prisma/client/runtime/library").Decimal | null;
             clubMemberId: string;
             reservedOrderId: string | null;
             confirmedOrderId: string | null;
-            batchId: string | null;
             originalAmount: import("@prisma/client/runtime/library").Decimal | null;
             finalAmount: import("@prisma/client/runtime/library").Decimal | null;
             reservedAt: Date | null;
@@ -133,15 +131,14 @@ export declare class ClubMembersController {
         })[];
     } & {
         id: string;
-        cpf: string;
+        email: string;
         name: string | null;
-        email: string | null;
         phone: string | null;
         isActive: boolean;
-        activatedAt: Date;
-        deactivatedAt: Date | null;
         createdAt: Date;
         updatedAt: Date;
+        activatedAt: Date;
+        deactivatedAt: Date | null;
     } & {
         hasLinkedAccount: boolean;
         linkedAccount: {
@@ -177,11 +174,11 @@ export declare class ClubMembersController {
             updatedAt: Date;
             status: import(".prisma/client").$Enums.ClubBenefitUsageStatus;
             eventId: string;
+            batchId: string | null;
             discountAmount: import("@prisma/client/runtime/library").Decimal | null;
             clubMemberId: string;
             reservedOrderId: string | null;
             confirmedOrderId: string | null;
-            batchId: string | null;
             originalAmount: import("@prisma/client/runtime/library").Decimal | null;
             finalAmount: import("@prisma/client/runtime/library").Decimal | null;
             reservedAt: Date | null;
@@ -192,15 +189,14 @@ export declare class ClubMembersController {
         })[];
     } & {
         id: string;
-        cpf: string;
+        email: string;
         name: string | null;
-        email: string | null;
         phone: string | null;
         isActive: boolean;
-        activatedAt: Date;
-        deactivatedAt: Date | null;
         createdAt: Date;
         updatedAt: Date;
+        activatedAt: Date;
+        deactivatedAt: Date | null;
     } & {
         hasLinkedAccount: boolean;
         linkedAccount: {
@@ -236,11 +232,11 @@ export declare class ClubMembersController {
             updatedAt: Date;
             status: import(".prisma/client").$Enums.ClubBenefitUsageStatus;
             eventId: string;
+            batchId: string | null;
             discountAmount: import("@prisma/client/runtime/library").Decimal | null;
             clubMemberId: string;
             reservedOrderId: string | null;
             confirmedOrderId: string | null;
-            batchId: string | null;
             originalAmount: import("@prisma/client/runtime/library").Decimal | null;
             finalAmount: import("@prisma/client/runtime/library").Decimal | null;
             reservedAt: Date | null;
@@ -251,15 +247,14 @@ export declare class ClubMembersController {
         })[];
     } & {
         id: string;
-        cpf: string;
+        email: string;
         name: string | null;
-        email: string | null;
         phone: string | null;
         isActive: boolean;
-        activatedAt: Date;
-        deactivatedAt: Date | null;
         createdAt: Date;
         updatedAt: Date;
+        activatedAt: Date;
+        deactivatedAt: Date | null;
     } & {
         hasLinkedAccount: boolean;
         linkedAccount: {

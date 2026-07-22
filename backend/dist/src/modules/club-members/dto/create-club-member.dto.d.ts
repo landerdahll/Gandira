@@ -1,6 +1,5 @@
 export declare class CreateClubMemberDto {
-    cpf: string;
+    email: string;
     name?: string;
-    email?: string;
     phone?: string;
 }
