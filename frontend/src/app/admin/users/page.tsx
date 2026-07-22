@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { adminApi } from '@/lib/api';
 import { Search, Users, ShieldCheck, UserCheck, Phone, Calendar, Mail, ChevronDown, KeyRound, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import Link from 'next/link';
+import { AdminNavigation } from '@/components/admin/admin-navigation';
 
 const GENDER_LABELS: Record<string, string> = {
   MALE: 'Masculino',
@@ -134,13 +134,10 @@ export default function AdminUsersPage() {
 
   return (
     <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '32px 24px 80px' }}>
+      <AdminNavigation />
 
       {/* Header */}
-      <div style={{ marginBottom: '28px' }}>
-        <div style={{ float: 'right', display: 'flex', gap: 14 }}>
-          <Link href="/admin/clube-outrahora" style={{ color: '#67bed9', textDecoration: 'none', fontSize: 14 }}>Clube Outrahora</Link>
-          <Link href="/admin/transfers" style={{ color: '#67bed9', textDecoration: 'none', fontSize: 14 }}>Transferências →</Link>
-        </div>
+      <div style={{ margin: '26px 0 28px' }}>
         <div className="admin-header-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>

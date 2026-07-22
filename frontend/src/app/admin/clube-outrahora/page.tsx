@@ -1,13 +1,13 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
-import Link from 'next/link';
 import toast from 'react-hot-toast';
 import {
   CheckCircle2, ChevronLeft, ChevronRight, CircleOff, Link2, Plus,
   Search, ShieldCheck, UserRound, Users, X,
 } from 'lucide-react';
 import { clubMembersApi } from '@/lib/api';
+import { AdminNavigation } from '@/components/admin/admin-navigation';
 
 interface LinkedAccount {
   id: string;
@@ -300,14 +300,6 @@ function UsageCard({ usage }: { usage: BenefitUsage }) {
   </div>;
 }
 
-function AdminNavigation() {
-  return <nav style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-    <Link href="/admin/users" style={navLink}>Usuários</Link>
-    <Link href="/admin/clube-outrahora" style={{ ...navLink, color: '#67bed9', borderColor: '#29414b', background: '#0d1e28' }}>Clube Outrahora</Link>
-    <Link href="/admin/transfers" style={navLink}>Transferências</Link>
-  </nav>;
-}
-
 function SummaryCard({ label, value, icon, color }: { label: string; value: number; icon: React.ReactNode; color: string }) {
   return <div style={{ background: '#111', border: '1px solid #222', borderRadius: 15, padding: 18 }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, color, marginBottom: 10 }}>{icon}<span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>{label}</span></div>
@@ -346,7 +338,6 @@ const dangerButton: React.CSSProperties = { display: 'inline-flex', justifyConte
 const paginationButton: React.CSSProperties = { ...secondaryButton, display: 'flex', padding: 9 };
 const memberButton: React.CSSProperties = { border: 0, background: 'none', color: '#fff', padding: 0, cursor: 'pointer', fontWeight: 700, textAlign: 'left' };
 const iconButton: React.CSSProperties = { background: '#191919', border: '1px solid #292929', color: '#888', borderRadius: 8, padding: 7, display: 'flex', cursor: 'pointer' };
-const navLink: React.CSSProperties = { color: '#777', border: '1px solid #252525', borderRadius: 9, padding: '7px 11px', textDecoration: 'none', fontSize: 13 };
 const th: React.CSSProperties = { textAlign: 'left', color: '#555', background: '#131313', padding: 13, fontSize: 12, whiteSpace: 'nowrap' };
 const td: React.CSSProperties = { color: '#bbb', padding: 13, fontSize: 13, verticalAlign: 'middle' };
 const small: React.CSSProperties = { display: 'block', color: '#555', marginTop: 4 };
