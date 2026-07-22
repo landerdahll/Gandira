@@ -14,6 +14,7 @@ export declare class ClubMembersService {
             isActive: boolean;
             createdAt: Date;
             updatedAt: Date;
+            discountPercentage: Prisma.Decimal;
             activatedAt: Date;
             deactivatedAt: Date | null;
         } & {
@@ -62,6 +63,7 @@ export declare class ClubMembersService {
             eventId: string;
             batchId: string | null;
             discountAmount: Prisma.Decimal | null;
+            discountPercentage: Prisma.Decimal;
             clubMemberId: string;
             reservedOrderId: string | null;
             confirmedOrderId: string | null;
@@ -81,6 +83,7 @@ export declare class ClubMembersService {
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
+        discountPercentage: Prisma.Decimal;
         activatedAt: Date;
         deactivatedAt: Date | null;
     } & {
@@ -118,6 +121,7 @@ export declare class ClubMembersService {
             eventId: string;
             batchId: string | null;
             discountAmount: Prisma.Decimal | null;
+            discountPercentage: Prisma.Decimal;
             clubMemberId: string;
             reservedOrderId: string | null;
             confirmedOrderId: string | null;
@@ -137,6 +141,7 @@ export declare class ClubMembersService {
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
+        discountPercentage: Prisma.Decimal;
         activatedAt: Date;
         deactivatedAt: Date | null;
     } & {
@@ -174,6 +179,7 @@ export declare class ClubMembersService {
             eventId: string;
             batchId: string | null;
             discountAmount: Prisma.Decimal | null;
+            discountPercentage: Prisma.Decimal;
             clubMemberId: string;
             reservedOrderId: string | null;
             confirmedOrderId: string | null;
@@ -193,6 +199,7 @@ export declare class ClubMembersService {
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
+        discountPercentage: Prisma.Decimal;
         activatedAt: Date;
         deactivatedAt: Date | null;
     } & {
@@ -230,6 +237,7 @@ export declare class ClubMembersService {
             eventId: string;
             batchId: string | null;
             discountAmount: Prisma.Decimal | null;
+            discountPercentage: Prisma.Decimal;
             clubMemberId: string;
             reservedOrderId: string | null;
             confirmedOrderId: string | null;
@@ -249,6 +257,65 @@ export declare class ClubMembersService {
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
+        discountPercentage: Prisma.Decimal;
+        activatedAt: Date;
+        deactivatedAt: Date | null;
+    } & {
+        hasLinkedAccount: boolean;
+        linkedAccount: {
+            id: string;
+            name: string;
+            email: string;
+            isActive: boolean;
+        } | null;
+    }>;
+    updateDiscount(id: string, value: string, adminUserId: string): Promise<{
+        usages: ({
+            event: {
+                id: string;
+                title: string;
+            };
+            batch: {
+                id: string;
+                name: string;
+            } | null;
+            reservedOrder: {
+                id: string;
+                status: import(".prisma/client").$Enums.OrderStatus;
+            } | null;
+            confirmedOrder: {
+                id: string;
+                status: import(".prisma/client").$Enums.OrderStatus;
+            } | null;
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            status: import(".prisma/client").$Enums.ClubBenefitUsageStatus;
+            eventId: string;
+            batchId: string | null;
+            discountAmount: Prisma.Decimal | null;
+            discountPercentage: Prisma.Decimal;
+            clubMemberId: string;
+            reservedOrderId: string | null;
+            confirmedOrderId: string | null;
+            originalAmount: Prisma.Decimal | null;
+            finalAmount: Prisma.Decimal | null;
+            reservedAt: Date | null;
+            reservationExpiresAt: Date | null;
+            confirmedAt: Date | null;
+            releasedAt: Date | null;
+            releaseReason: string | null;
+        })[];
+    } & {
+        id: string;
+        email: string;
+        name: string | null;
+        phone: string | null;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        discountPercentage: Prisma.Decimal;
         activatedAt: Date;
         deactivatedAt: Date | null;
     } & {
@@ -265,4 +332,5 @@ export declare class ClubMembersService {
     private withLinkedAccount;
     private optionalText;
     private normalizeEmail;
+    private parseDiscountPercentage;
 }

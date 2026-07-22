@@ -5,6 +5,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ClubMembersService } from './club-members.service';
 import { CreateClubMemberDto } from './dto/create-club-member.dto';
+import { UpdateClubDiscountDto } from './dto/update-club-discount.dto';
 
 @ApiTags('Clube Outrahora')
 @ApiBearerAuth()
@@ -45,5 +46,15 @@ export class ClubMembersController {
   @ApiOperation({ summary: 'Desativar membro do Clube Outrahora' })
   deactivate(@Param('id') id: string, @CurrentUser() admin: { id: string }) {
     return this.clubMembers.deactivate(id, admin.id);
+  }
+
+  @Patch(':id/discount-percentage')
+  @ApiOperation({ summary: 'Alterar percentual de desconto do membro' })
+  updateDiscount(
+    @Param('id') id: string,
+    @Body() dto: UpdateClubDiscountDto,
+    @CurrentUser() admin: { id: string },
+  ) {
+    return this.clubMembers.updateDiscount(id, dto.discountPercentage, admin.id);
   }
 }

@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { maskEmail } from '../../common/utils/demo-email.util';
@@ -81,6 +81,7 @@ export class ClubMembersService {
             email,
             name: this.optionalText(dto.name),
             phone: dto.phone?.replace(/\D/g, '') || null,
+            discountPercentage: this.parseDiscountPercentage(dto.discountPercentage ?? '10.00'),
             isActive: true,
             activatedAt: new Date(),
           },
@@ -112,6 +113,32 @@ export class ClubMembersService {
 
   deactivate(id: string, adminUserId: string) {
     return this.changeStatus(id, false, adminUserId);
+  }
+
+  async updateDiscount(id: string, value: string, adminUserId: string) {
+    const discountPercentage = this.parseDiscountPercentage(value);
+    const member = await this.prisma.clubMember.findUnique({ where: { id } });
+    if (!member) throw new NotFoundException('Membro do Clube Outrahora não encontrado');
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.clubMember.update({ where: { id }, data: { discountPercentage } });
+      await tx.auditLog.create({
+        data: {
+          userId: adminUserId,
+          action: 'CLUB_MEMBER_DISCOUNT_UPDATED',
+          entity: 'ClubMember',
+          entityId: id,
+          metadata: {
+            email: maskEmail(member.email),
+            previousDiscountPercentage: member.discountPercentage.toFixed(2),
+            newDiscountPercentage: discountPercentage.toFixed(2),
+          },
+        },
+      });
+    });
+
+    this.logger.log(`Desconto do membro do Clube alterado: ${maskEmail(member.email)}`);
+    return this.findOne(id);
   }
 
   private async changeStatus(id: string, isActive: boolean, adminUserId: string) {
@@ -185,5 +212,16 @@ export class ClubMembersService {
 
   private normalizeEmail(value: string) {
     return value.trim().toLowerCase();
+  }
+
+  private parseDiscountPercentage(value: string) {
+    if (!/^\d{1,2}(?:\.\d{1,2})?$/.test(value)) {
+      throw new BadRequestException('O percentual de desconto deve ser um decimal entre 0,01 e 99,99, com até duas casas decimais');
+    }
+    const percentage = new Prisma.Decimal(value);
+    if (percentage.lt(new Prisma.Decimal('0.01')) || percentage.gt(new Prisma.Decimal('99.99'))) {
+      throw new BadRequestException('O percentual de desconto deve estar entre 0,01 e 99,99');
+    }
+    return percentage;
   }
 }

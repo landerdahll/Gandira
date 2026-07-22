@@ -31,6 +31,7 @@ interface BenefitUsage {
   confirmedAt?: string | null;
   releasedAt?: string | null;
   releaseReason?: string | null;
+  discountPercentage: string;
 }
 
 interface ClubMember {
@@ -38,6 +39,7 @@ interface ClubMember {
   email: string;
   name?: string | null;
   phone?: string | null;
+  discountPercentage: string;
   isActive: boolean;
   activatedAt?: string | null;
   deactivatedAt?: string | null;
@@ -47,7 +49,7 @@ interface ClubMember {
   usages?: BenefitUsage[];
 }
 
-const emptyForm = { name: '', email: '', phone: '' };
+const emptyForm = { name: '', email: '', phone: '', discountPercentage: '10' };
 
 export default function ClubeOutrahoraPage() {
   const [members, setMembers] = useState<ClubMember[]>([]);
@@ -62,6 +64,8 @@ export default function ClubeOutrahoraPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [acting, setActing] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [discountOpen, setDiscountOpen] = useState(false);
+  const [discountValue, setDiscountValue] = useState('10');
   const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
@@ -113,6 +117,7 @@ export default function ClubeOutrahoraPage() {
         email: form.email.trim(),
         ...(form.name.trim() ? { name: form.name.trim() } : {}),
         ...(form.phone.trim() ? { phone: form.phone } : {}),
+        discountPercentage: normalizePercentage(form.discountPercentage),
       });
       toast.success('Membro cadastrado com sucesso');
       setCreateOpen(false);
@@ -123,6 +128,29 @@ export default function ClubeOutrahoraPage() {
       toast.error(error.response?.status === 409
         ? 'Este e-mail já está cadastrado no Clube Outrahora'
         : apiMessage(error, 'Erro ao cadastrar membro'));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function openDiscount(member: ClubMember) {
+    setDetail(member);
+    setDiscountValue(formatPercentageInput(member.discountPercentage));
+    setDiscountOpen(true);
+  }
+
+  async function submitDiscount(event: FormEvent) {
+    event.preventDefault();
+    if (!detail) return;
+    setSaving(true);
+    try {
+      const response = await clubMembersApi.updateDiscount(detail.id, normalizePercentage(discountValue));
+      setDetail(response.data);
+      setDiscountOpen(false);
+      setRefreshKey((value) => value + 1);
+      toast.success('Percentual de desconto alterado com sucesso');
+    } catch (error: any) {
+      toast.error(apiMessage(error, 'Erro ao alterar percentual de desconto'));
     } finally {
       setSaving(false);
     }
@@ -192,7 +220,7 @@ export default function ClubeOutrahoraPage() {
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 850 }}>
-              <thead><tr>{['Membro', 'E-mail', 'Telefone', 'Conta vinculada', 'Status', 'Ações'].map((title) => <th key={title} style={th}>{title}</th>)}</tr></thead>
+              <thead><tr>{['Membro', 'E-mail', 'Telefone', 'Desconto', 'Conta vinculada', 'Status', 'Ações'].map((title) => <th key={title} style={th}>{title}</th>)}</tr></thead>
               <tbody>{members.map((member) => (
                 <tr key={member.id} style={{ borderTop: '1px solid #1d1d1d' }}>
                   <td style={td}>
@@ -201,6 +229,7 @@ export default function ClubeOutrahoraPage() {
                   </td>
                   <td style={td}>{member.email}</td>
                   <td style={td}>{formatPhone(member.phone)}</td>
+                  <td style={td}>{formatPercentage(member.discountPercentage)}</td>
                   <td style={td}>{member.hasLinkedAccount
                     ? <Badge color="#67bed9" background="#0d1e28"><Link2 size={11} /> Vinculada</Badge>
                     : <Badge color="#777" background="#191919">Sem conta</Badge>}
@@ -209,6 +238,7 @@ export default function ClubeOutrahoraPage() {
                   <td style={td}>
                     <div style={{ display: 'flex', gap: 7 }}>
                       <button onClick={() => openDetail(member.id)} disabled={detailLoading} style={secondaryButton}>Detalhes</button>
+                      <button onClick={() => openDiscount(member)} style={secondaryButton}>Alterar desconto</button>
                       <button onClick={() => toggleStatus(member)} disabled={acting === member.id} style={member.isActive ? dangerButton : primarySmallButton}>
                         {acting === member.id ? 'Aguarde...' : member.isActive ? 'Desativar' : 'Ativar'}
                       </button>
@@ -233,6 +263,13 @@ export default function ClubeOutrahoraPage() {
             <Field label="Nome"><input value={form.name} maxLength={100} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Nome completo" style={inputStyle} /></Field>
             <Field label="E-mail *"><input required type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="email@exemplo.com" style={inputStyle} /></Field>
             <Field label="Telefone"><input value={form.phone} onChange={(event) => setForm({ ...form, phone: formatPhoneInput(event.target.value) })} placeholder="(00) 00000-0000" style={inputStyle} /></Field>
+            <Field label="Desconto (%) *">
+              <input required inputMode="decimal" value={form.discountPercentage} onChange={(event) => setForm({ ...form, discountPercentage: sanitizePercentageInput(event.target.value) })} placeholder="10,00" style={inputStyle} />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="button" onClick={() => setForm({ ...form, discountPercentage: '10' })} style={shortcutButton}>10%</button>
+                <button type="button" onClick={() => setForm({ ...form, discountPercentage: '20' })} style={shortcutButton}>20%</button>
+              </div>
+            </Field>
             <p style={{ color: '#555', fontSize: 12 }}>O membro será cadastrado inicialmente como ativo.</p>
             <button type="submit" disabled={saving} style={primaryButton}>{saving ? 'Cadastrando...' : 'Cadastrar membro'}</button>
           </form>
@@ -241,7 +278,23 @@ export default function ClubeOutrahoraPage() {
 
       {detail && (
         <Modal title="Detalhes do membro" onClose={() => setDetail(null)} wide>
-          <MemberDetail member={detail} acting={acting === detail.id} onToggle={() => toggleStatus(detail)} />
+          <MemberDetail member={detail} acting={acting === detail.id} onToggle={() => toggleStatus(detail)} onEditDiscount={() => openDiscount(detail)} />
+        </Modal>
+      )}
+
+      {discountOpen && detail && (
+        <Modal title="Alterar desconto" onClose={() => { if (!saving) setDiscountOpen(false); }}>
+          <form onSubmit={submitDiscount} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <p style={{ color: '#777', fontSize: 13 }}>Membro: {detail.name || detail.email}</p>
+            <Field label="Desconto (%) *">
+              <input required autoFocus inputMode="decimal" value={discountValue} onChange={(event) => setDiscountValue(sanitizePercentageInput(event.target.value))} style={inputStyle} />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="button" onClick={() => setDiscountValue('10')} style={shortcutButton}>10%</button>
+                <button type="button" onClick={() => setDiscountValue('20')} style={shortcutButton}>20%</button>
+              </div>
+            </Field>
+            <button type="submit" disabled={saving} style={primaryButton}>{saving ? 'Salvando...' : 'Salvar desconto'}</button>
+          </form>
         </Modal>
       )}
 
@@ -250,7 +303,7 @@ export default function ClubeOutrahoraPage() {
   );
 }
 
-function MemberDetail({ member, acting, onToggle }: { member: ClubMember; acting: boolean; onToggle: () => void }) {
+function MemberDetail({ member, acting, onToggle, onEditDiscount }: { member: ClubMember; acting: boolean; onToggle: () => void; onEditDiscount: () => void }) {
   const usages = member.usages ?? [];
   return <div>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
@@ -258,6 +311,7 @@ function MemberDetail({ member, acting, onToggle }: { member: ClubMember; acting
       <Info label="Nome" value={member.name || 'Não informado'} />
       <Info label="Telefone" value={formatPhone(member.phone)} />
       <Info label="E-mail" value={member.email} />
+      <Info label="Desconto" value={formatPercentage(member.discountPercentage)} />
       <Info label="Criado em" value={formatDate(member.createdAt)} />
       <Info label="Ativado em" value={formatDate(member.activatedAt)} />
       <Info label="Desativado em" value={formatDate(member.deactivatedAt)} />
@@ -277,9 +331,12 @@ function MemberDetail({ member, acting, onToggle }: { member: ClubMember; acting
       {usages.length === 0 ? <p style={{ color: '#666', fontSize: 14 }}>Nenhuma utilização registrada.</p> : usages.map((usage) => <UsageCard key={usage.id} usage={usage} />)}
     </section>
 
-    <button onClick={onToggle} disabled={acting} style={member.isActive ? dangerButton : primaryButton}>
-      {acting ? 'Aguarde...' : member.isActive ? 'Desativar membro' : 'Ativar membro'}
-    </button>
+    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+      <button onClick={onEditDiscount} style={secondaryButton}>Alterar desconto</button>
+      <button onClick={onToggle} disabled={acting} style={member.isActive ? dangerButton : primaryButton}>
+        {acting ? 'Aguarde...' : member.isActive ? 'Desativar membro' : 'Ativar membro'}
+      </button>
+    </div>
   </div>;
 }
 
@@ -290,6 +347,7 @@ function UsageCard({ usage }: { usage: BenefitUsage }) {
     <p style={usageLine}>Pedido reservado: {orderLabel(usage.reservedOrder)}</p>
     <p style={usageLine}>Pedido confirmado: {orderLabel(usage.confirmedOrder)}</p>
     <p style={usageLine}>Valores: {money(usage.originalAmount)} − {money(usage.discountAmount)} = {money(usage.finalAmount)}</p>
+    <p style={usageLine}>Percentual aplicado: {formatPercentage(usage.discountPercentage)}</p>
     <p style={usageLine}>Reserva: {formatDate(usage.reservedAt)} · expira {formatDate(usage.reservationExpiresAt)}</p>
     <p style={usageLine}>Confirmação: {formatDate(usage.confirmedAt)} · liberação {formatDate(usage.releasedAt)}</p>
     {usage.releaseReason && <p style={{ ...usageLine, color: '#ff9d7a' }}>Motivo: {usage.releaseReason}</p>}
@@ -322,12 +380,17 @@ function formatPhone(value?: string | null) { return value ? formatPhoneInput(va
 function formatDate(value?: string | null) { return value ? new Date(value).toLocaleString('pt-BR') : '—'; }
 function money(value?: string | number | null) { return value == null ? '—' : Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
 function orderLabel(order?: { id: string; status: string } | null) { return order ? `${order.id.slice(-8).toUpperCase()} (${order.status})` : '—'; }
+function formatPercentage(value: string) { return `${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(Number(value))}%`; }
+function formatPercentageInput(value: string) { return value.replace('.', ','); }
+function sanitizePercentageInput(value: string) { return value.replace(/[^\d,.]/g, '').replace('.', ',').replace(/(,.*),/g, '$1').slice(0, 5); }
+function normalizePercentage(value: string) { return value.trim().replace(',', '.'); }
 function apiMessage(error: any, fallback: string) { const message = error.response?.data?.message; return Array.isArray(message) ? message.join(', ') : message || fallback; }
 
 const inputStyle: React.CSSProperties = { background: '#171717', border: '1px solid #292929', color: '#fff', borderRadius: 10, padding: '11px 13px', outline: 'none', fontSize: 14 };
 const primaryButton: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, background: '#67bed9', color: '#fff', border: 0, borderRadius: 10, padding: '11px 16px', fontWeight: 700, cursor: 'pointer' };
 const primarySmallButton: React.CSSProperties = { ...primaryButton, padding: '7px 11px', fontSize: 12 };
 const secondaryButton: React.CSSProperties = { background: '#191919', color: '#aaa', border: '1px solid #303030', borderRadius: 8, padding: '7px 10px', cursor: 'pointer', fontSize: 12 };
+const shortcutButton: React.CSSProperties = { ...secondaryButton, borderRadius: 999, padding: '6px 13px' };
 const dangerButton: React.CSSProperties = { display: 'inline-flex', justifyContent: 'center', background: '#2a1717', color: '#ff8b8b', border: '1px solid #5a2929', borderRadius: 9, padding: '9px 13px', cursor: 'pointer', fontWeight: 700 };
 const paginationButton: React.CSSProperties = { ...secondaryButton, display: 'flex', padding: 9 };
 const memberButton: React.CSSProperties = { border: 0, background: 'none', color: '#fff', padding: 0, cursor: 'pointer', fontWeight: 700, textAlign: 'left' };

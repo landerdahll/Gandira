@@ -87,6 +87,7 @@ let ClubMembersService = ClubMembersService_1 = class ClubMembersService {
                         email,
                         name: this.optionalText(dto.name),
                         phone: dto.phone?.replace(/\D/g, '') || null,
+                        discountPercentage: this.parseDiscountPercentage(dto.discountPercentage ?? '10.00'),
                         isActive: true,
                         activatedAt: new Date(),
                     },
@@ -117,6 +118,30 @@ let ClubMembersService = ClubMembersService_1 = class ClubMembersService {
     }
     deactivate(id, adminUserId) {
         return this.changeStatus(id, false, adminUserId);
+    }
+    async updateDiscount(id, value, adminUserId) {
+        const discountPercentage = this.parseDiscountPercentage(value);
+        const member = await this.prisma.clubMember.findUnique({ where: { id } });
+        if (!member)
+            throw new common_1.NotFoundException('Membro do Clube Outrahora não encontrado');
+        await this.prisma.$transaction(async (tx) => {
+            await tx.clubMember.update({ where: { id }, data: { discountPercentage } });
+            await tx.auditLog.create({
+                data: {
+                    userId: adminUserId,
+                    action: 'CLUB_MEMBER_DISCOUNT_UPDATED',
+                    entity: 'ClubMember',
+                    entityId: id,
+                    metadata: {
+                        email: (0, demo_email_util_1.maskEmail)(member.email),
+                        previousDiscountPercentage: member.discountPercentage.toFixed(2),
+                        newDiscountPercentage: discountPercentage.toFixed(2),
+                    },
+                },
+            });
+        });
+        this.logger.log(`Desconto do membro do Clube alterado: ${(0, demo_email_util_1.maskEmail)(member.email)}`);
+        return this.findOne(id);
     }
     async changeStatus(id, isActive, adminUserId) {
         const member = await this.prisma.clubMember.findUnique({ where: { id } });
@@ -181,6 +206,16 @@ let ClubMembersService = ClubMembersService_1 = class ClubMembersService {
     }
     normalizeEmail(value) {
         return value.trim().toLowerCase();
+    }
+    parseDiscountPercentage(value) {
+        if (!/^\d{1,2}(?:\.\d{1,2})?$/.test(value)) {
+            throw new common_1.BadRequestException('O percentual de desconto deve ser um decimal entre 0,01 e 99,99, com até duas casas decimais');
+        }
+        const percentage = new client_1.Prisma.Decimal(value);
+        if (percentage.lt(new client_1.Prisma.Decimal('0.01')) || percentage.gt(new client_1.Prisma.Decimal('99.99'))) {
+            throw new common_1.BadRequestException('O percentual de desconto deve estar entre 0,01 e 99,99');
+        }
+        return percentage;
     }
 };
 exports.ClubMembersService = ClubMembersService;

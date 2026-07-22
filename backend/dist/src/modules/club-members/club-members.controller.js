@@ -20,6 +20,7 @@ const current_user_decorator_1 = require("../../common/decorators/current-user.d
 const roles_decorator_1 = require("../../common/decorators/roles.decorator");
 const club_members_service_1 = require("./club-members.service");
 const create_club_member_dto_1 = require("./dto/create-club-member.dto");
+const update_club_discount_dto_1 = require("./dto/update-club-discount.dto");
 let ClubMembersController = class ClubMembersController {
     constructor(clubMembers) {
         this.clubMembers = clubMembers;
@@ -38,6 +39,9 @@ let ClubMembersController = class ClubMembersController {
     }
     deactivate(id, admin) {
         return this.clubMembers.deactivate(id, admin.id);
+    }
+    updateDiscount(id, dto, admin) {
+        return this.clubMembers.updateDiscount(id, dto.discountPercentage, admin.id);
     }
 };
 exports.ClubMembersController = ClubMembersController;
@@ -86,6 +90,16 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], ClubMembersController.prototype, "deactivate", null);
+__decorate([
+    (0, common_1.Patch)(':id/discount-percentage'),
+    (0, swagger_1.ApiOperation)({ summary: 'Alterar percentual de desconto do membro' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_club_discount_dto_1.UpdateClubDiscountDto, Object]),
+    __metadata("design:returntype", void 0)
+], ClubMembersController.prototype, "updateDiscount", null);
 exports.ClubMembersController = ClubMembersController = __decorate([
     (0, swagger_1.ApiTags)('Clube Outrahora'),
     (0, swagger_1.ApiBearerAuth)(),

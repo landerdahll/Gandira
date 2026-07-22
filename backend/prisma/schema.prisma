@@ -429,13 +429,14 @@ model AuditLog {
 }
 
 model ClubMember {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  phone         String?
-  isActive      Boolean   @default(true)
-  activatedAt   DateTime  @default(now())
-  deactivatedAt DateTime?
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  name               String?
+  phone              String?
+  discountPercentage Decimal  @default(10.00) @db.Decimal(5, 2)
+  isActive           Boolean  @default(true)
+  activatedAt        DateTime @default(now())
+  deactivatedAt      DateTime?
 
   usages ClubBenefitUsage[]
 
@@ -454,6 +455,7 @@ model ClubBenefitUsage {
   eventId      String
   event        Event                  @relation(fields: [eventId], references: [id], onDelete: Restrict)
   status       ClubBenefitUsageStatus @default(RESERVED)
+  discountPercentage Decimal          @db.Decimal(5, 2)
 
   reservedOrderId  String? @unique
   reservedOrder    Order?  @relation("ClubBenefitReservedOrder", fields: [reservedOrderId], references: [id], onDelete: SetNull)

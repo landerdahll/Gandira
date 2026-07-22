@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const common_1 = require("@nestjs/common");
+const client_1 = require("@prisma/client");
 const club_members_service_1 = require("./club-members.service");
 describe('ClubMembersService', () => {
     const activeMember = {
@@ -8,6 +9,7 @@ describe('ClubMembersService', () => {
         name: 'Maria',
         email: 'maria@example.com',
         phone: '48999999999',
+        discountPercentage: new client_1.Prisma.Decimal('10.00'),
         isActive: true,
         activatedAt: new Date(),
         deactivatedAt: null,
@@ -50,6 +52,7 @@ describe('ClubMembersService', () => {
         expect(tx.clubMember.create).toHaveBeenCalledWith({
             data: expect.objectContaining({
                 email: 'maria@example.com', name: 'Maria', phone: '48999999999', isActive: true,
+                discountPercentage: new client_1.Prisma.Decimal('10.00'),
             }),
         });
         expect(tx.auditLog.create).toHaveBeenCalledWith({
@@ -60,6 +63,39 @@ describe('ClubMembersService', () => {
         });
         expect(JSON.stringify(tx.auditLog.create.mock.calls)).not.toContain('maria@example.com');
         expect(result).toEqual(expect.objectContaining({ hasLinkedAccount: true }));
+    });
+    it.each([
+        ['10', '10.00'],
+        ['10.5', '10.50'],
+        ['10.50', '10.50'],
+    ])('normaliza o percentual informado %s como Decimal %s', async (input, expected) => {
+        const { service, tx } = setup();
+        await service.create({ email: 'maria@example.com', discountPercentage: input }, 'admin-1');
+        const percentage = tx.clubMember.create.mock.calls[0][0].data.discountPercentage;
+        expect(percentage.toFixed(2)).toBe(expected);
+    });
+    it.each(['0', '-1', '100', '100.01', '10.123', '', '1e1', 'NaN', 'Infinity'])('rejeita percentual inválido %p', async (value) => {
+        const { service, tx } = setup();
+        await expect(service.create({ email: 'maria@example.com', discountPercentage: value }, 'admin-1'))
+            .rejects.toBeInstanceOf(common_1.BadRequestException);
+        expect(tx.clubMember.create).not.toHaveBeenCalled();
+    });
+    it('altera o percentual, audita valores anterior e novo e não altera snapshots de usos', async () => {
+        const { service, tx } = setup();
+        await service.updateDiscount(activeMember.id, '15.75', 'admin-1');
+        const updated = tx.clubMember.update.mock.calls[0][0].data.discountPercentage;
+        expect(updated.toFixed(2)).toBe('15.75');
+        expect(tx.auditLog.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({
+                action: 'CLUB_MEMBER_DISCOUNT_UPDATED',
+                metadata: {
+                    email: 'm***@e***.com',
+                    previousDiscountPercentage: '10.00',
+                    newDiscountPercentage: '15.75',
+                },
+            }),
+        });
+        expect(tx.clubBenefitUsage.updateMany).not.toHaveBeenCalled();
     });
     it('lista membros e vincula a conta por e-mail ignorando caixa e espaços', async () => {
         const { service, prisma } = setup();

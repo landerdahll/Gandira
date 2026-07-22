@@ -1,5 +1,6 @@
 import { ClubMembersService } from './club-members.service';
 import { CreateClubMemberDto } from './dto/create-club-member.dto';
+import { UpdateClubDiscountDto } from './dto/update-club-discount.dto';
 export declare class ClubMembersController {
     private readonly clubMembers;
     constructor(clubMembers: ClubMembersService);
@@ -12,6 +13,7 @@ export declare class ClubMembersController {
             isActive: boolean;
             createdAt: Date;
             updatedAt: Date;
+            discountPercentage: import("@prisma/client/runtime/library").Decimal;
             activatedAt: Date;
             deactivatedAt: Date | null;
         } & {
@@ -62,6 +64,7 @@ export declare class ClubMembersController {
             eventId: string;
             batchId: string | null;
             discountAmount: import("@prisma/client/runtime/library").Decimal | null;
+            discountPercentage: import("@prisma/client/runtime/library").Decimal;
             clubMemberId: string;
             reservedOrderId: string | null;
             confirmedOrderId: string | null;
@@ -81,6 +84,7 @@ export declare class ClubMembersController {
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
+        discountPercentage: import("@prisma/client/runtime/library").Decimal;
         activatedAt: Date;
         deactivatedAt: Date | null;
     } & {
@@ -118,6 +122,7 @@ export declare class ClubMembersController {
             eventId: string;
             batchId: string | null;
             discountAmount: import("@prisma/client/runtime/library").Decimal | null;
+            discountPercentage: import("@prisma/client/runtime/library").Decimal;
             clubMemberId: string;
             reservedOrderId: string | null;
             confirmedOrderId: string | null;
@@ -137,6 +142,7 @@ export declare class ClubMembersController {
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
+        discountPercentage: import("@prisma/client/runtime/library").Decimal;
         activatedAt: Date;
         deactivatedAt: Date | null;
     } & {
@@ -176,6 +182,7 @@ export declare class ClubMembersController {
             eventId: string;
             batchId: string | null;
             discountAmount: import("@prisma/client/runtime/library").Decimal | null;
+            discountPercentage: import("@prisma/client/runtime/library").Decimal;
             clubMemberId: string;
             reservedOrderId: string | null;
             confirmedOrderId: string | null;
@@ -195,6 +202,7 @@ export declare class ClubMembersController {
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
+        discountPercentage: import("@prisma/client/runtime/library").Decimal;
         activatedAt: Date;
         deactivatedAt: Date | null;
     } & {
@@ -234,6 +242,7 @@ export declare class ClubMembersController {
             eventId: string;
             batchId: string | null;
             discountAmount: import("@prisma/client/runtime/library").Decimal | null;
+            discountPercentage: import("@prisma/client/runtime/library").Decimal;
             clubMemberId: string;
             reservedOrderId: string | null;
             confirmedOrderId: string | null;
@@ -253,6 +262,67 @@ export declare class ClubMembersController {
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
+        discountPercentage: import("@prisma/client/runtime/library").Decimal;
+        activatedAt: Date;
+        deactivatedAt: Date | null;
+    } & {
+        hasLinkedAccount: boolean;
+        linkedAccount: {
+            id: string;
+            name: string;
+            email: string;
+            isActive: boolean;
+        } | null;
+    }>;
+    updateDiscount(id: string, dto: UpdateClubDiscountDto, admin: {
+        id: string;
+    }): Promise<{
+        usages: ({
+            event: {
+                id: string;
+                title: string;
+            };
+            batch: {
+                id: string;
+                name: string;
+            } | null;
+            reservedOrder: {
+                id: string;
+                status: import(".prisma/client").$Enums.OrderStatus;
+            } | null;
+            confirmedOrder: {
+                id: string;
+                status: import(".prisma/client").$Enums.OrderStatus;
+            } | null;
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            status: import(".prisma/client").$Enums.ClubBenefitUsageStatus;
+            eventId: string;
+            batchId: string | null;
+            discountAmount: import("@prisma/client/runtime/library").Decimal | null;
+            discountPercentage: import("@prisma/client/runtime/library").Decimal;
+            clubMemberId: string;
+            reservedOrderId: string | null;
+            confirmedOrderId: string | null;
+            originalAmount: import("@prisma/client/runtime/library").Decimal | null;
+            finalAmount: import("@prisma/client/runtime/library").Decimal | null;
+            reservedAt: Date | null;
+            reservationExpiresAt: Date | null;
+            confirmedAt: Date | null;
+            releasedAt: Date | null;
+            releaseReason: string | null;
+        })[];
+    } & {
+        id: string;
+        email: string;
+        name: string | null;
+        phone: string | null;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        discountPercentage: import("@prisma/client/runtime/library").Decimal;
         activatedAt: Date;
         deactivatedAt: Date | null;
     } & {

@@ -180,8 +180,10 @@ export const clubMembersApi = {
   list: (params?: { page?: number; limit?: number; search?: string }) =>
     api.get('/admin/club-members', { params }),
   get: (id: string) => api.get(`/admin/club-members/${id}`),
-  create: (data: { email: string; name?: string; phone?: string }) =>
+  create: (data: { email: string; name?: string; phone?: string; discountPercentage: string }) =>
     api.post('/admin/club-members', data),
+  updateDiscount: (id: string, discountPercentage: string) =>
+    api.patch(`/admin/club-members/${id}/discount-percentage`, { discountPercentage }),
   activate: (id: string) => api.patch(`/admin/club-members/${id}/activate`),
   deactivate: (id: string) => api.patch(`/admin/club-members/${id}/deactivate`),
 };
