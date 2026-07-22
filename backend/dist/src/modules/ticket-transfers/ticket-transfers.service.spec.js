@@ -71,4 +71,20 @@ describe('TicketTransfersService demo email mode', () => {
         expect(logger).not.toHaveBeenCalledWith(expect.stringContaining('[DEMO EMAIL MODE]'));
     });
 });
+describe('TicketTransfersService Clube Outrahora', () => {
+    it('bloqueia a transferência do ingresso que recebeu o benefício', async () => {
+        const ticket = {
+            id: 'ticket-1', ownerUserId: 'owner-1', status: 'ACTIVE', checkIn: null,
+            owner: { email: 'owner@example.com' },
+            event: { allowTicketTransfers: true, startDate: new Date(Date.now() + 60_000) },
+            order: { status: 'PAID' },
+            clubBenefitUsage: { id: 'usage-1' },
+        };
+        const tx = { ticket: { findUnique: jest.fn().mockResolvedValue(ticket) } };
+        const prisma = { $transaction: jest.fn((callback) => callback(tx)) };
+        const service = new ticket_transfers_service_1.TicketTransfersService(prisma, {}, {});
+        await expect(service.request('ticket-1', 'owner-1', 'guest@example.com'))
+            .rejects.toThrow('Este ingresso recebeu o benefício do Clube Outrahora e não pode ser transferido');
+    });
+});
 //# sourceMappingURL=ticket-transfers.service.spec.js.map

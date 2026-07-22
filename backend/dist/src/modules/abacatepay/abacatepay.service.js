@@ -16,6 +16,7 @@ const config_1 = require("@nestjs/config");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const order_fulfillment_service_1 = require("../order-fulfillment/order-fulfillment.service");
 const payment_expiration_util_1 = require("../order-fulfillment/payment-expiration.util");
+const client_1 = require("@prisma/client");
 const BASE_URL = 'https://api.abacatepay.com/v2';
 let AbacatepayService = AbacatepayService_1 = class AbacatepayService {
     constructor(config, prisma, fulfillment) {
@@ -38,7 +39,10 @@ let AbacatepayService = AbacatepayService_1 = class AbacatepayService {
         if (order.status !== 'PENDING')
             throw new common_1.BadRequestException('Pedido não está mais pendente');
         const expiresIn = (0, payment_expiration_util_1.calculateRemainingPaymentSeconds)(order.expiresAt);
-        const amountCents = Math.round(Number(order.total) * 100);
+        const amountCents = new client_1.Prisma.Decimal(order.total.toString())
+            .mul(100)
+            .toDecimalPlaces(0, client_1.Prisma.Decimal.ROUND_HALF_UP)
+            .toNumber();
         const res = await fetch(`${BASE_URL}/transparents/create`, {
             method: 'POST',
             headers: {

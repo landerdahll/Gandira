@@ -1,11 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const client_1 = require("@prisma/client");
 const order_fulfillment_service_1 = require("./order-fulfillment.service");
 describe('OrderFulfillmentService', () => {
     const future = new Date(Date.now() + 60_000);
     const baseOrder = {
         id: 'order-1', eventId: 'event-1', status: 'PENDING', expiresAt: future,
-        items: [{ batchId: 'batch-1', quantity: 2 }],
+        items: [{ batchId: 'batch-1', quantity: 2, unitPrice: new client_1.Prisma.Decimal(10), batch: { sortOrder: 0 } }],
+        reservedClubBenefits: [],
     };
     function setup(order = baseOrder) {
         const tx = {
@@ -25,13 +27,14 @@ describe('OrderFulfillmentService', () => {
             $transaction: jest.fn((callback) => callback(tx)),
             order: { findUnique: jest.fn().mockResolvedValue(fullOrder) },
         };
-        const tickets = { generateTicket: jest.fn().mockResolvedValue({}) };
+        const tickets = { generateTicket: jest.fn().mockResolvedValueOnce({ id: 'ticket-1' }).mockResolvedValue({ id: 'ticket-2' }) };
         const mail = { sendOrderConfirmation: jest.fn().mockResolvedValue(undefined) };
         const config = { get: jest.fn((_key, fallback) => fallback) };
         const expiration = { expirePendingOrderInTransaction: jest.fn().mockResolvedValue('EXPIRED') };
+        const clubBenefits = { confirmInTransaction: jest.fn().mockResolvedValue(undefined) };
         return {
-            service: new order_fulfillment_service_1.OrderFulfillmentService(prisma, tickets, mail, config, expiration),
-            tx, prisma, tickets, mail, expiration,
+            service: new order_fulfillment_service_1.OrderFulfillmentService(prisma, tickets, mail, config, expiration, clubBenefits),
+            tx, prisma, tickets, mail, expiration, clubBenefits,
         };
     }
     it('faz claim, gera todos os tickets e envia e-mail após o commit', async () => {
@@ -88,6 +91,12 @@ describe('OrderFulfillmentService', () => {
         tickets.generateTicket.mockRejectedValue(new Error('ticket failed'));
         await expect(service.confirmPaidOrder({ orderId: 'order-1', gateway: 'STRIPE' })).rejects.toThrow('ticket failed');
         expect(mail.sendOrderConfirmation).not.toHaveBeenCalled();
+    });
+    it('confirma o snapshot e associa exatamente o primeiro ticket do lote beneficiado', async () => {
+        const usage = { id: 'usage-1', status: 'RESERVED', batchId: 'batch-1' };
+        const { service, clubBenefits } = setup({ ...baseOrder, reservedClubBenefits: [usage] });
+        await service.confirmPaidOrder({ orderId: 'order-1', gateway: 'STRIPE' });
+        expect(clubBenefits.confirmInTransaction).toHaveBeenCalledWith(expect.anything(), 'usage-1', 'order-1', 'ticket-1', expect.any(Date));
     });
     it('trata falha de e-mail após commit como best effort', async () => {
         const { service, mail } = setup();

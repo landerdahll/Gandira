@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { maskEmail } from '../../common/utils/demo-email.util';
 import { CreateClubMemberDto } from './dto/create-club-member.dto';
+import { withSerializableRetry } from '../../common/utils/serializable-retry.util';
 
 @Injectable()
 export class ClubMembersService {
@@ -146,7 +147,7 @@ export class ClubMembersService {
     if (!member) throw new NotFoundException('Membro do Clube Outrahora não encontrado');
     if (member.isActive === isActive) return this.findOne(id);
 
-    await this.prisma.$transaction(async (tx) => {
+    await withSerializableRetry(() => this.prisma.$transaction(async (tx) => {
       await tx.clubMember.update({
         where: { id },
         data: isActive
@@ -155,16 +156,35 @@ export class ClubMembersService {
       });
 
       if (!isActive) {
-        await tx.clubBenefitUsage.updateMany({
-          where: { clubMemberId: id, status: 'RESERVED' },
-          data: {
-            status: 'RELEASED',
-            releasedAt: new Date(),
-            releaseReason: 'MEMBER_DEACTIVATED',
-            reservedOrderId: null,
-            reservationExpiresAt: null,
-          },
+        const reservations = await tx.clubBenefitUsage.findMany({
+          where: { clubMemberId: id, status: 'RESERVED', activeMarker: true },
+          include: { reservedOrder: { include: { items: true } } },
         });
+        for (const usage of reservations) {
+          const order = usage.reservedOrder;
+          if (order) {
+            const cancelled = await tx.order.updateMany({
+              where: { id: order.id, status: 'PENDING' },
+              data: { status: 'CANCELLED', cancelledAt: new Date(), cancelReason: 'CLUB_MEMBER_DEACTIVATED' },
+            });
+            if (cancelled.count !== 1) continue;
+            for (const item of order.items) {
+              await tx.batch.update({
+                where: { id: item.batchId },
+                data: { sold: { decrement: item.quantity }, status: 'ACTIVE' },
+              });
+            }
+          }
+          await tx.clubBenefitUsage.updateMany({
+            where: { id: usage.id, status: 'RESERVED', activeMarker: true },
+            data: {
+              status: 'RELEASED',
+              activeMarker: null,
+              releasedAt: new Date(),
+              releaseReason: 'MEMBER_DEACTIVATED',
+            },
+          });
+        }
       }
 
       await tx.auditLog.create({
@@ -176,7 +196,7 @@ export class ClubMembersService {
           metadata: { email: maskEmail(member.email), isActive },
         },
       });
-    });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }));
 
     this.logger.log(`Membro do Clube ${isActive ? 'ativado' : 'desativado'}: ${maskEmail(member.email)}`);
     return this.findOne(id);

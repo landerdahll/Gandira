@@ -15,6 +15,7 @@ const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const demo_email_util_1 = require("../../common/utils/demo-email.util");
+const serializable_retry_util_1 = require("../../common/utils/serializable-retry.util");
 let ClubMembersService = ClubMembersService_1 = class ClubMembersService {
     constructor(prisma) {
         this.prisma = prisma;
@@ -149,7 +150,7 @@ let ClubMembersService = ClubMembersService_1 = class ClubMembersService {
             throw new common_1.NotFoundException('Membro do Clube Outrahora não encontrado');
         if (member.isActive === isActive)
             return this.findOne(id);
-        await this.prisma.$transaction(async (tx) => {
+        await (0, serializable_retry_util_1.withSerializableRetry)(() => this.prisma.$transaction(async (tx) => {
             await tx.clubMember.update({
                 where: { id },
                 data: isActive
@@ -157,16 +158,36 @@ let ClubMembersService = ClubMembersService_1 = class ClubMembersService {
                     : { isActive: false, deactivatedAt: new Date() },
             });
             if (!isActive) {
-                await tx.clubBenefitUsage.updateMany({
-                    where: { clubMemberId: id, status: 'RESERVED' },
-                    data: {
-                        status: 'RELEASED',
-                        releasedAt: new Date(),
-                        releaseReason: 'MEMBER_DEACTIVATED',
-                        reservedOrderId: null,
-                        reservationExpiresAt: null,
-                    },
+                const reservations = await tx.clubBenefitUsage.findMany({
+                    where: { clubMemberId: id, status: 'RESERVED', activeMarker: true },
+                    include: { reservedOrder: { include: { items: true } } },
                 });
+                for (const usage of reservations) {
+                    const order = usage.reservedOrder;
+                    if (order) {
+                        const cancelled = await tx.order.updateMany({
+                            where: { id: order.id, status: 'PENDING' },
+                            data: { status: 'CANCELLED', cancelledAt: new Date(), cancelReason: 'CLUB_MEMBER_DEACTIVATED' },
+                        });
+                        if (cancelled.count !== 1)
+                            continue;
+                        for (const item of order.items) {
+                            await tx.batch.update({
+                                where: { id: item.batchId },
+                                data: { sold: { decrement: item.quantity }, status: 'ACTIVE' },
+                            });
+                        }
+                    }
+                    await tx.clubBenefitUsage.updateMany({
+                        where: { id: usage.id, status: 'RESERVED', activeMarker: true },
+                        data: {
+                            status: 'RELEASED',
+                            activeMarker: null,
+                            releasedAt: new Date(),
+                            releaseReason: 'MEMBER_DEACTIVATED',
+                        },
+                    });
+                }
             }
             await tx.auditLog.create({
                 data: {
@@ -177,7 +198,7 @@ let ClubMembersService = ClubMembersService_1 = class ClubMembersService {
                     metadata: { email: (0, demo_email_util_1.maskEmail)(member.email), isActive },
                 },
             });
-        });
+        }, { isolationLevel: client_1.Prisma.TransactionIsolationLevel.Serializable }));
         this.logger.log(`Membro do Clube ${isActive ? 'ativado' : 'desativado'}: ${(0, demo_email_util_1.maskEmail)(member.email)}`);
         return this.findOne(id);
     }

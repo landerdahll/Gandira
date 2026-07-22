@@ -222,6 +222,7 @@ model Order {
   couponId       String?
   coupon         Coupon? @relation(fields: [couponId], references: [id])
   discountAmount Decimal @default(0) @db.Decimal(10, 2)
+  clubBenefitReason String?
 
   cancelledAt    DateTime?
   cancelReason   String?
@@ -286,6 +287,7 @@ model Ticket {
   checkIn   CheckIn?
   transfers TicketTransfer[]
   history   TicketHistory[]
+  clubBenefitUsage ClubBenefitUsage?
 
   cancelledAt DateTime?
 
@@ -455,6 +457,7 @@ model ClubBenefitUsage {
   eventId      String
   event        Event                  @relation(fields: [eventId], references: [id], onDelete: Restrict)
   status       ClubBenefitUsageStatus @default(RESERVED)
+  activeMarker Boolean?               @default(true)
   discountPercentage Decimal          @db.Decimal(5, 2)
 
   reservedOrderId  String? @unique
@@ -463,6 +466,8 @@ model ClubBenefitUsage {
   confirmedOrder   Order?  @relation("ClubBenefitConfirmedOrder", fields: [confirmedOrderId], references: [id], onDelete: SetNull)
   batchId          String?
   batch            Batch?  @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  ticketId         String? @unique
+  ticket           Ticket? @relation(fields: [ticketId], references: [id], onDelete: SetNull)
 
   originalAmount Decimal? @db.Decimal(10, 2)
   discountAmount Decimal? @db.Decimal(10, 2)
@@ -477,7 +482,8 @@ model ClubBenefitUsage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([clubMemberId, eventId])
+  @@unique([clubMemberId, eventId, activeMarker])
+  @@index([clubMemberId, eventId])
   @@index([status, reservationExpiresAt])
   @@index([eventId, status])
 }

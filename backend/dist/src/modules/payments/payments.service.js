@@ -20,13 +20,16 @@ const stripe_1 = __importDefault(require("stripe"));
 const prisma_service_1 = require("../../prisma/prisma.service");
 const order_fulfillment_service_1 = require("../order-fulfillment/order-fulfillment.service");
 const payment_expiration_util_1 = require("../order-fulfillment/payment-expiration.util");
+const order_expiration_service_1 = require("../order-fulfillment/order-expiration.service");
+const club_benefits_service_1 = require("../club-benefits/club-benefits.service");
 const client_1 = require("@prisma/client");
-const serializable_retry_util_1 = require("../../common/utils/serializable-retry.util");
 let PaymentsService = PaymentsService_1 = class PaymentsService {
-    constructor(config, prisma, fulfillment) {
+    constructor(config, prisma, fulfillment, expiration, clubBenefits) {
         this.config = config;
         this.prisma = prisma;
         this.fulfillment = fulfillment;
+        this.expiration = expiration;
+        this.clubBenefits = clubBenefits;
         this.logger = new common_1.Logger(PaymentsService_1.name);
         this.stripe = new stripe_1.default(config.get('STRIPE_SECRET_KEY'), {
             apiVersion: '2023-10-16',
@@ -34,7 +37,10 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
         });
     }
     async createPaymentIntent(order) {
-        const amountCents = Math.round(Number(order.total) * 100);
+        const amountCents = new client_1.Prisma.Decimal(order.total.toString())
+            .mul(100)
+            .toDecimalPlaces(0, client_1.Prisma.Decimal.ROUND_HALF_UP)
+            .toNumber();
         const expiresAfterSeconds = (0, payment_expiration_util_1.calculateRemainingPaymentSeconds)(new Date(order.expiresAt));
         return this.stripe.paymentIntents.create({
             amount: amountCents,
@@ -60,14 +66,9 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
             reason: 'requested_by_customer',
             metadata: { orderId },
         });
-        await this.prisma.order.update({
-            where: { id: orderId },
-            data: {
-                status: 'REFUNDED',
-                refundedAt: new Date(),
-                stripeRefundId: refund.id,
-            },
-        });
+        if (refund.status === 'succeeded') {
+            await this.markFullyRefunded(orderId, refund.id);
+        }
         this.logger.log(`Refund created for order ${orderId}: ${refund.id}`);
         return refund;
     }
@@ -113,7 +114,7 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
                 await this.onPaymentFailed(event.data.object);
                 break;
             case 'charge.refunded':
-                this.logger.log(`Charge refunded: ${event.data.object.id}`);
+                await this.onChargeRefunded(event.data.object);
                 break;
             default:
                 this.logger.debug(`Unhandled event type: ${event.type}`);
@@ -139,29 +140,34 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
         return result;
     }
     async onPaymentFailed(pi) {
-        const order = await this.prisma.order.findUnique({
-            where: { stripePaymentIntentId: pi.id },
-            include: { items: true },
-        });
-        if (!order || order.status !== 'PENDING')
+        const order = await this.prisma.order.findUnique({ where: { stripePaymentIntentId: pi.id }, select: { id: true } });
+        if (!order)
             return;
-        const cancelled = await (0, serializable_retry_util_1.withSerializableRetry)(() => this.prisma.$transaction(async (tx) => {
-            const claimed = await tx.order.updateMany({
-                where: { id: order.id, status: 'PENDING' },
-                data: { status: 'CANCELLED' },
-            });
-            if (claimed.count !== 1)
-                return false;
-            for (const item of order.items) {
-                await tx.batch.update({
-                    where: { id: item.batchId },
-                    data: { sold: { decrement: item.quantity }, status: 'ACTIVE' },
-                });
-            }
-            return true;
-        }, { isolationLevel: client_1.Prisma.TransactionIsolationLevel.Serializable }));
+        const cancelled = await this.expiration.cancelPendingOrder(order.id, 'PAYMENT_FAILED');
         if (cancelled)
             this.logger.log(`Payment failed for order ${order.id} — stock released`);
+    }
+    async onChargeRefunded(charge) {
+        if (charge.amount_refunded !== charge.amount || typeof charge.payment_intent !== 'string')
+            return;
+        const order = await this.prisma.order.findUnique({
+            where: { stripePaymentIntentId: charge.payment_intent },
+            select: { id: true },
+        });
+        if (!order)
+            return;
+        await this.markFullyRefunded(order.id, charge.refunds?.data[0]?.id);
+    }
+    async markFullyRefunded(orderId, stripeRefundId) {
+        const now = new Date();
+        await this.prisma.$transaction(async (tx) => {
+            await tx.order.updateMany({
+                where: { id: orderId, status: { in: ['PAID', 'CANCELLED'] } },
+                data: { status: 'REFUNDED', refundedAt: now, ...(stripeRefundId ? { stripeRefundId } : {}) },
+            });
+            await this.clubBenefits.releaseConfirmedForOrderInTransaction(tx, orderId, 'FULL_REFUND_CONFIRMED', now);
+        });
+        this.logger.log(`Full refund confirmed for order ${orderId}`);
     }
 };
 exports.PaymentsService = PaymentsService;
@@ -169,6 +175,8 @@ exports.PaymentsService = PaymentsService = PaymentsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [config_1.ConfigService,
         prisma_service_1.PrismaService,
-        order_fulfillment_service_1.OrderFulfillmentService])
+        order_fulfillment_service_1.OrderFulfillmentService,
+        order_expiration_service_1.OrderExpirationService,
+        club_benefits_service_1.ClubBenefitsService])
 ], PaymentsService);
 //# sourceMappingURL=payments.service.js.map

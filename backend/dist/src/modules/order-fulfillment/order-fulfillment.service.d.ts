@@ -3,8 +3,9 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { TicketsService } from '../tickets/tickets.service';
 import { OrderExpirationService } from './order-expiration.service';
+import { ClubBenefitsService } from '../club-benefits/club-benefits.service';
 export type PaymentGateway = 'STRIPE' | 'ABACATEPAY';
-export type OrderFulfillmentStatus = 'FULFILLED' | 'ALREADY_PAID' | 'LATE_PAYMENT_REQUIRES_REVIEW' | 'ORDER_NOT_PAYABLE' | 'ORDER_NOT_FOUND';
+export type OrderFulfillmentStatus = 'FULFILLED' | 'ALREADY_PAID' | 'LATE_PAYMENT_REQUIRES_REVIEW' | 'CLUB_BENEFIT_REQUIRES_REVIEW' | 'ORDER_NOT_PAYABLE' | 'ORDER_NOT_FOUND';
 export interface ConfirmPaidOrderInput {
     orderId: string;
     gateway: PaymentGateway;
@@ -21,8 +22,9 @@ export declare class OrderFulfillmentService {
     private readonly mail;
     private readonly config;
     private readonly expiration;
+    private readonly clubBenefits;
     private readonly logger;
-    constructor(prisma: PrismaService, tickets: TicketsService, mail: MailService, config: ConfigService, expiration: OrderExpirationService);
+    constructor(prisma: PrismaService, tickets: TicketsService, mail: MailService, config: ConfigService, expiration: OrderExpirationService, clubBenefits: ClubBenefitsService);
     confirmPaidOrder(input: ConfirmPaidOrderInput): Promise<OrderFulfillmentResult>;
     private sendConfirmationEmail;
 }

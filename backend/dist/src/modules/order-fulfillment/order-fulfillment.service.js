@@ -19,21 +19,26 @@ const prisma_service_1 = require("../../prisma/prisma.service");
 const mail_service_1 = require("../mail/mail.service");
 const tickets_service_1 = require("../tickets/tickets.service");
 const order_expiration_service_1 = require("./order-expiration.service");
+const club_benefits_service_1 = require("../club-benefits/club-benefits.service");
 let OrderFulfillmentService = OrderFulfillmentService_1 = class OrderFulfillmentService {
-    constructor(prisma, tickets, mail, config, expiration) {
+    constructor(prisma, tickets, mail, config, expiration, clubBenefits) {
         this.prisma = prisma;
         this.tickets = tickets;
         this.mail = mail;
         this.config = config;
         this.expiration = expiration;
+        this.clubBenefits = clubBenefits;
         this.logger = new common_1.Logger(OrderFulfillmentService_1.name);
     }
     async confirmPaidOrder(input) {
-        const now = new Date();
         const result = await (0, serializable_retry_util_1.withSerializableRetry)(() => this.prisma.$transaction(async (tx) => {
+            const now = new Date();
             const order = await tx.order.findUnique({
                 where: { id: input.orderId },
-                include: { items: true },
+                include: {
+                    items: { include: { batch: { select: { sortOrder: true } } } },
+                    reservedClubBenefits: true,
+                },
             });
             if (!order)
                 return { status: 'ORDER_NOT_FOUND' };
@@ -48,6 +53,10 @@ let OrderFulfillmentService = OrderFulfillmentService_1 = class OrderFulfillment
             if (order.expiresAt <= now) {
                 await this.expiration.expirePendingOrderInTransaction(tx, order.id, now);
                 return { status: 'LATE_PAYMENT_REQUIRES_REVIEW', orderStatus: 'EXPIRED' };
+            }
+            const clubUsage = order.reservedClubBenefits[0] ?? null;
+            if (clubUsage && clubUsage.status !== 'RESERVED') {
+                return { status: 'CLUB_BENEFIT_REQUIRES_REVIEW', orderStatus: order.status };
             }
             const claimed = await tx.order.updateMany({
                 where: { id: order.id, status: 'PENDING', expiresAt: { gt: now } },
@@ -66,16 +75,41 @@ let OrderFulfillmentService = OrderFulfillmentService_1 = class OrderFulfillment
                     return { status: 'LATE_PAYMENT_REQUIRES_REVIEW', orderStatus: current.status };
                 return { status: 'ORDER_NOT_PAYABLE', orderStatus: current?.status };
             }
-            for (const item of order.items) {
+            const sortedItems = [...order.items].sort((left, right) => {
+                const price = right.unitPrice.comparedTo(left.unitPrice);
+                if (price !== 0)
+                    return price;
+                if (left.batch.sortOrder !== right.batch.sortOrder)
+                    return left.batch.sortOrder - right.batch.sortOrder;
+                return left.batchId.localeCompare(right.batchId);
+            });
+            let benefitedTicketId = null;
+            for (const item of sortedItems) {
                 for (let index = 0; index < item.quantity; index += 1) {
-                    await this.tickets.generateTicket({ orderId: order.id, batchId: item.batchId, eventId: order.eventId }, tx);
+                    const ticket = await this.tickets.generateTicket({ orderId: order.id, batchId: item.batchId, eventId: order.eventId }, tx);
+                    if (clubUsage?.batchId === item.batchId && benefitedTicketId === null) {
+                        benefitedTicketId = ticket.id;
+                    }
                 }
+            }
+            if (clubUsage) {
+                if (!benefitedTicketId)
+                    throw new Error('Ingresso beneficiado não foi gerado para o lote reservado');
+                await this.clubBenefits.confirmInTransaction(tx, clubUsage.id, order.id, benefitedTicketId, now);
             }
             return { status: 'FULFILLED', orderStatus: 'PAID' };
         }, { isolationLevel: client_1.Prisma.TransactionIsolationLevel.Serializable }));
         if (result.status === 'LATE_PAYMENT_REQUIRES_REVIEW') {
             this.logger.error(JSON.stringify({
                 event: 'LATE_PAYMENT_REQUIRES_REVIEW',
+                orderId: input.orderId,
+                gateway: input.gateway,
+                externalPaymentId: input.externalPaymentId ?? null,
+            }));
+        }
+        if (result.status === 'CLUB_BENEFIT_REQUIRES_REVIEW') {
+            this.logger.error(JSON.stringify({
+                event: 'CLUB_BENEFIT_REQUIRES_REVIEW',
                 orderId: input.orderId,
                 gateway: input.gateway,
                 externalPaymentId: input.externalPaymentId ?? null,
@@ -123,6 +157,7 @@ exports.OrderFulfillmentService = OrderFulfillmentService = OrderFulfillmentServ
         tickets_service_1.TicketsService,
         mail_service_1.MailService,
         config_1.ConfigService,
-        order_expiration_service_1.OrderExpirationService])
+        order_expiration_service_1.OrderExpirationService,
+        club_benefits_service_1.ClubBenefitsService])
 ], OrderFulfillmentService);
 //# sourceMappingURL=order-fulfillment.service.js.map

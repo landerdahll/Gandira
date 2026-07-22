@@ -22,7 +22,12 @@ describe('ClubMembersService', () => {
         create: jest.fn().mockResolvedValue(activeMember),
         update: jest.fn().mockResolvedValue(activeMember),
       },
-      clubBenefitUsage: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
+      clubBenefitUsage: {
+        findMany: jest.fn().mockResolvedValue([{ id: 'usage-1', reservedOrder: { id: 'order-1', items: [{ batchId: 'batch-1', quantity: 1 }] } }]),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+      order: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
+      batch: { update: jest.fn().mockResolvedValue({}) },
       auditLog: { create: jest.fn().mockResolvedValue({}) },
     };
     const prisma = {
@@ -154,10 +159,13 @@ describe('ClubMembersService', () => {
       where: { id: activeMember.id },
       data: expect.objectContaining({ isActive: false, deactivatedAt: expect.any(Date) }),
     });
-    expect(tx.clubBenefitUsage.updateMany).toHaveBeenCalledWith({
-      where: { clubMemberId: activeMember.id, status: 'RESERVED' },
-      data: expect.objectContaining({ status: 'RELEASED', releaseReason: 'MEMBER_DEACTIVATED' }),
-    });
+    expect(tx.clubBenefitUsage.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'usage-1', status: 'RESERVED', activeMarker: true },
+      data: expect.objectContaining({ status: 'RELEASED', activeMarker: null, releaseReason: 'MEMBER_DEACTIVATED' }),
+    }));
+    expect(tx.order.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'order-1', status: 'PENDING' },
+    }));
     expect(tx.auditLog.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         action: 'CLUB_MEMBER_DEACTIVATED', metadata: { email: 'm***@e***.com', isActive: false },

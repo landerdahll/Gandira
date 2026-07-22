@@ -4,6 +4,7 @@ const client_1 = require("@prisma/client");
 const order_expiration_service_1 = require("../modules/order-fulfillment/order-expiration.service");
 const order_fulfillment_service_1 = require("../modules/order-fulfillment/order-fulfillment.service");
 const tickets_service_1 = require("../modules/tickets/tickets.service");
+const club_benefits_service_1 = require("../modules/club-benefits/club-benefits.service");
 const databaseUrl = process.env.DATABASE_URL ?? '';
 const describeIntegration = process.env.RUN_INTEGRATION === 'true' ? describe : describe.skip;
 jest.setTimeout(120_000);
@@ -14,8 +15,9 @@ describeIntegration('Order fulfillment with real PostgreSQL', () => {
     const mail = { sendOrderConfirmation: jest.fn().mockResolvedValue(undefined) };
     const config = { get: (_key, fallback) => fallback };
     function service(prisma) {
-        const expiration = new order_expiration_service_1.OrderExpirationService(prisma);
-        return new order_fulfillment_service_1.OrderFulfillmentService(prisma, new tickets_service_1.TicketsService(prisma), mail, config, expiration);
+        const clubBenefits = new club_benefits_service_1.ClubBenefitsService();
+        const expiration = new order_expiration_service_1.OrderExpirationService(prisma, clubBenefits);
+        return new order_fulfillment_service_1.OrderFulfillmentService(prisma, new tickets_service_1.TicketsService(prisma), mail, config, expiration, clubBenefits);
     }
     beforeAll(async () => {
         if (!databaseUrl.includes('127.0.0.1:55432/outrahora_test')) {

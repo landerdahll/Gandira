@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { OrderExpirationService } from '../modules/order-fulfillment/order-expiration.service';
 import { OrderFulfillmentService } from '../modules/order-fulfillment/order-fulfillment.service';
 import { TicketsService } from '../modules/tickets/tickets.service';
+import { ClubBenefitsService } from '../modules/club-benefits/club-benefits.service';
 
 const databaseUrl = process.env.DATABASE_URL ?? '';
 const describeIntegration = process.env.RUN_INTEGRATION === 'true' ? describe : describe.skip;
@@ -16,13 +17,15 @@ describeIntegration('Order fulfillment with real PostgreSQL', () => {
   const config = { get: <T>(_key: string, fallback?: T) => fallback as T };
 
   function service(prisma: PrismaClient) {
-    const expiration = new OrderExpirationService(prisma as never);
+    const clubBenefits = new ClubBenefitsService();
+    const expiration = new OrderExpirationService(prisma as never, clubBenefits);
     return new OrderFulfillmentService(
       prisma as never,
       new TicketsService(prisma as never),
       mail as never,
       config as never,
       expiration,
+      clubBenefits,
     );
   }
 

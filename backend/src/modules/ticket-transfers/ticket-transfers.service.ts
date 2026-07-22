@@ -33,7 +33,7 @@ export class TicketTransfersService {
     const result = await withSerializableRetry(() => this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const ticket = await tx.ticket.findUnique({
         where: { id: ticketId },
-        include: { event: true, checkIn: true, order: { include: { user: true } }, batch: true, owner: true },
+        include: { event: true, checkIn: true, order: { include: { user: true } }, batch: true, owner: true, clubBenefitUsage: true },
       });
       if (!ticket) throw new NotFoundException('Ingresso não encontrado');
       if (ticket.ownerUserId !== senderUserId) throw new ForbiddenException('Somente o titular atual pode transferir este ingresso');
@@ -43,6 +43,9 @@ export class TicketTransfersService {
       if (ticket.status === 'TRANSFER_PENDING') throw new ConflictException('O ingresso já possui uma transferência em andamento');
       if (ticket.status !== 'ACTIVE' || ticket.checkIn) throw new BadRequestException('Este ingresso não está disponível para transferência');
       if (ticket.order.status !== 'PAID') throw new BadRequestException('O pedido deste ingresso não está ativo');
+      if (ticket.clubBenefitUsage) {
+        throw new BadRequestException('Este ingresso recebeu o benefício do Clube Outrahora e não pode ser transferido');
+      }
 
       const recipient = await tx.user.findUnique({ where: { email: recipientEmail }, select: { id: true, name: true, email: true, isActive: true } });
       if (recipient && !recipient.isActive) throw new BadRequestException('Não foi possível transferir para este destinatário');

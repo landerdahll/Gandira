@@ -6,12 +6,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { TicketsService } from '../tickets/tickets.service';
 import { OrderExpirationService } from './order-expiration.service';
+import { ClubBenefitsService } from '../club-benefits/club-benefits.service';
 
 export type PaymentGateway = 'STRIPE' | 'ABACATEPAY';
 export type OrderFulfillmentStatus =
   | 'FULFILLED'
   | 'ALREADY_PAID'
   | 'LATE_PAYMENT_REQUIRES_REVIEW'
+  | 'CLUB_BENEFIT_REQUIRES_REVIEW'
   | 'ORDER_NOT_PAYABLE'
   | 'ORDER_NOT_FOUND';
 
@@ -37,14 +39,18 @@ export class OrderFulfillmentService {
     private readonly mail: MailService,
     private readonly config: ConfigService,
     private readonly expiration: OrderExpirationService,
+    private readonly clubBenefits: ClubBenefitsService,
   ) {}
 
   async confirmPaidOrder(input: ConfirmPaidOrderInput): Promise<OrderFulfillmentResult> {
-    const now = new Date();
     const result = await withSerializableRetry(() => this.prisma.$transaction(async (tx) => {
+      const now = new Date();
       const order = await tx.order.findUnique({
         where: { id: input.orderId },
-        include: { items: true },
+        include: {
+          items: { include: { batch: { select: { sortOrder: true } } } },
+          reservedClubBenefits: true,
+        },
       });
       if (!order) return { status: 'ORDER_NOT_FOUND' as const };
       if (order.status === 'PAID') return { status: 'ALREADY_PAID' as const, orderStatus: order.status };
@@ -57,6 +63,10 @@ export class OrderFulfillmentService {
       if (order.expiresAt <= now) {
         await this.expiration.expirePendingOrderInTransaction(tx, order.id, now);
         return { status: 'LATE_PAYMENT_REQUIRES_REVIEW' as const, orderStatus: 'EXPIRED' };
+      }
+      const clubUsage = order.reservedClubBenefits[0] ?? null;
+      if (clubUsage && clubUsage.status !== 'RESERVED') {
+        return { status: 'CLUB_BENEFIT_REQUIRES_REVIEW' as const, orderStatus: order.status };
       }
 
       const claimed = await tx.order.updateMany({
@@ -75,13 +85,27 @@ export class OrderFulfillmentService {
         return { status: 'ORDER_NOT_PAYABLE' as const, orderStatus: current?.status };
       }
 
-      for (const item of order.items) {
+      const sortedItems = [...order.items].sort((left, right) => {
+        const price = right.unitPrice.comparedTo(left.unitPrice);
+        if (price !== 0) return price;
+        if (left.batch.sortOrder !== right.batch.sortOrder) return left.batch.sortOrder - right.batch.sortOrder;
+        return left.batchId.localeCompare(right.batchId);
+      });
+      let benefitedTicketId: string | null = null;
+      for (const item of sortedItems) {
         for (let index = 0; index < item.quantity; index += 1) {
-          await this.tickets.generateTicket(
+          const ticket = await this.tickets.generateTicket(
             { orderId: order.id, batchId: item.batchId, eventId: order.eventId },
             tx,
           );
+          if (clubUsage?.batchId === item.batchId && benefitedTicketId === null) {
+            benefitedTicketId = ticket.id;
+          }
         }
+      }
+      if (clubUsage) {
+        if (!benefitedTicketId) throw new Error('Ingresso beneficiado não foi gerado para o lote reservado');
+        await this.clubBenefits.confirmInTransaction(tx, clubUsage.id, order.id, benefitedTicketId, now);
       }
       return { status: 'FULFILLED' as const, orderStatus: 'PAID' };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }));
@@ -89,6 +113,14 @@ export class OrderFulfillmentService {
     if (result.status === 'LATE_PAYMENT_REQUIRES_REVIEW') {
       this.logger.error(JSON.stringify({
         event: 'LATE_PAYMENT_REQUIRES_REVIEW',
+        orderId: input.orderId,
+        gateway: input.gateway,
+        externalPaymentId: input.externalPaymentId ?? null,
+      }));
+    }
+    if (result.status === 'CLUB_BENEFIT_REQUIRES_REVIEW') {
+      this.logger.error(JSON.stringify({
+        event: 'CLUB_BENEFIT_REQUIRES_REVIEW',
         orderId: input.orderId,
         gateway: input.gateway,
         externalPaymentId: input.externalPaymentId ?? null,

@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const orders_service_1 = require("./orders.service");
+const client_1 = require("@prisma/client");
 describe('OrdersService expiration', () => {
     function setup() {
         const prisma = {
@@ -14,14 +15,22 @@ describe('OrdersService expiration', () => {
             coupon: { update: jest.fn() },
             $transaction: jest.fn(),
         };
-        const batches = { reserveStock: jest.fn().mockResolvedValue({ price: '100.00' }) };
+        const batches = { reserveStock: jest.fn().mockResolvedValue({ price: '100.00', name: 'Lote', sortOrder: 0 }) };
         const payments = {
             createPaymentIntent: jest.fn().mockResolvedValue({ id: 'pi_1', client_secret: 'secret' }),
         };
         const coupons = {};
-        const expiration = { expirePendingOrder: jest.fn().mockResolvedValue('EXPIRED') };
-        const service = new orders_service_1.OrdersService(prisma, batches, payments, coupons, expiration);
-        return { service, prisma, batches, payments, expiration };
+        const expiration = {
+            expirePendingOrder: jest.fn().mockResolvedValue('EXPIRED'),
+            cancelPendingOrder: jest.fn().mockResolvedValue(true),
+        };
+        const clubBenefits = {
+            evaluateInTransaction: jest.fn().mockResolvedValue({ applied: false, reason: 'NOT_MEMBER' }),
+            createReservationInTransaction: jest.fn().mockResolvedValue(null),
+            toResponse: jest.fn((value) => value),
+        };
+        const service = new orders_service_1.OrdersService(prisma, batches, payments, coupons, expiration, clubBenefits);
+        return { service, prisma, batches, payments, expiration, clubBenefits };
     }
     it('cria Order.expiresAt aproximadamente 60 minutos no futuro', async () => {
         const { service, prisma } = setup();
@@ -39,6 +48,36 @@ describe('OrdersService expiration', () => {
         const { service, expiration } = setup();
         await service.expireStaleOrders();
         expect(expiration.expirePendingOrder).toHaveBeenCalledWith('stale-1');
+    });
+    it('retorna discountType CLUB e o snapshot autoritativo criado na transação', async () => {
+        const { service, prisma, clubBenefits } = setup();
+        const decision = {
+            applied: true, reason: 'AVAILABLE', clubMemberId: 'member-1', batchId: 'batch-1', batchName: 'Lote',
+            discountPercentage: new client_1.Prisma.Decimal('15.75'), originalAmount: new client_1.Prisma.Decimal('100.00'),
+            discountAmount: new client_1.Prisma.Decimal('15.75'), finalAmount: new client_1.Prisma.Decimal('84.25'),
+        };
+        clubBenefits.evaluateInTransaction.mockResolvedValue(decision);
+        clubBenefits.toResponse.mockReturnValue({ applied: true, reason: 'AVAILABLE', discountPercentage: '15.75' });
+        const tx = {
+            order: { create: jest.fn(({ data }) => Promise.resolve({ id: 'order-1', eventId: 'event-1', total: data.total, expiresAt: data.expiresAt })) },
+        };
+        prisma.$transaction.mockImplementation((callback) => callback(tx));
+        const result = await service.create({ eventId: 'event-1', items: [{ batchId: 'batch-1', quantity: 1 }] }, 'user-1');
+        expect(result).toEqual(expect.objectContaining({
+            discountType: 'CLUB', clubBenefit: expect.objectContaining({ applied: true, reason: 'AVAILABLE' }),
+        }));
+        expect(clubBenefits.createReservationInTransaction).toHaveBeenCalledWith(tx, decision, expect.objectContaining({ orderId: 'order-1' }));
+    });
+    it('cancela pedido pendente e libera reservas quando a criação da cobrança falha', async () => {
+        const { service, prisma, payments, expiration } = setup();
+        const tx = {
+            order: { create: jest.fn(({ data }) => Promise.resolve({ id: 'order-1', eventId: 'event-1', total: data.total, expiresAt: data.expiresAt })) },
+        };
+        prisma.$transaction.mockImplementation((callback) => callback(tx));
+        payments.createPaymentIntent.mockRejectedValue(new Error('gateway unavailable'));
+        await expect(service.create({ eventId: 'event-1', items: [{ batchId: 'batch-1', quantity: 1 }] }, 'user-1'))
+            .rejects.toThrow('gateway unavailable');
+        expect(expiration.cancelPendingOrder).toHaveBeenCalledWith('order-1', 'PAYMENT_CREATION_FAILED');
     });
 });
 //# sourceMappingURL=orders.service.spec.js.map

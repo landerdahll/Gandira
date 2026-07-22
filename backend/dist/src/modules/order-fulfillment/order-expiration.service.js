@@ -14,9 +14,11 @@ const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
 const serializable_retry_util_1 = require("../../common/utils/serializable-retry.util");
 const prisma_service_1 = require("../../prisma/prisma.service");
+const club_benefits_service_1 = require("../club-benefits/club-benefits.service");
 let OrderExpirationService = class OrderExpirationService {
-    constructor(prisma) {
+    constructor(prisma, clubBenefits) {
         this.prisma = prisma;
+        this.clubBenefits = clubBenefits;
     }
     expirePendingOrder(orderId, now = new Date()) {
         return (0, serializable_retry_util_1.withSerializableRetry)(() => this.prisma.$transaction((tx) => this.expirePendingOrderInTransaction(tx, orderId, now), { isolationLevel: client_1.Prisma.TransactionIsolationLevel.Serializable }));
@@ -37,12 +39,33 @@ let OrderExpirationService = class OrderExpirationService {
                 data: { sold: { decrement: item.quantity }, status: 'ACTIVE' },
             });
         }
+        await this.clubBenefits.releaseForOrderInTransaction(tx, orderId, 'ORDER_EXPIRED', now);
         return 'EXPIRED';
+    }
+    cancelPendingOrder(orderId, reason, now = new Date()) {
+        return (0, serializable_retry_util_1.withSerializableRetry)(() => this.prisma.$transaction(async (tx) => {
+            const claimed = await tx.order.updateMany({
+                where: { id: orderId, status: 'PENDING' },
+                data: { status: 'CANCELLED', cancelledAt: now, cancelReason: reason },
+            });
+            if (claimed.count !== 1)
+                return false;
+            const items = await tx.orderItem.findMany({ where: { orderId }, select: { batchId: true, quantity: true } });
+            for (const item of items) {
+                await tx.batch.update({
+                    where: { id: item.batchId },
+                    data: { sold: { decrement: item.quantity }, status: 'ACTIVE' },
+                });
+            }
+            await this.clubBenefits.releaseForOrderInTransaction(tx, orderId, reason, now);
+            return true;
+        }, { isolationLevel: client_1.Prisma.TransactionIsolationLevel.Serializable }));
     }
 };
 exports.OrderExpirationService = OrderExpirationService;
 exports.OrderExpirationService = OrderExpirationService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        club_benefits_service_1.ClubBenefitsService])
 ], OrderExpirationService);
 //# sourceMappingURL=order-expiration.service.js.map

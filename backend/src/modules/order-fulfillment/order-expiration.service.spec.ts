@@ -13,11 +13,12 @@ describe('OrderExpirationService', () => {
     const prisma = {
       $transaction: jest.fn((callback: (client: typeof tx) => unknown) => callback(tx)),
     };
-    return { service: new OrderExpirationService(prisma as never), tx, prisma };
+    const clubBenefits = { releaseForOrderInTransaction: jest.fn().mockResolvedValue({ count: 1 }) };
+    return { service: new OrderExpirationService(prisma as never, clubBenefits as never), tx, prisma, clubBenefits };
   }
 
   it('reivindica PENDING vencido e devolve estoque uma vez', async () => {
-    const { service, tx } = setup();
+    const { service, tx, clubBenefits } = setup();
     await expect(service.expirePendingOrder('order-1')).resolves.toBe('EXPIRED');
     expect(tx.order.updateMany).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({ id: 'order-1', status: 'PENDING' }),
@@ -28,6 +29,9 @@ describe('OrderExpirationService', () => {
       where: { id: 'batch-1' },
       data: { sold: { decrement: 2 }, status: 'ACTIVE' },
     });
+    expect(clubBenefits.releaseForOrderInTransaction).toHaveBeenCalledWith(
+      tx, 'order-1', 'ORDER_EXPIRED', expect.any(Date),
+    );
   });
 
   it('é idempotente e não libera estoque quando o claim falha', async () => {

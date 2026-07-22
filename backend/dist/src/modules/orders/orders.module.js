@@ -14,12 +14,13 @@ const batches_module_1 = require("../batches/batches.module");
 const payments_module_1 = require("../payments/payments.module");
 const coupons_module_1 = require("../coupons/coupons.module");
 const order_fulfillment_module_1 = require("../order-fulfillment/order-fulfillment.module");
+const club_benefits_module_1 = require("../club-benefits/club-benefits.module");
 let OrdersModule = class OrdersModule {
 };
 exports.OrdersModule = OrdersModule;
 exports.OrdersModule = OrdersModule = __decorate([
     (0, common_1.Module)({
-        imports: [batches_module_1.BatchesModule, payments_module_1.PaymentsModule, coupons_module_1.CouponsModule, order_fulfillment_module_1.OrderFulfillmentModule],
+        imports: [batches_module_1.BatchesModule, payments_module_1.PaymentsModule, coupons_module_1.CouponsModule, order_fulfillment_module_1.OrderFulfillmentModule, club_benefits_module_1.ClubBenefitsModule],
         controllers: [orders_controller_1.OrdersController],
         providers: [orders_service_1.OrdersService],
         exports: [orders_service_1.OrdersService],

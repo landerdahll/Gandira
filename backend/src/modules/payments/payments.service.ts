@@ -4,8 +4,9 @@ import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OrderFulfillmentService } from '../order-fulfillment/order-fulfillment.service';
 import { calculateRemainingPaymentSeconds } from '../order-fulfillment/payment-expiration.util';
+import { OrderExpirationService } from '../order-fulfillment/order-expiration.service';
+import { ClubBenefitsService } from '../club-benefits/club-benefits.service';
 import { Prisma } from '@prisma/client';
-import { withSerializableRetry } from '../../common/utils/serializable-retry.util';
 
 @Injectable()
 export class PaymentsService {
@@ -16,6 +17,8 @@ export class PaymentsService {
     private config: ConfigService,
     private prisma: PrismaService,
     private fulfillment: OrderFulfillmentService,
+    private expiration: OrderExpirationService,
+    private clubBenefits: ClubBenefitsService,
   ) {
     this.stripe = new Stripe(config.get<string>('STRIPE_SECRET_KEY')!, {
       apiVersion: '2023-10-16',
@@ -24,7 +27,10 @@ export class PaymentsService {
   }
 
   async createPaymentIntent(order: any): Promise<Stripe.PaymentIntent> {
-    const amountCents = Math.round(Number(order.total) * 100);
+    const amountCents = new Prisma.Decimal(order.total.toString())
+      .mul(100)
+      .toDecimalPlaces(0, Prisma.Decimal.ROUND_HALF_UP)
+      .toNumber();
     const expiresAfterSeconds = calculateRemainingPaymentSeconds(new Date(order.expiresAt));
 
     return this.stripe.paymentIntents.create({
@@ -55,14 +61,9 @@ export class PaymentsService {
       metadata: { orderId },
     });
 
-    await this.prisma.order.update({
-      where: { id: orderId },
-      data: {
-        status: 'REFUNDED',
-        refundedAt: new Date(),
-        stripeRefundId: refund.id,
-      },
-    });
+    if (refund.status === 'succeeded') {
+      await this.markFullyRefunded(orderId, refund.id);
+    }
 
     this.logger.log(`Refund created for order ${orderId}: ${refund.id}`);
     return refund;
@@ -122,7 +123,7 @@ export class PaymentsService {
         break;
 
       case 'charge.refunded':
-        this.logger.log(`Charge refunded: ${(event.data.object as Stripe.Charge).id}`);
+        await this.onChargeRefunded(event.data.object as Stripe.Charge);
         break;
 
       default:
@@ -154,30 +155,32 @@ export class PaymentsService {
   }
 
   private async onPaymentFailed(pi: Stripe.PaymentIntent) {
-    const order = await this.prisma.order.findUnique({
-      where: { stripePaymentIntentId: pi.id },
-      include: { items: true },
-    });
-
-    if (!order || order.status !== 'PENDING') return;
-
-    // Claim PENDING -> CANCELLED before releasing stock, so repeated or concurrent
-    // failure events cannot cancel a paid order or release the same stock twice.
-    const cancelled = await withSerializableRetry(() => this.prisma.$transaction(async (tx) => {
-      const claimed = await tx.order.updateMany({
-        where: { id: order.id, status: 'PENDING' },
-        data: { status: 'CANCELLED' },
-      });
-      if (claimed.count !== 1) return false;
-      for (const item of order.items) {
-        await tx.batch.update({
-          where: { id: item.batchId },
-          data: { sold: { decrement: item.quantity }, status: 'ACTIVE' },
-        });
-      }
-      return true;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }));
+    const order = await this.prisma.order.findUnique({ where: { stripePaymentIntentId: pi.id }, select: { id: true } });
+    if (!order) return;
+    const cancelled = await this.expiration.cancelPendingOrder(order.id, 'PAYMENT_FAILED');
 
     if (cancelled) this.logger.log(`Payment failed for order ${order.id} — stock released`);
+  }
+
+  private async onChargeRefunded(charge: Stripe.Charge) {
+    if (charge.amount_refunded !== charge.amount || typeof charge.payment_intent !== 'string') return;
+    const order = await this.prisma.order.findUnique({
+      where: { stripePaymentIntentId: charge.payment_intent },
+      select: { id: true },
+    });
+    if (!order) return;
+    await this.markFullyRefunded(order.id, charge.refunds?.data[0]?.id);
+  }
+
+  private async markFullyRefunded(orderId: string, stripeRefundId?: string) {
+    const now = new Date();
+    await this.prisma.$transaction(async (tx) => {
+      await tx.order.updateMany({
+        where: { id: orderId, status: { in: ['PAID', 'CANCELLED'] } },
+        data: { status: 'REFUNDED', refundedAt: now, ...(stripeRefundId ? { stripeRefundId } : {}) },
+      });
+      await this.clubBenefits.releaseConfirmedForOrderInTransaction(tx, orderId, 'FULL_REFUND_CONFIRMED', now);
+    });
+    this.logger.log(`Full refund confirmed for order ${orderId}`);
   }
 }

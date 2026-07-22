@@ -15,8 +15,8 @@ export declare class TicketsService {
         createdAt: Date;
         updatedAt: Date;
         status: import(".prisma/client").$Enums.TicketStatus;
-        cancelledAt: Date | null;
         eventId: string;
+        cancelledAt: Date | null;
         token: string;
         orderId: string;
         batchId: string;

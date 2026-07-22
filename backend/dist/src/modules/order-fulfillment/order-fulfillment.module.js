@@ -11,12 +11,13 @@ const common_1 = require("@nestjs/common");
 const tickets_module_1 = require("../tickets/tickets.module");
 const order_expiration_service_1 = require("./order-expiration.service");
 const order_fulfillment_service_1 = require("./order-fulfillment.service");
+const club_benefits_module_1 = require("../club-benefits/club-benefits.module");
 let OrderFulfillmentModule = class OrderFulfillmentModule {
 };
 exports.OrderFulfillmentModule = OrderFulfillmentModule;
 exports.OrderFulfillmentModule = OrderFulfillmentModule = __decorate([
     (0, common_1.Module)({
-        imports: [tickets_module_1.TicketsModule],
+        imports: [tickets_module_1.TicketsModule, club_benefits_module_1.ClubBenefitsModule],
         providers: [order_expiration_service_1.OrderExpirationService, order_fulfillment_service_1.OrderFulfillmentService],
         exports: [order_expiration_service_1.OrderExpirationService, order_fulfillment_service_1.OrderFulfillmentService],
     })

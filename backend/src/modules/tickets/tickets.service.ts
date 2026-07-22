@@ -76,6 +76,7 @@ export class TicketsService {
             orderBy: { requestedAt: 'desc' }, take: 1,
             include: { sender: { select: { name: true } }, recipient: { select: { name: true } } },
           },
+          clubBenefitUsage: { select: { id: true } },
         },
       }),
       db.ticket.count({ where: { OR: [{ ownerUserId: userId }, { transfers: { some: { senderUserId: userId } } }] } }),
@@ -87,6 +88,8 @@ export class TicketsService {
         ? (ticket.transfers[0]?.recipientUserId === userId ? 'RECEIVED' : ticket.status)
         : (ticket.transfers[0]?.status === 'PENDING_REGISTRATION' ? 'TRANSFER_PENDING' : 'TRANSFERRED'),
       qrCodeUrl: undefined,
+      clubBenefitApplied: Boolean(ticket.clubBenefitUsage),
+      transferAllowed: !ticket.clubBenefitUsage,
     })), meta: { total, page, lastPage: Math.ceil(total / take) } };
   }
 
@@ -100,6 +103,7 @@ export class TicketsService {
         batch: { select: { name: true, ticketType: true, price: true } },
         checkIn: { select: { checkedAt: true, method: true } },
         transfers: { where: { OR: [{ senderUserId: userId }, { recipientUserId: userId }] }, orderBy: { requestedAt: 'desc' }, take: 1, include: { sender: { select: { name: true } }, recipient: { select: { name: true } } } },
+        clubBenefitUsage: { select: { id: true } },
       },
     });
 
@@ -110,7 +114,13 @@ export class TicketsService {
     const accessState = ticket.ownerUserId === userId
       ? (ticket.transfers[0]?.recipientUserId === userId ? 'RECEIVED' : ticket.status)
       : (ticket.transfers[0]?.status === 'PENDING_REGISTRATION' ? 'TRANSFER_PENDING' : 'TRANSFERRED');
-    return { ...ticket, accessState, qrCodeUrl: ticket.ownerUserId === userId && ticket.status === 'ACTIVE' ? ticket.qrCodeUrl : null };
+    return {
+      ...ticket,
+      accessState,
+      clubBenefitApplied: Boolean(ticket.clubBenefitUsage),
+      transferAllowed: !ticket.clubBenefitUsage,
+      qrCodeUrl: ticket.ownerUserId === userId && ticket.status === 'ACTIVE' ? ticket.qrCodeUrl : null,
+    };
   }
 
   /**

@@ -6,16 +6,19 @@ describe('PaymentsService fulfillment integration', () => {
     const config = { get: jest.fn((key: string) => key === 'STRIPE_SECRET_KEY' ? 'sk_test_fake' : '') };
     const prisma = {
       order: { findUnique: jest.fn().mockResolvedValue({ id: 'order-1' }) },
+      $transaction: jest.fn((callback: (tx: any) => unknown) => callback({ order: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) } })),
     };
     const fulfillment = { confirmPaidOrder: jest.fn().mockResolvedValue({ status: 'FULFILLED', orderStatus: 'PAID' }) };
-    const service = new PaymentsService(config as never, prisma as never, fulfillment as never);
+    const expiration = { cancelPendingOrder: jest.fn().mockResolvedValue(true) };
+    const clubBenefits = { releaseConfirmedForOrderInTransaction: jest.fn() };
+    const service = new PaymentsService(config as never, prisma as never, fulfillment as never, expiration as never, clubBenefits as never);
     const stripe = {
       paymentIntents: {
         create: jest.fn().mockResolvedValue({ id: 'pi_1', client_secret: 'secret' }),
       },
     };
     (service as any).stripe = stripe;
-    return { service, prisma, fulfillment, stripe };
+    return { service, prisma, fulfillment, stripe, expiration, clubBenefits };
   }
 
   it('configura a validade PIX com os segundos restantes do pedido', async () => {
@@ -25,6 +28,7 @@ describe('PaymentsService fulfillment integration', () => {
       expiresAt: new Date(Date.now() + 60 * 60 * 1000), event: { title: 'Evento' },
     });
     const params = stripe.paymentIntents.create.mock.calls[0][0];
+    expect(params.amount).toBe(10000);
     expect(params.payment_method_options.pix.expires_after_seconds).toBeGreaterThanOrEqual(3599);
     expect(params.payment_method_options.pix.expires_after_seconds).toBeLessThanOrEqual(3600);
   });
@@ -54,5 +58,22 @@ describe('PaymentsService fulfillment integration', () => {
     await expect(service.handleWebhookEvent({
       type: 'payment_intent.succeeded', data: { object: { id: 'pi_late', latest_charge: 'ch_late' } },
     } as never)).resolves.toBeUndefined();
+  });
+
+  it('libera o benefício somente quando o webhook confirma reembolso integral', async () => {
+    const { service, clubBenefits } = setup();
+    await service.handleWebhookEvent({
+      type: 'charge.refunded',
+      data: { object: { id: 'ch_1', amount: 10000, amount_refunded: 5000, payment_intent: 'pi_1' } },
+    } as never);
+    expect(clubBenefits.releaseConfirmedForOrderInTransaction).not.toHaveBeenCalled();
+
+    await service.handleWebhookEvent({
+      type: 'charge.refunded',
+      data: { object: { id: 'ch_1', amount: 10000, amount_refunded: 10000, payment_intent: 'pi_1', refunds: { data: [{ id: 're_1' }] } } },
+    } as never);
+    expect(clubBenefits.releaseConfirmedForOrderInTransaction).toHaveBeenCalledWith(
+      expect.anything(), 'order-1', 'FULL_REFUND_CONFIRMED', expect.any(Date),
+    );
   });
 });

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OrderFulfillmentService } from '../order-fulfillment/order-fulfillment.service';
 import { calculateRemainingPaymentSeconds } from '../order-fulfillment/payment-expiration.util';
+import { Prisma } from '@prisma/client';
 
 const BASE_URL = 'https://api.abacatepay.com/v2';
 
@@ -32,7 +33,10 @@ export class AbacatepayService {
     if (order.status !== 'PENDING') throw new BadRequestException('Pedido não está mais pendente');
     const expiresIn = calculateRemainingPaymentSeconds(order.expiresAt);
 
-    const amountCents = Math.round(Number(order.total) * 100);
+    const amountCents = new Prisma.Decimal(order.total.toString())
+      .mul(100)
+      .toDecimalPlaces(0, Prisma.Decimal.ROUND_HALF_UP)
+      .toNumber();
 
     const res = await fetch(`${BASE_URL}/transparents/create`, {
       method: 'POST',

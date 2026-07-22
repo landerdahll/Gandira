@@ -75,7 +75,7 @@ let TicketTransfersService = TicketTransfersService_1 = class TicketTransfersSer
         const result = await (0, serializable_retry_util_1.withSerializableRetry)(() => this.prisma.$transaction(async (tx) => {
             const ticket = await tx.ticket.findUnique({
                 where: { id: ticketId },
-                include: { event: true, checkIn: true, order: { include: { user: true } }, batch: true, owner: true },
+                include: { event: true, checkIn: true, order: { include: { user: true } }, batch: true, owner: true, clubBenefitUsage: true },
             });
             if (!ticket)
                 throw new common_1.NotFoundException('Ingresso não encontrado');
@@ -93,6 +93,9 @@ let TicketTransfersService = TicketTransfersService_1 = class TicketTransfersSer
                 throw new common_1.BadRequestException('Este ingresso não está disponível para transferência');
             if (ticket.order.status !== 'PAID')
                 throw new common_1.BadRequestException('O pedido deste ingresso não está ativo');
+            if (ticket.clubBenefitUsage) {
+                throw new common_1.BadRequestException('Este ingresso recebeu o benefício do Clube Outrahora e não pode ser transferido');
+            }
             const recipient = await tx.user.findUnique({ where: { email: recipientEmail }, select: { id: true, name: true, email: true, isActive: true } });
             if (recipient && !recipient.isActive)
                 throw new common_1.BadRequestException('Não foi possível transferir para este destinatário');

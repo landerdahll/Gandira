@@ -4,6 +4,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Logger,
+  ConflictException,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -13,6 +14,9 @@ import { PaymentsService } from '../payments/payments.service';
 import { CouponsService } from '../coupons/coupons.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderExpirationService } from '../order-fulfillment/order-expiration.service';
+import { Prisma } from '@prisma/client';
+import { withSerializableRetry } from '../../common/utils/serializable-retry.util';
+import { ClubBenefitsService, DiscountType } from '../club-benefits/club-benefits.service';
 
 const ORDER_EXPIRY_MINUTES = 60;
 const PLATFORM_FEE_PERCENT = Number(process.env.PLATFORM_FEE_PERCENT ?? 10);
@@ -27,6 +31,7 @@ export class OrdersService {
     private payments: PaymentsService,
     private coupons: CouponsService,
     private orderExpiration: OrderExpirationService,
+    private clubBenefits: ClubBenefitsService,
   ) {}
 
   /**
@@ -79,40 +84,81 @@ export class OrdersService {
     }
 
     // All DB operations in a single transaction — stock reservation is atomic
-    const order = await this.prisma.$transaction(async (tx) => {
+    let result;
+    try {
+      result = await withSerializableRetry(() => this.prisma.$transaction(async (tx) => {
+      const now = new Date();
       let subtotal = new Decimal(0);
-      const lineItems: Array<{ batchId: string; quantity: number; unitPrice: Decimal; total: Decimal }> = [];
+      const lineItems: Array<{ batchId: string; batchName: string; sortOrder: number; quantity: number; unitPrice: Decimal; total: Decimal }> = [];
 
       for (const item of dto.items) {
         const batch = await this.batches.reserveStock(item.batchId, item.quantity, tx);
         const unitPrice = new Decimal(batch.price.toString());
         const lineTotal = unitPrice.mul(item.quantity);
         subtotal = subtotal.add(lineTotal);
-        lineItems.push({ batchId: item.batchId, quantity: item.quantity, unitPrice, total: lineTotal });
+        lineItems.push({ batchId: item.batchId, batchName: batch.name, sortOrder: batch.sortOrder, quantity: item.quantity, unitPrice, total: lineTotal });
       }
 
-      const platformFee = subtotal.mul(PLATFORM_FEE_PERCENT / 100).toDecimalPlaces(2);
-      const discountAmount = discountPct > 0
-        ? subtotal.mul(discountPct / 100).toDecimalPlaces(2)
+      const clubDecision = await this.clubBenefits.evaluateInTransaction(tx, {
+        userId,
+        eventId: dto.eventId,
+        items: lineItems,
+        hasCoupon: Boolean(couponId),
+        now,
+      });
+      const platformFee = subtotal
+        .mul(new Decimal(PLATFORM_FEE_PERCENT).div(100))
+        .toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+      const couponDiscount = discountPct > 0
+        ? subtotal.mul(new Decimal(discountPct).div(100)).toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
         : new Decimal(0);
+      const discountAmount = clubDecision.applied
+        ? clubDecision.discountAmount!
+        : couponDiscount;
       const total = subtotal.add(platformFee).sub(discountAmount);
-      const expiresAt = new Date(Date.now() + ORDER_EXPIRY_MINUTES * 60 * 1000);
+      const expiresAt = new Date(now.getTime() + ORDER_EXPIRY_MINUTES * 60 * 1000);
 
-      return tx.order.create({
+      const order = await tx.order.create({
         data: {
           userId,
           eventId: dto.eventId,
           subtotal,
           platformFee,
           discountAmount,
+          clubBenefitReason: clubDecision.reason,
           total,
           couponId,
           expiresAt,
-          items: { create: lineItems },
+          items: { create: lineItems.map(({ batchName: _batchName, sortOrder: _sortOrder, ...item }) => item) },
         },
         include: { items: true, event: { select: { title: true } } },
       });
-    });
+      await this.clubBenefits.createReservationInTransaction(tx, clubDecision, {
+        eventId: dto.eventId,
+        orderId: order.id,
+        expiresAt,
+        now,
+      });
+      const discountType: DiscountType = clubDecision.applied ? 'CLUB' : couponId ? 'COUPON' : 'NONE';
+      return { order, clubDecision, discountType };
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }));
+    } catch (error) {
+      const target = error instanceof Prisma.PrismaClientKnownRequestError
+        ? String(error.meta?.target ?? '')
+        : '';
+      if (error instanceof Prisma.PrismaClientKnownRequestError
+        && error.code === 'P2002'
+        && target.includes('clubMemberId')
+        && target.includes('eventId')) {
+        throw new ConflictException({
+          message: 'Já existe uma reserva válida do benefício para este evento',
+          code: 'CLUB_BENEFIT_RESERVED',
+          clubBenefit: { applied: false, reason: 'RESERVED_BY_OTHER_REQUEST' },
+        });
+      }
+      throw error;
+    }
+    const { order, clubDecision, discountType } = result;
 
     // Increment coupon usage by number of tickets purchased
     if (couponId) {
@@ -123,7 +169,13 @@ export class OrdersService {
     }
 
     // Create Stripe PaymentIntent (outside DB tx — external call)
-    const paymentIntent = await this.payments.createPaymentIntent(order);
+    let paymentIntent;
+    try {
+      paymentIntent = await this.payments.createPaymentIntent(order);
+    } catch (error) {
+      await this.orderExpiration.cancelPendingOrder(order.id, 'PAYMENT_CREATION_FAILED');
+      throw error;
+    }
     await this.prisma.order.update({
       where: { id: order.id },
       data: { stripePaymentIntentId: paymentIntent.id },
@@ -134,6 +186,8 @@ export class OrdersService {
       total: order.total,
       expiresAt: order.expiresAt,
       clientSecret: paymentIntent.client_secret, // sent to Stripe.js on frontend
+      discountType,
+      clubBenefit: this.clubBenefits.toResponse(clubDecision),
     };
   }
 
@@ -153,12 +207,14 @@ export class OrdersService {
             include: { batch: { select: { name: true, ticketType: true } } },
           },
           tickets: { select: { id: true, status: true } },
+          reservedClubBenefits: { include: { batch: { select: { id: true, name: true } } } },
+          confirmedClubBenefits: { include: { batch: { select: { id: true, name: true } } } },
         },
       }),
       this.prisma.order.count({ where: { userId } }),
     ]);
 
-    return { data, meta: { total, page, lastPage: Math.ceil(total / take) } };
+    return { data: data.map((order) => this.withBenefitResponse(order)), meta: { total, page, lastPage: Math.ceil(total / take) } };
   }
 
   async findOne(orderId: string, userId: string) {
@@ -168,13 +224,15 @@ export class OrdersService {
         event: { select: { title: true, slug: true, startDate: true, venue: true, coverImage: true } },
         items: { include: { batch: true } },
         tickets: true,
+        reservedClubBenefits: { include: { batch: { select: { id: true, name: true } } } },
+        confirmedClubBenefits: { include: { batch: { select: { id: true, name: true } } } },
       },
     });
 
     if (!order) throw new NotFoundException('Pedido não encontrado');
     if (order.userId !== userId) throw new ForbiddenException('Acesso negado');
 
-    return order;
+    return this.withBenefitResponse(order);
   }
 
   /**
@@ -243,5 +301,28 @@ export class OrdersService {
         this.logger.error(`Failed to expire order ${order.id}`, e);
       }
     }
+  }
+
+  private withBenefitResponse(order: any) {
+    const usage = order.confirmedClubBenefits?.[0] ?? order.reservedClubBenefits?.[0] ?? null;
+    const clubBenefit = usage ? {
+      applied: true,
+      reason: 'AVAILABLE',
+      status: usage.status,
+      discountPercentage: usage.discountPercentage.toFixed(2),
+      batchId: usage.batchId,
+      batchName: usage.batch?.name ?? null,
+      originalAmount: usage.originalAmount?.toFixed(2) ?? null,
+      discountAmount: usage.discountAmount?.toFixed(2) ?? null,
+      finalAmount: usage.finalAmount?.toFixed(2) ?? null,
+      quantityDiscounted: 1,
+      ticketId: usage.ticketId ?? null,
+    } : { applied: false, reason: order.clubBenefitReason ?? 'NOT_MEMBER' };
+    const { reservedClubBenefits: _reserved, confirmedClubBenefits: _confirmed, ...safeOrder } = order;
+    return {
+      ...safeOrder,
+      discountType: usage ? 'CLUB' : order.couponId ? 'COUPON' : 'NONE',
+      clubBenefit,
+    };
   }
 }

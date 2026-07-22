@@ -27,6 +27,7 @@ describe('AbacatepayService fulfillment integration', () => {
     const result = await service.createPixCharge('order-1', 'user-1');
     const request = (global.fetch as jest.Mock).mock.calls[0][1];
     const body = JSON.parse(request.body);
+    expect(body.data.amount).toBe(10000);
     expect(body.data.expiresIn).toBeGreaterThanOrEqual(3599);
     expect(body.data.expiresIn).toBeLessThanOrEqual(3600);
     expect(result.expiresAt).toBeInstanceOf(Date);
