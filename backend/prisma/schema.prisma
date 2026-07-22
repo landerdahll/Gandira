@@ -74,35 +74,41 @@ enum CheckInMethod {
   AT_DOOR
 }
 
+enum ClubBenefitUsageStatus {
+  RESERVED
+  CONFIRMED
+  RELEASED
+}
+
 // ─── Models ──────────────────────────────────────────────────────────────────
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String
-  name          String
-  phone         String?
-  cpf           String?   @unique
-  role          Role      @default(CUSTOMER)
-  gender        Gender?
-  birthDate     DateTime?
-  avatarUrl     String?
-  isVerified    Boolean   @default(false)
-  isActive      Boolean   @default(true)
+  id         String    @id @default(cuid())
+  email      String    @unique
+  password   String
+  name       String
+  phone      String?
+  cpf        String?   @unique
+  role       Role      @default(CUSTOMER)
+  gender     Gender?
+  birthDate  DateTime?
+  avatarUrl  String?
+  isVerified Boolean   @default(false)
+  isActive   Boolean   @default(true)
 
-  events              Event[]
-  orders              Order[]
-  checkIns            CheckIn[] @relation("StaffCheckIns")
-  refreshTokens       RefreshToken[]
-  auditLogs           AuditLog[]
-  passwordResetTokens       PasswordResetToken[]
-  emailVerificationTokens   EmailVerificationToken[]
-  ownedTickets              Ticket[]         @relation("TicketOwner")
-  sentTicketTransfers       TicketTransfer[] @relation("TransferSender")
-  receivedTicketTransfers   TicketTransfer[] @relation("TransferRecipient")
+  events                  Event[]
+  orders                  Order[]
+  checkIns                CheckIn[]                @relation("StaffCheckIns")
+  refreshTokens           RefreshToken[]
+  auditLogs               AuditLog[]
+  passwordResetTokens     PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  ownedTickets            Ticket[]                 @relation("TicketOwner")
+  sentTicketTransfers     TicketTransfer[]         @relation("TransferSender")
+  receivedTicketTransfers TicketTransfer[]         @relation("TransferRecipient")
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([email])
   @@index([cpf])
@@ -122,44 +128,45 @@ model RefreshToken {
 }
 
 model Event {
-  id          String      @id @default(cuid())
-  producerId  String
-  producer    User        @relation(fields: [producerId], references: [id])
+  id         String @id @default(cuid())
+  producerId String
+  producer   User   @relation(fields: [producerId], references: [id])
 
   title       String
-  description String      @db.Text
-  slug        String      @unique
+  description String  @db.Text
+  slug        String  @unique
   coverImage  String?
   bannerImage String?
 
-  venue       String
-  address     String
-  city        String
-  state       String
-  zipCode     String?
-  latitude    Decimal?    @db.Decimal(10, 8)
-  longitude   Decimal?    @db.Decimal(11, 8)
+  venue     String
+  address   String
+  city      String
+  state     String
+  zipCode   String?
+  latitude  Decimal? @db.Decimal(10, 8)
+  longitude Decimal? @db.Decimal(11, 8)
 
-  startDate   DateTime
-  endDate     DateTime
-  doorsOpen   DateTime?
+  startDate DateTime
+  endDate   DateTime
+  doorsOpen DateTime?
 
-  ageRating   Int         @default(0)
-  category    String?
-  tags        String[]    @default([])
+  ageRating Int      @default(0)
+  category  String?
+  tags      String[] @default([])
 
-  status      EventStatus @default(DRAFT)
-  allowTicketTransfers Boolean @default(true)
+  status               EventStatus @default(DRAFT)
+  allowTicketTransfers Boolean     @default(true)
 
-  batches     Batch[]
-  orders      Order[]
-  checkIns    CheckIn[]
-  tickets     Ticket[]
-  coupons     Coupon[]
-  ticketTransfers TicketTransfer[]
+  batches           Batch[]
+  orders            Order[]
+  checkIns          CheckIn[]
+  tickets           Ticket[]
+  coupons           Coupon[]
+  ticketTransfers   TicketTransfer[]
+  clubBenefitUsages ClubBenefitUsage[]
 
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug])
   @@index([producerId])
@@ -168,65 +175,68 @@ model Event {
 }
 
 model Batch {
-  id          String      @id @default(cuid())
-  eventId     String
-  event       Event       @relation(fields: [eventId], references: [id])
+  id      String @id @default(cuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id])
 
   name        String
   description String?
-  price       Decimal     @db.Decimal(10, 2)
+  price       Decimal @db.Decimal(10, 2)
   quantity    Int
-  sold        Int         @default(0)
+  sold        Int     @default(0)
 
-  startsAt    DateTime
-  endsAt      DateTime
+  startsAt DateTime
+  endsAt   DateTime
 
-  ticketType  TicketType  @default(GENERAL)
-  status      BatchStatus @default(ACTIVE)
-  sortOrder   Int         @default(0)
+  ticketType TicketType  @default(GENERAL)
+  status     BatchStatus @default(ACTIVE)
+  sortOrder  Int         @default(0)
 
-  tickets     Ticket[]
-  orderItems  OrderItem[]
+  tickets    Ticket[]
+  orderItems OrderItem[]
+  clubBenefitUsages ClubBenefitUsage[]
 
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([eventId])
   @@index([eventId, status])
 }
 
 model Order {
-  id                    String      @id @default(cuid())
-  userId                String
-  user                  User        @relation(fields: [userId], references: [id])
-  eventId               String
-  event                 Event       @relation(fields: [eventId], references: [id])
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id])
 
-  status                OrderStatus @default(PENDING)
+  status OrderStatus @default(PENDING)
 
-  subtotal              Decimal     @db.Decimal(10, 2)
-  platformFee           Decimal     @db.Decimal(10, 2)
-  total                 Decimal     @db.Decimal(10, 2)
+  subtotal    Decimal @db.Decimal(10, 2)
+  platformFee Decimal @db.Decimal(10, 2)
+  total       Decimal @db.Decimal(10, 2)
 
-  stripePaymentIntentId String?     @unique
+  stripePaymentIntentId String? @unique
   stripeChargeId        String?
 
-  couponId              String?
-  coupon                Coupon?     @relation(fields: [couponId], references: [id])
-  discountAmount        Decimal     @default(0) @db.Decimal(10, 2)
+  couponId       String?
+  coupon         Coupon? @relation(fields: [couponId], references: [id])
+  discountAmount Decimal @default(0) @db.Decimal(10, 2)
 
-  cancelledAt           DateTime?
-  cancelReason          String?
-  refundedAt            DateTime?
-  stripeRefundId        String?
+  cancelledAt    DateTime?
+  cancelReason   String?
+  refundedAt     DateTime?
+  stripeRefundId String?
 
-  expiresAt             DateTime
+  expiresAt DateTime
 
   items                 OrderItem[]
   tickets               Ticket[]
+  reservedClubBenefits  ClubBenefitUsage[] @relation("ClubBenefitReservedOrder")
+  confirmedClubBenefits ClubBenefitUsage[] @relation("ClubBenefitConfirmedOrder")
 
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([eventId])
@@ -236,15 +246,15 @@ model Order {
 }
 
 model OrderItem {
-  id        String   @id @default(cuid())
-  orderId   String
-  order     Order    @relation(fields: [orderId], references: [id])
-  batchId   String
-  batch     Batch    @relation(fields: [batchId], references: [id])
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+  batchId String
+  batch   Batch  @relation(fields: [batchId], references: [id])
 
   quantity  Int
-  unitPrice Decimal  @db.Decimal(10, 2)
-  total     Decimal  @db.Decimal(10, 2)
+  unitPrice Decimal @db.Decimal(10, 2)
+  total     Decimal @db.Decimal(10, 2)
 
   createdAt DateTime @default(now())
 
@@ -252,35 +262,35 @@ model OrderItem {
 }
 
 model Ticket {
-  id           String       @id @default(cuid())
-  orderId      String
-  order        Order        @relation(fields: [orderId], references: [id])
-  batchId      String
-  batch        Batch        @relation(fields: [batchId], references: [id])
-  eventId      String
-  event        Event        @relation(fields: [eventId], references: [id])
-  ownerUserId  String
-  owner        User         @relation("TicketOwner", fields: [ownerUserId], references: [id])
+  id          String @id @default(cuid())
+  orderId     String
+  order       Order  @relation(fields: [orderId], references: [id])
+  batchId     String
+  batch       Batch  @relation(fields: [batchId], references: [id])
+  eventId     String
+  event       Event  @relation(fields: [eventId], references: [id])
+  ownerUserId String
+  owner       User   @relation("TicketOwner", fields: [ownerUserId], references: [id])
 
   // Token criptograficamente aleatório — conteúdo do QR Code
-  token        String       @unique @default(cuid())
+  token String @unique @default(cuid())
 
-  status       TicketStatus @default(ACTIVE)
+  status TicketStatus @default(ACTIVE)
 
-  holderName   String?
-  holderEmail  String?
-  holderCpf    String?
+  holderName  String?
+  holderEmail String?
+  holderCpf   String?
 
-  qrCodeUrl    String?
+  qrCodeUrl String?
 
-  checkIn      CheckIn?
-  transfers    TicketTransfer[]
-  history      TicketHistory[]
+  checkIn   CheckIn?
+  transfers TicketTransfer[]
+  history   TicketHistory[]
 
-  cancelledAt  DateTime?
+  cancelledAt DateTime?
 
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([token])
   @@index([orderId])
@@ -322,34 +332,34 @@ model TicketTransfer {
 }
 
 model TicketHistory {
-  id         String          @id @default(cuid())
-  ticketId   String
-  ticket     Ticket          @relation(fields: [ticketId], references: [id])
-  transferId String?
-  transfer   TicketTransfer? @relation(fields: [transferId], references: [id])
-  action     String
+  id          String          @id @default(cuid())
+  ticketId    String
+  ticket      Ticket          @relation(fields: [ticketId], references: [id])
+  transferId  String?
+  transfer    TicketTransfer? @relation(fields: [transferId], references: [id])
+  action      String
   actorUserId String?
-  metadata   Json?
-  createdAt  DateTime        @default(now())
+  metadata    Json?
+  createdAt   DateTime        @default(now())
 
   @@index([ticketId, createdAt])
   @@index([transferId, createdAt])
 }
 
 model CheckIn {
-  id        String        @id @default(cuid())
-  ticketId  String        @unique
-  ticket    Ticket        @relation(fields: [ticketId], references: [id])
-  eventId   String
-  event     Event         @relation(fields: [eventId], references: [id])
+  id       String @id @default(cuid())
+  ticketId String @unique
+  ticket   Ticket @relation(fields: [ticketId], references: [id])
+  eventId  String
+  event    Event  @relation(fields: [eventId], references: [id])
 
-  staffId   String?
-  staff     User?         @relation("StaffCheckIns", fields: [staffId], references: [id])
+  staffId String?
+  staff   User?   @relation("StaffCheckIns", fields: [staffId], references: [id])
 
-  method    CheckInMethod @default(QR_CODE)
-  notes     String?
+  method CheckInMethod @default(QR_CODE)
+  notes  String?
 
-  checkedAt DateTime      @default(now())
+  checkedAt DateTime @default(now())
 
   @@index([eventId])
   @@index([ticketId])
@@ -382,27 +392,27 @@ model PasswordResetToken {
 }
 
 model Coupon {
-  id          String    @id @default(cuid())
-  eventId     String
-  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  code        String
-  discount    Decimal   @db.Decimal(5, 2)
-  maxUses     Int?
-  usedCount   Int       @default(0)
-  expiresAt   DateTime?
-  isActive    Boolean   @default(true)
-  orders      Order[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id        String    @id @default(cuid())
+  eventId   String
+  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  code      String
+  discount  Decimal   @db.Decimal(5, 2)
+  maxUses   Int?
+  usedCount Int       @default(0)
+  expiresAt DateTime?
+  isActive  Boolean   @default(true)
+  orders    Order[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@unique([eventId, code])
   @@index([eventId])
 }
 
 model AuditLog {
-  id        String   @id @default(cuid())
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id])
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
 
   action    String
   entity    String
@@ -416,4 +426,58 @@ model AuditLog {
   @@index([userId])
   @@index([entity, entityId])
   @@index([createdAt])
+}
+
+model ClubMember {
+  id            String    @id @default(cuid())
+  cpf           String    @unique @db.VarChar(11)
+  name          String?
+  email         String?
+  phone         String?
+  isActive      Boolean   @default(true)
+  activatedAt   DateTime  @default(now())
+  deactivatedAt DateTime?
+
+  usages ClubBenefitUsage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([email])
+  @@index([phone])
+  @@index([isActive])
+}
+
+model ClubBenefitUsage {
+  id           String                 @id @default(cuid())
+  clubMemberId String
+  clubMember   ClubMember             @relation(fields: [clubMemberId], references: [id], onDelete: Restrict)
+  eventId      String
+  event        Event                  @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  status       ClubBenefitUsageStatus @default(RESERVED)
+
+  reservedOrderId  String? @unique
+  reservedOrder    Order?  @relation("ClubBenefitReservedOrder", fields: [reservedOrderId], references: [id], onDelete: SetNull)
+  confirmedOrderId String? @unique
+  confirmedOrder   Order?  @relation("ClubBenefitConfirmedOrder", fields: [confirmedOrderId], references: [id], onDelete: SetNull)
+  batchId          String?
+  batch            Batch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+
+  originalAmount Decimal? @db.Decimal(10, 2)
+  discountAmount Decimal? @db.Decimal(10, 2)
+  finalAmount    Decimal? @db.Decimal(10, 2)
+
+  reservedAt           DateTime?
+  reservationExpiresAt DateTime?
+  confirmedAt          DateTime?
+  releasedAt           DateTime?
+  releaseReason        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([clubMemberId, eventId])
+  @@index([status, reservationExpiresAt])
+  @@index([eventId, status])
 }

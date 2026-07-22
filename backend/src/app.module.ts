@@ -18,6 +18,7 @@ import { TicketTransfersModule } from './modules/ticket-transfers/ticket-transfe
 import { MailModule } from './modules/mail/mail.module';
 import { CouponsModule } from './modules/coupons/coupons.module';
 import { AbacatepayModule } from './modules/abacatepay/abacatepay.module';
+import { ClubMembersModule } from './modules/club-members/club-members.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { AbacatepayModule } from './modules/abacatepay/abacatepay.module';
     TicketTransfersModule,
     CouponsModule,
     AbacatepayModule,
+    ClubMembersModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

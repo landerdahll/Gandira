@@ -17,7 +17,7 @@ export default function AdminTransfersPage() {
   useEffect(() => { load(); }, []);
   async function open(id: string) { try { setDetail((await ticketTransfersApi.adminDetail(id)).data); } catch { toast.error('Erro ao carregar detalhes'); } }
   return <div style={{ maxWidth: 1180, margin: '0 auto', padding: '32px 20px 80px', color: '#fff' }}>
-    <Link href="/admin/users" style={{ color: '#666', textDecoration: 'none', fontSize: 13 }}><ArrowLeft size={13} /> Painel Master</Link>
+    <div style={{ display: 'flex', gap: 14 }}><Link href="/admin/users" style={{ color: '#666', textDecoration: 'none', fontSize: 13 }}><ArrowLeft size={13} /> Painel Master</Link><Link href="/admin/clube-outrahora" style={{ color: '#67bed9', textDecoration: 'none', fontSize: 13 }}>Clube Outrahora</Link></div>
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 24 }}><History color="#67bed9" /><h1 style={{ fontSize: 24 }}>Histórico de transferências</h1></div>
     <p style={{ color: '#666', fontSize: 14 }}>{meta.total} registro(s) encontrado(s)</p>
     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.4fr 1fr 1fr 1fr auto', gap: 8, margin: '24px 0' }}>

@@ -175,3 +175,13 @@ export const adminApi = {
   resetPassword:   (id: string) => api.patch(`/users/${id}/reset-password`),
   deleteUser:      (id: string) => api.delete(`/users/${id}`),
 };
+
+export const clubMembersApi = {
+  list: (params?: { page?: number; limit?: number; search?: string }) =>
+    api.get('/admin/club-members', { params }),
+  get: (id: string) => api.get(`/admin/club-members/${id}`),
+  create: (data: { cpf: string; name?: string; email?: string; phone?: string }) =>
+    api.post('/admin/club-members', data),
+  activate: (id: string) => api.patch(`/admin/club-members/${id}/activate`),
+  deactivate: (id: string) => api.patch(`/admin/club-members/${id}/deactivate`),
+};

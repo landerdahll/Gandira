@@ -27,6 +27,7 @@ const ticket_transfers_module_1 = require("./modules/ticket-transfers/ticket-tra
 const mail_module_1 = require("./modules/mail/mail.module");
 const coupons_module_1 = require("./modules/coupons/coupons.module");
 const abacatepay_module_1 = require("./modules/abacatepay/abacatepay.module");
+const club_members_module_1 = require("./modules/club-members/club-members.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -61,6 +62,7 @@ exports.AppModule = AppModule = __decorate([
             ticket_transfers_module_1.TicketTransfersModule,
             coupons_module_1.CouponsModule,
             abacatepay_module_1.AbacatepayModule,
+            club_members_module_1.ClubMembersModule,
         ],
         providers: [
             { provide: core_1.APP_GUARD, useClass: throttler_1.ThrottlerGuard },

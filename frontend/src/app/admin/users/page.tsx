@@ -137,7 +137,10 @@ export default function AdminUsersPage() {
 
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
-        <Link href="/admin/transfers" style={{ float: 'right', color: '#67bed9', textDecoration: 'none', fontSize: 14 }}>Histórico de transferências →</Link>
+        <div style={{ float: 'right', display: 'flex', gap: 14 }}>
+          <Link href="/admin/clube-outrahora" style={{ color: '#67bed9', textDecoration: 'none', fontSize: 14 }}>Clube Outrahora</Link>
+          <Link href="/admin/transfers" style={{ color: '#67bed9', textDecoration: 'none', fontSize: 14 }}>Transferências →</Link>
+        </div>
         <div className="admin-header-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
