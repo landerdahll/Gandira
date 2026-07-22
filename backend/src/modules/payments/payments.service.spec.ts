@@ -1,0 +1,58 @@
+import { BadRequestException } from '@nestjs/common';
+import { PaymentsService } from './payments.service';
+
+describe('PaymentsService fulfillment integration', () => {
+  function setup() {
+    const config = { get: jest.fn((key: string) => key === 'STRIPE_SECRET_KEY' ? 'sk_test_fake' : '') };
+    const prisma = {
+      order: { findUnique: jest.fn().mockResolvedValue({ id: 'order-1' }) },
+    };
+    const fulfillment = { confirmPaidOrder: jest.fn().mockResolvedValue({ status: 'FULFILLED', orderStatus: 'PAID' }) };
+    const service = new PaymentsService(config as never, prisma as never, fulfillment as never);
+    const stripe = {
+      paymentIntents: {
+        create: jest.fn().mockResolvedValue({ id: 'pi_1', client_secret: 'secret' }),
+      },
+    };
+    (service as any).stripe = stripe;
+    return { service, prisma, fulfillment, stripe };
+  }
+
+  it('configura a validade PIX com os segundos restantes do pedido', async () => {
+    const { service, stripe } = setup();
+    await service.createPaymentIntent({
+      id: 'order-1', eventId: 'event-1', total: 100,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000), event: { title: 'Evento' },
+    });
+    const params = stripe.paymentIntents.create.mock.calls[0][0];
+    expect(params.payment_method_options.pix.expires_after_seconds).toBeGreaterThanOrEqual(3599);
+    expect(params.payment_method_options.pix.expires_after_seconds).toBeLessThanOrEqual(3600);
+  });
+
+  it('não cria PaymentIntent para pedido expirado', async () => {
+    const { service, stripe } = setup();
+    await expect(service.createPaymentIntent({
+      id: 'order-1', eventId: 'event-1', total: 100, expiresAt: new Date(Date.now() - 1),
+    })).rejects.toBeInstanceOf(BadRequestException);
+    expect(stripe.paymentIntents.create).not.toHaveBeenCalled();
+  });
+
+  it('delega payment_intent.succeeded ao finalizador compartilhado', async () => {
+    const { service, fulfillment } = setup();
+    await service.handleWebhookEvent({
+      type: 'payment_intent.succeeded',
+      data: { object: { id: 'pi_1', latest_charge: 'ch_1' } },
+    } as never);
+    expect(fulfillment.confirmPaidOrder).toHaveBeenCalledWith({
+      orderId: 'order-1', gateway: 'STRIPE', externalPaymentId: 'pi_1', stripeChargeId: 'ch_1',
+    });
+  });
+
+  it('reconhece pagamento tardio no webhook sem lançar erro', async () => {
+    const { service, fulfillment } = setup();
+    fulfillment.confirmPaidOrder.mockResolvedValue({ status: 'LATE_PAYMENT_REQUIRES_REVIEW', orderStatus: 'EXPIRED' });
+    await expect(service.handleWebhookEvent({
+      type: 'payment_intent.succeeded', data: { object: { id: 'pi_late', latest_charge: 'ch_late' } },
+    } as never)).resolves.toBeUndefined();
+  });
+});

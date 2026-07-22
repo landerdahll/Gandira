@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
 import { AbacatepayService } from './abacatepay.service';
 import { AbacatepayController } from './abacatepay.controller';
-import { TicketsModule } from '../tickets/tickets.module';
-import { MailModule } from '../mail/mail.module';
+import { OrderFulfillmentModule } from '../order-fulfillment/order-fulfillment.module';
 
 @Module({
-  imports: [TicketsModule, MailModule],
+  imports: [OrderFulfillmentModule],
   controllers: [AbacatepayController],
   providers: [AbacatepayService],
 })

@@ -1,4 +1,5 @@
 import { PrismaService } from '../../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 interface GenerateTicketInput {
     orderId: string;
     batchId: string;
@@ -8,7 +9,22 @@ export declare class TicketsService {
     private prisma;
     private readonly logger;
     constructor(prisma: PrismaService);
-    generateTicket(input: GenerateTicketInput, tx?: any): Promise<any>;
+    generateTicket(input: GenerateTicketInput, tx?: Prisma.TransactionClient): Promise<{
+        qrCodeUrl: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.TicketStatus;
+        cancelledAt: Date | null;
+        eventId: string;
+        token: string;
+        orderId: string;
+        batchId: string;
+        ownerUserId: string;
+        holderName: string | null;
+        holderEmail: string | null;
+        holderCpf: string | null;
+    }>;
     findUserTickets(userId: string, page?: number, limit?: number): Promise<{
         data: any;
         meta: {

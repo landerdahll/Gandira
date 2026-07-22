@@ -4,13 +4,15 @@ import { BatchesService } from '../batches/batches.service';
 import { PaymentsService } from '../payments/payments.service';
 import { CouponsService } from '../coupons/coupons.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { OrderExpirationService } from '../order-fulfillment/order-expiration.service';
 export declare class OrdersService {
     private prisma;
     private batches;
     private payments;
     private coupons;
+    private orderExpiration;
     private readonly logger;
-    constructor(prisma: PrismaService, batches: BatchesService, payments: PaymentsService, coupons: CouponsService);
+    constructor(prisma: PrismaService, batches: BatchesService, payments: PaymentsService, coupons: CouponsService, orderExpiration: OrderExpirationService);
     create(dto: CreateOrderDto, userId: string): Promise<{
         orderId: string;
         total: Decimal;
@@ -49,9 +51,9 @@ export declare class OrdersService {
             updatedAt: Date;
             status: import(".prisma/client").$Enums.OrderStatus;
             total: Decimal;
-            eventId: string;
             cancelledAt: Date | null;
             expiresAt: Date;
+            eventId: string;
             userId: string;
             subtotal: Decimal;
             platformFee: Decimal;
@@ -75,8 +77,8 @@ export declare class OrdersService {
             createdAt: Date;
             updatedAt: Date;
             status: import(".prisma/client").$Enums.TicketStatus;
-            eventId: string;
             cancelledAt: Date | null;
+            eventId: string;
             token: string;
             orderId: string;
             batchId: string;
@@ -125,9 +127,9 @@ export declare class OrdersService {
         updatedAt: Date;
         status: import(".prisma/client").$Enums.OrderStatus;
         total: Decimal;
-        eventId: string;
         cancelledAt: Date | null;
         expiresAt: Date;
+        eventId: string;
         userId: string;
         subtotal: Decimal;
         platformFee: Decimal;

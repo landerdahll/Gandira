@@ -18,14 +18,15 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const stripe_1 = __importDefault(require("stripe"));
 const prisma_service_1 = require("../../prisma/prisma.service");
-const tickets_service_1 = require("../tickets/tickets.service");
-const mail_service_1 = require("../mail/mail.service");
+const order_fulfillment_service_1 = require("../order-fulfillment/order-fulfillment.service");
+const payment_expiration_util_1 = require("../order-fulfillment/payment-expiration.util");
+const client_1 = require("@prisma/client");
+const serializable_retry_util_1 = require("../../common/utils/serializable-retry.util");
 let PaymentsService = PaymentsService_1 = class PaymentsService {
-    constructor(config, prisma, tickets, mail) {
+    constructor(config, prisma, fulfillment) {
         this.config = config;
         this.prisma = prisma;
-        this.tickets = tickets;
-        this.mail = mail;
+        this.fulfillment = fulfillment;
         this.logger = new common_1.Logger(PaymentsService_1.name);
         this.stripe = new stripe_1.default(config.get('STRIPE_SECRET_KEY'), {
             apiVersion: '2023-10-16',
@@ -34,6 +35,7 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
     }
     async createPaymentIntent(order) {
         const amountCents = Math.round(Number(order.total) * 100);
+        const expiresAfterSeconds = (0, payment_expiration_util_1.calculateRemainingPaymentSeconds)(new Date(order.expiresAt));
         return this.stripe.paymentIntents.create({
             amount: amountCents,
             currency: 'brl',
@@ -44,7 +46,7 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
             },
             automatic_payment_methods: { enabled: true },
             payment_method_options: {
-                pix: { expires_after_seconds: 3600 },
+                pix: { expires_after_seconds: expiresAfterSeconds },
             },
         });
     }
@@ -88,8 +90,8 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
         const pi = await this.stripe.paymentIntents.retrieve(order.stripePaymentIntentId);
         if (pi.status !== 'succeeded')
             return { status: order.status };
-        await this.onPaymentSucceeded(pi);
-        return { status: 'PAID' };
+        const result = await this.onPaymentSucceeded(pi);
+        return { status: result.status === 'FULFILLED' || result.status === 'ALREADY_PAID' ? 'PAID' : result.status };
     }
     constructWebhookEvent(payload, signature) {
         const secret = this.config.get('STRIPE_WEBHOOK_SECRET');
@@ -120,53 +122,21 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
     async onPaymentSucceeded(pi) {
         const order = await this.prisma.order.findUnique({
             where: { stripePaymentIntentId: pi.id },
-            include: { items: { include: { batch: true } } },
+            select: { id: true },
         });
         if (!order) {
             this.logger.error(`Order not found for PaymentIntent ${pi.id}`);
-            return;
+            return { status: 'ORDER_NOT_FOUND' };
         }
-        if (order.status === 'PAID') {
-            this.logger.warn(`Order ${order.id} already paid — idempotent webhook`);
-            return;
-        }
-        await this.prisma.$transaction(async (tx) => {
-            await tx.order.update({
-                where: { id: order.id },
-                data: {
-                    status: 'PAID',
-                    stripeChargeId: typeof pi.latest_charge === 'string' ? pi.latest_charge : undefined,
-                },
-            });
-            for (const item of order.items) {
-                for (let i = 0; i < item.quantity; i++) {
-                    await this.tickets.generateTicket({ orderId: order.id, batchId: item.batchId, eventId: order.eventId }, tx);
-                }
-            }
+        const result = await this.fulfillment.confirmPaidOrder({
+            orderId: order.id,
+            gateway: 'STRIPE',
+            externalPaymentId: pi.id,
+            stripeChargeId: typeof pi.latest_charge === 'string' ? pi.latest_charge : undefined,
         });
-        this.logger.log(`Payment succeeded for order ${order.id} — tickets generated`);
-        this.prisma.order.findUnique({
-            where: { id: order.id },
-            include: {
-                user: { select: { email: true, name: true } },
-                event: { select: { title: true, startDate: true, venue: true, city: true } },
-                items: { include: { batch: { select: { name: true, ticketType: true } } } },
-                tickets: { select: { id: true } },
-            },
-        }).then(full => {
-            if (!full)
-                return;
-            const frontendUrl = (this.config.get('FRONTEND_URL', 'http://localhost:3000')).split(',')[0].trim();
-            this.mail.sendOrderConfirmation(full.user.email, full.user.name, {
-                eventTitle: full.event.title,
-                eventDate: full.event.startDate,
-                venue: `${full.event.venue}, ${full.event.city}`,
-                items: full.items.map(i => ({ batchName: i.batch.name, ticketType: i.batch.ticketType, quantity: i.quantity })),
-                total: Number(full.total),
-                ticketCount: full.tickets.length,
-                myTicketsUrl: `${frontendUrl}/my-tickets`,
-            }).catch(err => this.logger.error(`Falha ao enviar e-mail de confirmação: ${err.message}`));
-        }).catch(err => this.logger.error(`Falha ao buscar pedido para e-mail: ${err.message}`));
+        if (result.status === 'FULFILLED')
+            this.logger.log(`Payment succeeded for order ${order.id}`);
+        return result;
     }
     async onPaymentFailed(pi) {
         const order = await this.prisma.order.findUnique({
@@ -175,16 +145,23 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
         });
         if (!order || order.status !== 'PENDING')
             return;
-        await this.prisma.$transaction(async (tx) => {
-            await tx.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } });
+        const cancelled = await (0, serializable_retry_util_1.withSerializableRetry)(() => this.prisma.$transaction(async (tx) => {
+            const claimed = await tx.order.updateMany({
+                where: { id: order.id, status: 'PENDING' },
+                data: { status: 'CANCELLED' },
+            });
+            if (claimed.count !== 1)
+                return false;
             for (const item of order.items) {
                 await tx.batch.update({
                     where: { id: item.batchId },
                     data: { sold: { decrement: item.quantity }, status: 'ACTIVE' },
                 });
             }
-        });
-        this.logger.log(`Payment failed for order ${order.id} — stock released`);
+            return true;
+        }, { isolationLevel: client_1.Prisma.TransactionIsolationLevel.Serializable }));
+        if (cancelled)
+            this.logger.log(`Payment failed for order ${order.id} — stock released`);
     }
 };
 exports.PaymentsService = PaymentsService;
@@ -192,7 +169,6 @@ exports.PaymentsService = PaymentsService = PaymentsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [config_1.ConfigService,
         prisma_service_1.PrismaService,
-        tickets_service_1.TicketsService,
-        mail_service_1.MailService])
+        order_fulfillment_service_1.OrderFulfillmentService])
 ], PaymentsService);
 //# sourceMappingURL=payments.service.js.map

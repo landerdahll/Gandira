@@ -2,8 +2,10 @@ import { Injectable, Logger, BadRequestException, NotFoundException, ForbiddenEx
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
-import { TicketsService } from '../tickets/tickets.service';
-import { MailService } from '../mail/mail.service';
+import { OrderFulfillmentService } from '../order-fulfillment/order-fulfillment.service';
+import { calculateRemainingPaymentSeconds } from '../order-fulfillment/payment-expiration.util';
+import { Prisma } from '@prisma/client';
+import { withSerializableRetry } from '../../common/utils/serializable-retry.util';
 
 @Injectable()
 export class PaymentsService {
@@ -13,8 +15,7 @@ export class PaymentsService {
   constructor(
     private config: ConfigService,
     private prisma: PrismaService,
-    private tickets: TicketsService,
-    private mail: MailService,
+    private fulfillment: OrderFulfillmentService,
   ) {
     this.stripe = new Stripe(config.get<string>('STRIPE_SECRET_KEY')!, {
       apiVersion: '2023-10-16',
@@ -24,6 +25,7 @@ export class PaymentsService {
 
   async createPaymentIntent(order: any): Promise<Stripe.PaymentIntent> {
     const amountCents = Math.round(Number(order.total) * 100);
+    const expiresAfterSeconds = calculateRemainingPaymentSeconds(new Date(order.expiresAt));
 
     return this.stripe.paymentIntents.create({
       amount: amountCents,
@@ -35,7 +37,7 @@ export class PaymentsService {
       },
       automatic_payment_methods: { enabled: true },
       payment_method_options: {
-        pix: { expires_after_seconds: 3600 },
+        pix: { expires_after_seconds: expiresAfterSeconds },
       },
     });
   }
@@ -90,9 +92,8 @@ export class PaymentsService {
     const pi = await this.stripe.paymentIntents.retrieve(order.stripePaymentIntentId);
     if (pi.status !== 'succeeded') return { status: order.status };
 
-    // PaymentIntent succeeded but webhook wasn't received — process manually
-    await this.onPaymentSucceeded(pi);
-    return { status: 'PAID' };
+    const result = await this.onPaymentSucceeded(pi);
+    return { status: result.status === 'FULFILLED' || result.status === 'ALREADY_PAID' ? 'PAID' : result.status };
   }
 
   /**
@@ -134,63 +135,22 @@ export class PaymentsService {
   private async onPaymentSucceeded(pi: Stripe.PaymentIntent) {
     const order = await this.prisma.order.findUnique({
       where: { stripePaymentIntentId: pi.id },
-      include: { items: { include: { batch: true } } },
+      select: { id: true },
     });
 
     if (!order) {
       this.logger.error(`Order not found for PaymentIntent ${pi.id}`);
-      return;
+      return { status: 'ORDER_NOT_FOUND' as const };
     }
 
-    if (order.status === 'PAID') {
-      this.logger.warn(`Order ${order.id} already paid — idempotent webhook`);
-      return; // Idempotent: webhook may fire more than once
-    }
-
-    await this.prisma.$transaction(async (tx) => {
-      await tx.order.update({
-        where: { id: order.id },
-        data: {
-          status: 'PAID',
-          stripeChargeId: typeof pi.latest_charge === 'string' ? pi.latest_charge : undefined,
-        },
-      });
-
-      // Generate one ticket per purchased ingresso
-      for (const item of order.items) {
-        for (let i = 0; i < item.quantity; i++) {
-          await this.tickets.generateTicket(
-            { orderId: order.id, batchId: item.batchId, eventId: order.eventId },
-            tx,
-          );
-        }
-      }
+    const result = await this.fulfillment.confirmPaidOrder({
+      orderId: order.id,
+      gateway: 'STRIPE',
+      externalPaymentId: pi.id,
+      stripeChargeId: typeof pi.latest_charge === 'string' ? pi.latest_charge : undefined,
     });
-
-    this.logger.log(`Payment succeeded for order ${order.id} — tickets generated`);
-
-    // Fire-and-forget: send confirmation email to buyer
-    this.prisma.order.findUnique({
-      where: { id: order.id },
-      include: {
-        user: { select: { email: true, name: true } },
-        event: { select: { title: true, startDate: true, venue: true, city: true } },
-        items: { include: { batch: { select: { name: true, ticketType: true } } } },
-        tickets: { select: { id: true } },
-      },
-    }).then(full => {
-      if (!full) return;
-      const frontendUrl = (this.config.get<string>('FRONTEND_URL', 'http://localhost:3000')).split(',')[0].trim();
-      this.mail.sendOrderConfirmation(full.user.email, full.user.name, {
-        eventTitle: full.event.title,
-        eventDate: full.event.startDate,
-        venue: `${full.event.venue}, ${full.event.city}`,
-        items: full.items.map(i => ({ batchName: i.batch.name, ticketType: i.batch.ticketType, quantity: i.quantity })),
-        total: Number(full.total),
-        ticketCount: full.tickets.length,
-        myTicketsUrl: `${frontendUrl}/my-tickets`,
-      }).catch(err => this.logger.error(`Falha ao enviar e-mail de confirmação: ${err.message}`));
-    }).catch(err => this.logger.error(`Falha ao buscar pedido para e-mail: ${err.message}`));
+    if (result.status === 'FULFILLED') this.logger.log(`Payment succeeded for order ${order.id}`);
+    return result;
   }
 
   private async onPaymentFailed(pi: Stripe.PaymentIntent) {
@@ -201,17 +161,23 @@ export class PaymentsService {
 
     if (!order || order.status !== 'PENDING') return;
 
-    // Release stock on payment failure
-    await this.prisma.$transaction(async (tx) => {
-      await tx.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } });
+    // Claim PENDING -> CANCELLED before releasing stock, so repeated or concurrent
+    // failure events cannot cancel a paid order or release the same stock twice.
+    const cancelled = await withSerializableRetry(() => this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.order.updateMany({
+        where: { id: order.id, status: 'PENDING' },
+        data: { status: 'CANCELLED' },
+      });
+      if (claimed.count !== 1) return false;
       for (const item of order.items) {
         await tx.batch.update({
           where: { id: item.batchId },
           data: { sold: { decrement: item.quantity }, status: 'ACTIVE' },
         });
       }
-    });
+      return true;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }));
 
-    this.logger.log(`Payment failed for order ${order.id} — stock released`);
+    if (cancelled) this.logger.log(`Payment failed for order ${order.id} — stock released`);
   }
 }

@@ -10,14 +10,13 @@ exports.AbacatepayModule = void 0;
 const common_1 = require("@nestjs/common");
 const abacatepay_service_1 = require("./abacatepay.service");
 const abacatepay_controller_1 = require("./abacatepay.controller");
-const tickets_module_1 = require("../tickets/tickets.module");
-const mail_module_1 = require("../mail/mail.module");
+const order_fulfillment_module_1 = require("../order-fulfillment/order-fulfillment.module");
 let AbacatepayModule = class AbacatepayModule {
 };
 exports.AbacatepayModule = AbacatepayModule;
 exports.AbacatepayModule = AbacatepayModule = __decorate([
     (0, common_1.Module)({
-        imports: [tickets_module_1.TicketsModule, mail_module_1.MailModule],
+        imports: [order_fulfillment_module_1.OrderFulfillmentModule],
         controllers: [abacatepay_controller_1.AbacatepayController],
         providers: [abacatepay_service_1.AbacatepayService],
     })

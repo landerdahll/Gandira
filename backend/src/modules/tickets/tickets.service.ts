@@ -22,7 +22,7 @@ export class TicketsService {
    * O QR Code contém apenas o token — nunca IDs internos.
    * Pode receber um `tx` (Prisma transaction) para ser chamado dentro de uma transação.
    */
-  async generateTicket(input: GenerateTicketInput, tx?: any) {
+  async generateTicket(input: GenerateTicketInput, tx?: Prisma.TransactionClient) {
     const db = tx ?? this.prisma;
     const token = generateSecureToken(32); // 64 hex chars — não sequencial, não previsível
     const order = await db.order.findUniqueOrThrow({ where: { id: input.orderId }, select: { userId: true } });

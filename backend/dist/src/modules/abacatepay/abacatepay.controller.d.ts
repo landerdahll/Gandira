@@ -6,7 +6,7 @@ export declare class AbacatepayController {
         id: any;
         brCode: any;
         brCodeBase64: any;
-        expiresAt: any;
+        expiresAt: Date;
     }>;
     checkPix(pixId: string, orderId: string, user: any): Promise<{
         status: string;

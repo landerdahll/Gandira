@@ -1,21 +1,19 @@
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
-import { TicketsService } from '../tickets/tickets.service';
-import { MailService } from '../mail/mail.service';
+import { OrderFulfillmentService } from '../order-fulfillment/order-fulfillment.service';
 export declare class AbacatepayService {
     private config;
     private prisma;
-    private tickets;
-    private mail;
+    private fulfillment;
     private readonly logger;
     private readonly apiKey;
     private readonly webhookSecret;
-    constructor(config: ConfigService, prisma: PrismaService, tickets: TicketsService, mail: MailService);
+    constructor(config: ConfigService, prisma: PrismaService, fulfillment: OrderFulfillmentService);
     createPixCharge(orderId: string, userId: string): Promise<{
         id: any;
         brCode: any;
         brCodeBase64: any;
-        expiresAt: any;
+        expiresAt: Date;
     }>;
     checkPixAndConfirm(pixId: string, orderId: string, userId: string): Promise<{
         status: string;

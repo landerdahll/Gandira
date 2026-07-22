@@ -18,14 +18,16 @@ const prisma_service_1 = require("../../prisma/prisma.service");
 const batches_service_1 = require("../batches/batches.service");
 const payments_service_1 = require("../payments/payments.service");
 const coupons_service_1 = require("../coupons/coupons.service");
-const ORDER_EXPIRY_MINUTES = 15;
+const order_expiration_service_1 = require("../order-fulfillment/order-expiration.service");
+const ORDER_EXPIRY_MINUTES = 60;
 const PLATFORM_FEE_PERCENT = Number(process.env.PLATFORM_FEE_PERCENT ?? 10);
 let OrdersService = OrdersService_1 = class OrdersService {
-    constructor(prisma, batches, payments, coupons) {
+    constructor(prisma, batches, payments, coupons, orderExpiration) {
         this.prisma = prisma;
         this.batches = batches;
         this.payments = payments;
         this.coupons = coupons;
+        this.orderExpiration = orderExpiration;
         this.logger = new common_1.Logger(OrdersService_1.name);
     }
     async create(dto, userId) {
@@ -182,21 +184,13 @@ let OrdersService = OrdersService_1 = class OrdersService {
     async expireStaleOrders() {
         const stale = await this.prisma.order.findMany({
             where: { status: 'PENDING', expiresAt: { lt: new Date() } },
-            include: { items: true },
+            select: { id: true },
         });
         for (const order of stale) {
             try {
-                await this.prisma.$transaction(async (tx) => {
-                    await tx.order.update({ where: { id: order.id }, data: { status: 'EXPIRED' } });
-                    await tx.ticket.updateMany({
-                        where: { orderId: order.id },
-                        data: { status: 'CANCELLED' },
-                    });
-                    for (const item of order.items) {
-                        await this.batches.releaseStock(item.batchId, item.quantity);
-                    }
-                });
-                this.logger.log(`Order ${order.id} expired`);
+                const result = await this.orderExpiration.expirePendingOrder(order.id);
+                if (result === 'EXPIRED')
+                    this.logger.log(`Order ${order.id} expired`);
             }
             catch (e) {
                 this.logger.error(`Failed to expire order ${order.id}`, e);
@@ -216,6 +210,7 @@ exports.OrdersService = OrdersService = OrdersService_1 = __decorate([
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         batches_service_1.BatchesService,
         payments_service_1.PaymentsService,
-        coupons_service_1.CouponsService])
+        coupons_service_1.CouponsService,
+        order_expiration_service_1.OrderExpirationService])
 ], OrdersService);
 //# sourceMappingURL=orders.service.js.map

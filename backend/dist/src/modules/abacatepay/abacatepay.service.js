@@ -14,15 +14,14 @@ exports.AbacatepayService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const prisma_service_1 = require("../../prisma/prisma.service");
-const tickets_service_1 = require("../tickets/tickets.service");
-const mail_service_1 = require("../mail/mail.service");
+const order_fulfillment_service_1 = require("../order-fulfillment/order-fulfillment.service");
+const payment_expiration_util_1 = require("../order-fulfillment/payment-expiration.util");
 const BASE_URL = 'https://api.abacatepay.com/v2';
 let AbacatepayService = AbacatepayService_1 = class AbacatepayService {
-    constructor(config, prisma, tickets, mail) {
+    constructor(config, prisma, fulfillment) {
         this.config = config;
         this.prisma = prisma;
-        this.tickets = tickets;
-        this.mail = mail;
+        this.fulfillment = fulfillment;
         this.logger = new common_1.Logger(AbacatepayService_1.name);
         this.apiKey = config.get('ABACATEPAY_API_KEY');
         this.webhookSecret = config.get('ABACATEPAY_WEBHOOK_SECRET', '');
@@ -38,6 +37,7 @@ let AbacatepayService = AbacatepayService_1 = class AbacatepayService {
             throw new common_1.ForbiddenException('Acesso negado');
         if (order.status !== 'PENDING')
             throw new common_1.BadRequestException('Pedido não está mais pendente');
+        const expiresIn = (0, payment_expiration_util_1.calculateRemainingPaymentSeconds)(order.expiresAt);
         const amountCents = Math.round(Number(order.total) * 100);
         const res = await fetch(`${BASE_URL}/transparents/create`, {
             method: 'POST',
@@ -51,7 +51,7 @@ let AbacatepayService = AbacatepayService_1 = class AbacatepayService {
                     amount: amountCents,
                     externalId: orderId,
                     description: `Ingressos - ${order.event.title}`,
-                    expiresIn: 3600,
+                    expiresIn,
                 },
             }),
         });
@@ -67,7 +67,7 @@ let AbacatepayService = AbacatepayService_1 = class AbacatepayService {
             id: data.id,
             brCode: data.brCode,
             brCodeBase64: data.brCodeBase64,
-            expiresAt: data.expiresAt,
+            expiresAt: order.expiresAt,
         };
     }
     async checkPixAndConfirm(pixId, orderId, userId) {
@@ -89,8 +89,8 @@ let AbacatepayService = AbacatepayService_1 = class AbacatepayService {
         const pixStatus = body.data?.status ?? '';
         this.logger.log(`AbacatePay check pixId=${pixId} status=${pixStatus}`);
         if (pixStatus === 'PAID' || pixStatus === 'APPROVED') {
-            await this.onPixPaid(orderId);
-            return { status: 'PAID' };
+            const result = await this.onPixPaid(orderId, pixId);
+            return { status: result.status === 'FULFILLED' || result.status === 'ALREADY_PAID' ? 'PAID' : result.status };
         }
         return { status: pixStatus || order.status };
     }
@@ -126,55 +126,17 @@ let AbacatepayService = AbacatepayService_1 = class AbacatepayService {
             this.logger.error(`AbacatePay webhook: externalId ausente. data: ${JSON.stringify(payload.data)}`);
             return;
         }
-        await this.onPixPaid(externalId);
+        await this.onPixPaid(externalId, payload.data?.id);
     }
-    async onPixPaid(orderId) {
-        const order = await this.prisma.order.findUnique({
-            where: { id: orderId },
-            include: { items: { include: { batch: true } } },
+    async onPixPaid(orderId, pixId) {
+        const result = await this.fulfillment.confirmPaidOrder({
+            orderId,
+            gateway: 'ABACATEPAY',
+            externalPaymentId: pixId,
         });
-        if (!order) {
-            this.logger.error(`AbacatePay: pedido ${orderId} não encontrado`);
-            return;
-        }
-        if (order.status === 'PAID') {
-            this.logger.warn(`AbacatePay: pedido ${orderId} já pago — idempotente`);
-            return;
-        }
-        await this.prisma.$transaction(async (tx) => {
-            await tx.order.update({
-                where: { id: orderId },
-                data: { status: 'PAID' },
-            });
-            for (const item of order.items) {
-                for (let i = 0; i < item.quantity; i++) {
-                    await this.tickets.generateTicket({ orderId: order.id, batchId: item.batchId, eventId: order.eventId }, tx);
-                }
-            }
-        });
-        this.logger.log(`PIX confirmado para pedido ${orderId} — ingressos gerados`);
-        this.prisma.order.findUnique({
-            where: { id: orderId },
-            include: {
-                user: { select: { email: true, name: true } },
-                event: { select: { title: true, startDate: true, venue: true, city: true } },
-                items: { include: { batch: { select: { name: true, ticketType: true } } } },
-                tickets: { select: { id: true } },
-            },
-        }).then(full => {
-            if (!full)
-                return;
-            const frontendUrl = this.config.get('FRONTEND_URL', 'http://localhost:3000').split(',')[0].trim();
-            this.mail.sendOrderConfirmation(full.user.email, full.user.name, {
-                eventTitle: full.event.title,
-                eventDate: full.event.startDate,
-                venue: `${full.event.venue}, ${full.event.city}`,
-                items: full.items.map(i => ({ batchName: i.batch.name, ticketType: i.batch.ticketType, quantity: i.quantity })),
-                total: Number(full.total),
-                ticketCount: full.tickets.length,
-                myTicketsUrl: `${frontendUrl}/my-tickets`,
-            }).catch(err => this.logger.error(`E-mail falhou: ${err.message}`));
-        }).catch(err => this.logger.error(`Busca de pedido falhou: ${err.message}`));
+        if (result.status === 'FULFILLED')
+            this.logger.log(`PIX confirmado para pedido ${orderId}`);
+        return result;
     }
 };
 exports.AbacatepayService = AbacatepayService;
@@ -182,7 +144,6 @@ exports.AbacatepayService = AbacatepayService = AbacatepayService_1 = __decorate
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [config_1.ConfigService,
         prisma_service_1.PrismaService,
-        tickets_service_1.TicketsService,
-        mail_service_1.MailService])
+        order_fulfillment_service_1.OrderFulfillmentService])
 ], AbacatepayService);
 //# sourceMappingURL=abacatepay.service.js.map

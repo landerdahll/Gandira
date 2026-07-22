@@ -12,8 +12,9 @@ import { BatchesService } from '../batches/batches.service';
 import { PaymentsService } from '../payments/payments.service';
 import { CouponsService } from '../coupons/coupons.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { OrderExpirationService } from '../order-fulfillment/order-expiration.service';
 
-const ORDER_EXPIRY_MINUTES = 15;
+const ORDER_EXPIRY_MINUTES = 60;
 const PLATFORM_FEE_PERCENT = Number(process.env.PLATFORM_FEE_PERCENT ?? 10);
 
 @Injectable()
@@ -25,6 +26,7 @@ export class OrdersService {
     private batches: BatchesService,
     private payments: PaymentsService,
     private coupons: CouponsService,
+    private orderExpiration: OrderExpirationService,
   ) {}
 
   /**
@@ -230,22 +232,13 @@ export class OrdersService {
   async expireStaleOrders() {
     const stale = await this.prisma.order.findMany({
       where: { status: 'PENDING', expiresAt: { lt: new Date() } },
-      include: { items: true },
+      select: { id: true },
     });
 
     for (const order of stale) {
       try {
-        await this.prisma.$transaction(async (tx) => {
-          await tx.order.update({ where: { id: order.id }, data: { status: 'EXPIRED' } });
-          await tx.ticket.updateMany({
-            where: { orderId: order.id },
-            data: { status: 'CANCELLED' },
-          });
-          for (const item of order.items) {
-            await this.batches.releaseStock(item.batchId, item.quantity);
-          }
-        });
-        this.logger.log(`Order ${order.id} expired`);
+        const result = await this.orderExpiration.expirePendingOrder(order.id);
+        if (result === 'EXPIRED') this.logger.log(`Order ${order.id} expired`);
       } catch (e) {
         this.logger.error(`Failed to expire order ${order.id}`, e);
       }
