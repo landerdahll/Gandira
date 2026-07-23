@@ -192,6 +192,7 @@ export default function CheckInPage() {
             ) : (
               filteredEvents.map((event) => (
                 <button
+                  className="checkin-event-card"
                   key={event.id}
                   onClick={() => selectEvent(event)}
                   style={{
@@ -228,13 +229,13 @@ export default function CheckInPage() {
                   </div>
 
                   <div style={{ flex: 1, overflow: 'hidden' }}>
-                    <p style={{
+                    <p className="checkin-event-title" style={{
                       fontSize: 15, fontWeight: 700, color: '#fff', margin: 0,
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                     }}>
                       {event.title}
                     </p>
-                    <p style={{ fontSize: 12, color: '#555', margin: '3px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <p className="checkin-event-meta" style={{ fontSize: 12, color: '#555', margin: '3px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
                       <Calendar size={11} />
                       {new Date(event.startDate).toLocaleDateString('pt-BR', {
                         day: '2-digit', month: 'short', year: 'numeric',
@@ -242,14 +243,14 @@ export default function CheckInPage() {
                       })}
                     </p>
                     {event.venue && (
-                      <p style={{ fontSize: 12, color: '#444', margin: '2px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <p className="checkin-event-meta" style={{ fontSize: 12, color: '#444', margin: '2px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
                         <MapPin size={11} />
                         {event.venue}
                       </p>
                     )}
                   </div>
 
-                  <ChevronRight size={16} color="#2a2a2a" style={{ flexShrink: 0 }} />
+                  <ChevronRight className="checkin-event-arrow" size={16} color="#2a2a2a" style={{ flexShrink: 0 }} />
                 </button>
               ))
             )}

@@ -286,7 +286,8 @@ function ThemeToggle({ theme, onToggle }: { theme: 'dark' | 'light'; onToggle: (
       aria-label={`Ativar modo ${nextTheme}`}
       title={`Ativar modo ${nextTheme}`}
     >
-      {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+      <Sun className="theme-toggle-icon theme-toggle-icon--dark" size={17} />
+      <Moon className="theme-toggle-icon theme-toggle-icon--light" size={17} />
     </button>
   );
 }

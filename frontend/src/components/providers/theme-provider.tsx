@@ -9,7 +9,7 @@ const STORAGE_KEY = 'pago-theme';
 const ThemeContext = createContext<{
   theme: Theme;
   toggleTheme: () => void;
-}>({ theme: 'dark', toggleTheme: () => undefined });
+}>({ theme: 'light', toggleTheme: () => undefined });
 
 function updateFavicon(theme: Theme) {
   const href = theme === 'dark' ? '/icon-blue.svg' : '/icon-black.svg';
@@ -25,11 +25,11 @@ function updateFavicon(theme: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('dark');
+  const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem(STORAGE_KEY);
-    const initialTheme = savedTheme === 'light' ? 'light' : 'dark';
+    const initialTheme = savedTheme === 'dark' ? 'dark' : 'light';
     setTheme(initialTheme);
     updateFavicon(initialTheme);
   }, []);

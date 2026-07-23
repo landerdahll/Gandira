@@ -9,12 +9,12 @@ import './globals.css';
 
 const themeInitScript = `
   try {
-    var theme = localStorage.getItem('pago-theme') === 'light' ? 'light' : 'dark';
+    var theme = localStorage.getItem('pago-theme') === 'dark' ? 'dark' : 'light';
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
   } catch (_) {
-    document.documentElement.dataset.theme = 'dark';
-    document.documentElement.style.colorScheme = 'dark';
+    document.documentElement.dataset.theme = 'light';
+    document.documentElement.style.colorScheme = 'light';
   }
 `;
 
@@ -33,13 +33,13 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: { default: 'Pago', template: '%s | Pago' },
   description: 'Ingressos para os melhores eventos',
-  icons: { icon: '/icon-blue.svg' },
+  icons: { icon: '/icon-black.svg' },
   openGraph: { type: 'website', locale: 'pt_BR', siteName: 'Pago' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" data-theme="dark" suppressHydrationWarning>
+    <html lang="pt-BR" data-theme="light" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

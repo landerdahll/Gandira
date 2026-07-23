@@ -203,9 +203,9 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
           </div>
 
           {user?.clubMembership?.isActive && (
-            <div style={{ marginBottom: 10, padding: '10px 12px', borderRadius: 10, background: '#0d1e28', border: '1px solid #67bed933' }}>
-              <p style={{ margin: 0, color: '#67bed9', fontSize: 12, fontWeight: 700 }}>Clube Outrahora</p>
-              <p style={{ margin: '3px 0 0', color: '#78909a', fontSize: 11, lineHeight: 1.4 }}>
+            <div className="club-coupon-benefit" style={{ marginBottom: 10, padding: '10px 12px', borderRadius: 10, background: '#0d1e28', border: '1px solid #67bed933' }}>
+              <p className="club-coupon-benefit-title" style={{ margin: 0, color: '#67bed9', fontSize: 12, fontWeight: 700 }}>Clube Outrahora</p>
+              <p className="club-coupon-benefit-description" style={{ margin: '3px 0 0', color: '#78909a', fontSize: 11, lineHeight: 1.4 }}>
                 O benefício será verificado e aplicado automaticamente ao criar o pedido. Não é cumulativo com cupom.
               </p>
             </div>

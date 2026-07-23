@@ -129,6 +129,7 @@ function TicketCard({ ticket }: { ticket: any }) {
   return (
     <Link href={`/my-tickets/${ticket.id}`} style={{ textDecoration: 'none' }}>
       <div
+        className="my-ticket-card"
         style={{
           background: '#111', border: '1px solid #1a1a1a',
           borderRadius: 16, overflow: 'hidden',
@@ -194,7 +195,7 @@ function TicketCard({ ticket }: { ticket: any }) {
           </div>
 
           {/* Event title */}
-          <p style={{
+          <p className="my-ticket-card-title" style={{
             fontSize: 15, fontWeight: 700, color: isActive ? '#fff' : '#666',
             margin: '0 0 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
@@ -205,7 +206,7 @@ function TicketCard({ ticket }: { ticket: any }) {
           {displayStatus === 'RECEIVED' && <p style={{ fontSize: 12, color: '#67bed9', margin: '0 0 8px' }}>Transferido por {transfer?.sender?.name}.</p>}
 
           {/* Meta */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <div className="my-ticket-card-meta" style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#555' }}>
               <Calendar size={11} color="#444" />
               {format(new Date(ticket.event?.startDate), "d 'de' MMM, HH:mm", { locale: ptBR })}
@@ -220,7 +221,7 @@ function TicketCard({ ticket }: { ticket: any }) {
         </div>
 
         {/* Right side */}
-        <div style={{
+        <div className="my-ticket-card-action" style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           padding: '0 16px', gap: 6, flexShrink: 0,
           borderLeft: '1px dashed #1a1a1a',
