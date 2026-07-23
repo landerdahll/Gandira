@@ -133,7 +133,7 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '32px 24px 80px' }}>
+    <div className="master-users-panel" style={{ maxWidth: '1100px', margin: '0 auto', padding: '32px 24px 80px' }}>
       <AdminNavigation />
 
       {/* Header */}
@@ -173,6 +173,7 @@ export default function AdminUsersPage() {
             const active = roleFilter === tab.key;
             return (
               <button
+                className={`master-filter ${active ? 'master-filter--active' : 'master-filter--inactive'}`}
                 key={tab.key}
                 onClick={() => handleFilter(tab.key)}
                 style={{
@@ -212,7 +213,7 @@ export default function AdminUsersPage() {
             const role = ROLE_CONFIG[user.role] ?? ROLE_CONFIG.CUSTOMER;
             const age = calcAge(user.birthDate);
             return (
-              <div key={user.id} style={{
+              <div className="master-user-card" key={user.id} style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr auto',
                 gap: '12px',
@@ -225,7 +226,7 @@ export default function AdminUsersPage() {
                 {/* Left: user info */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '16px', alignItems: 'center', minWidth: 0 }}>
                   {/* Avatar */}
-                  <div style={{
+                  <div className="master-user-avatar" style={{
                     width: '44px', height: '44px', borderRadius: '50%',
                     background: '#1e1e1e', border: `2px solid ${role.color}22`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -240,7 +241,7 @@ export default function AdminUsersPage() {
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>{user.name}</span>
-                      <span style={{
+                      <span className="master-role-badge" style={{
                         padding: '2px 8px', borderRadius: '999px',
                         background: role.bg, color: role.color,
                         fontSize: '11px', fontWeight: 600,
@@ -331,7 +332,7 @@ export default function AdminUsersPage() {
                       </button>
 
                       {openMenu === user.id && (
-                        <div style={{
+                        <div className="master-role-menu" style={{
                           position: 'absolute', right: 0, top: 'calc(100% + 6px)', zIndex: 100,
                           background: '#141414', border: '1px solid #252525',
                           borderRadius: '12px', padding: '6px', minWidth: '160px',
@@ -368,6 +369,7 @@ export default function AdminUsersPage() {
         <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '32px' }}>
           {Array.from({ length: meta.lastPage }, (_, i) => i + 1).map(p => (
             <button
+              className={`master-pagination ${p === meta.page ? 'master-pagination--active' : 'master-pagination--inactive'}`}
               key={p}
               onClick={() => load(p)}
               style={{
@@ -389,6 +391,7 @@ export default function AdminUsersPage() {
 function MenuItem({ children, color, onClick }: { children: React.ReactNode; color: string; onClick: () => void }) {
   return (
     <button
+      className="master-role-menu-item"
       onClick={onClick}
       style={{
         display: 'block', width: '100%', textAlign: 'left',

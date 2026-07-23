@@ -488,6 +488,206 @@
   color: var(--theme-primary) !important;
 }
 
+/* Light ticket detail */
+:root[data-theme='light'] .ticket-detail-card {
+  border-color: var(--theme-border) !important;
+  box-shadow: var(--theme-shadow);
+}
+
+:root[data-theme='light'] .ticket-detail-header,
+:root[data-theme='light'] .ticket-detail-cover-fallback {
+  background: color-mix(in srgb, var(--theme-primary) 7%, var(--theme-surface)) !important;
+}
+
+:root[data-theme='light'] .ticket-detail-header > img {
+  opacity: 0.12 !important;
+}
+
+:root[data-theme='light'] .ticket-detail-cover-overlay {
+  background: linear-gradient(to top, var(--theme-surface) 0%, color-mix(in srgb, var(--theme-surface) 78%, transparent) 62%, transparent 100%) !important;
+}
+
+:root[data-theme='light'] .ticket-detail-title {
+  color: var(--theme-text) !important;
+}
+
+:root[data-theme='light'] .ticket-detail-status--active {
+  background: color-mix(in srgb, var(--theme-primary) 11%, var(--theme-surface)) !important;
+  border-color: color-mix(in srgb, var(--theme-primary) 38%, var(--theme-border)) !important;
+  color: var(--theme-primary) !important;
+}
+
+/* Light Master panel navigation and users */
+:root[data-theme='light'] .master-navigation-link {
+  background: transparent !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-text-secondary) !important;
+}
+
+:root[data-theme='light'] .master-navigation-link:not(.master-navigation-link--active):hover {
+  background: color-mix(in srgb, var(--theme-primary) 8%, var(--theme-surface)) !important;
+  border-color: color-mix(in srgb, var(--theme-primary) 38%, var(--theme-border)) !important;
+  color: var(--theme-primary) !important;
+}
+
+:root[data-theme='light'] .master-navigation-link--active,
+:root[data-theme='light'] .master-filter--active {
+  background: var(--theme-primary) !important;
+  border-color: var(--theme-primary) !important;
+  color: #fff !important;
+}
+
+:root[data-theme='light'] .master-filter--inactive {
+  background: transparent !important;
+  border-color: color-mix(in srgb, var(--theme-primary) 34%, var(--theme-border)) !important;
+  color: var(--theme-primary) !important;
+}
+
+:root[data-theme='light'] .master-filter--inactive:hover {
+  background: color-mix(in srgb, var(--theme-primary) 9%, var(--theme-surface)) !important;
+  border-color: color-mix(in srgb, var(--theme-primary) 50%, var(--theme-border)) !important;
+  color: var(--theme-primary) !important;
+}
+
+:root[data-theme='light'] .master-user-card {
+  background: var(--theme-surface) !important;
+  border-color: var(--theme-border) !important;
+  box-shadow: var(--theme-shadow);
+}
+
+:root[data-theme='light'] .master-user-avatar {
+  background: var(--theme-primary) !important;
+  border-color: color-mix(in srgb, var(--theme-primary) 45%, var(--theme-surface)) !important;
+}
+
+:root[data-theme='light'] .master-user-avatar span {
+  color: #fff !important;
+}
+
+:root[data-theme='light'] .master-role-badge {
+  background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface)) !important;
+  color: var(--theme-primary) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-primary) 34%, var(--theme-border));
+}
+
+:root[data-theme='light'] .master-role-menu {
+  background: var(--theme-surface) !important;
+  border-color: var(--theme-border) !important;
+  box-shadow: var(--theme-shadow) !important;
+}
+
+:root[data-theme='light'] .master-role-menu-item {
+  color: var(--theme-primary) !important;
+}
+
+:root[data-theme='light'] .master-role-menu-item:hover {
+  background: color-mix(in srgb, var(--theme-primary) 9%, var(--theme-surface)) !important;
+}
+
+:root[data-theme='light'] .master-pagination--active {
+  background: var(--theme-primary) !important;
+  color: #fff !important;
+}
+
+:root[data-theme='light'] .master-pagination--inactive {
+  background: var(--theme-surface) !important;
+  color: var(--theme-primary) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-primary) 34%, var(--theme-border));
+}
+
+/* Light Master club listing */
+:root[data-theme='light'] .master-club-panel {
+  color: var(--theme-text) !important;
+}
+
+:root[data-theme='light'] :is(.master-club-list, .master-club-summary, .master-club-usage, .master-club-info, .master-club-modal) {
+  background: var(--theme-surface) !important;
+  border-color: var(--theme-border) !important;
+}
+
+:root[data-theme='light'] :is(.master-club-list, .master-club-summary) {
+  box-shadow: var(--theme-shadow);
+}
+
+:root[data-theme='light'] .master-club-list th {
+  background: color-mix(in srgb, var(--theme-primary) 7%, var(--theme-surface)) !important;
+  color: var(--theme-text-secondary) !important;
+}
+
+:root[data-theme='light'] .master-club-list td,
+:root[data-theme='light'] .master-club-info span {
+  color: var(--theme-text) !important;
+}
+
+:root[data-theme='light'] .master-club-row {
+  border-top-color: var(--theme-border) !important;
+}
+
+:root[data-theme='light'] .master-club-row:hover {
+  background: color-mix(in srgb, var(--theme-primary) 7%, var(--theme-surface)) !important;
+}
+
+:root[data-theme='light'] .master-club-badge {
+  background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface)) !important;
+  color: var(--theme-primary) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-primary) 34%, var(--theme-border));
+}
+
+:root[data-theme='light'] .master-club-panel :is(svg, .master-club-summary > div) {
+  color: var(--theme-primary) !important;
+}
+
+/* Light Master transfers */
+:root[data-theme='light'] .master-transfers-panel {
+  color: var(--theme-text) !important;
+}
+
+:root[data-theme='light'] .master-transfer-filters :is(input, select) {
+  background: var(--theme-surface) !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-text) !important;
+  color-scheme: light;
+}
+
+:root[data-theme='light'] :is(.master-transfer-search, .master-transfer-pagination) {
+  background: var(--theme-surface) !important;
+  border-color: color-mix(in srgb, var(--theme-primary) 34%, var(--theme-border)) !important;
+  color: var(--theme-primary) !important;
+}
+
+:root[data-theme='light'] :is(.master-transfer-search, .master-transfer-pagination):not(:disabled):hover {
+  background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface)) !important;
+  border-color: color-mix(in srgb, var(--theme-primary) 50%, var(--theme-border)) !important;
+}
+
+:root[data-theme='light'] :is(.master-transfer-search, .master-transfer-pagination):disabled {
+  color: var(--theme-text-secondary) !important;
+  opacity: 0.5;
+}
+
+:root[data-theme='light'] :is(.master-transfer-table, .master-transfer-modal) {
+  background: var(--theme-surface) !important;
+  border-color: var(--theme-border) !important;
+  box-shadow: var(--theme-shadow);
+}
+
+:root[data-theme='light'] .master-transfer-table th {
+  background: color-mix(in srgb, var(--theme-primary) 7%, var(--theme-surface)) !important;
+  color: var(--theme-text-secondary) !important;
+}
+
+:root[data-theme='light'] .master-transfer-table td {
+  color: var(--theme-text) !important;
+}
+
+:root[data-theme='light'] .master-transfer-row {
+  border-top-color: var(--theme-border) !important;
+}
+
+:root[data-theme='light'] .master-transfer-row:hover {
+  background: color-mix(in srgb, var(--theme-primary) 7%, var(--theme-surface)) !important;
+}
+
 @layer utilities {
   .line-clamp-2 {
     overflow: hidden;

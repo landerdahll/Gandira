@@ -85,10 +85,10 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
         </Link>
 
         {/* ── Ticket card ── */}
-        <div style={{ borderRadius: 20, overflow: 'hidden', border: '1px solid #1e1e1e' }}>
+        <div className="ticket-detail-card" style={{ borderRadius: 20, overflow: 'hidden', border: '1px solid #1e1e1e' }}>
 
           {/* Cover image / header */}
-          <div style={{ position: 'relative', height: 180, background: '#111', overflow: 'hidden' }}>
+          <div className="ticket-detail-header" style={{ position: 'relative', height: 180, background: '#111', overflow: 'hidden' }}>
             {ticket.event?.coverImage ? (
               <>
                 <img
@@ -100,13 +100,13 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
                     filter: isActive ? 'none' : 'grayscale(100%)',
                   }}
                 />
-                <div style={{
+                <div className="ticket-detail-cover-overlay" style={{
                   position: 'absolute', inset: 0,
                   background: 'linear-gradient(to top, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.4) 60%, transparent 100%)',
                 }} />
               </>
             ) : (
-              <div style={{
+              <div className="ticket-detail-cover-fallback" style={{
                 width: '100%', height: '100%',
                 background: 'linear-gradient(135deg, #0d1a1f 0%, #111 100%)',
               }} />
@@ -114,7 +114,7 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
 
             {/* Status badge */}
             <div style={{ position: 'absolute', top: 16, right: 16 }}>
-              <span style={{
+              <span className={`ticket-detail-status ticket-detail-status--${displayStatus.toLowerCase()}`} style={{
                 display: 'inline-flex', alignItems: 'center', gap: 5,
                 fontSize: 12, fontWeight: 700,
                 background: status.bg, color: status.color,
@@ -131,7 +131,7 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
               <p style={{ fontSize: 11, color: '#67bed9', margin: '0 0 4px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8 }}>
                 {ticket.batch?.ticketType?.replace('_', ' ')}
               </p>
-              <h1 style={{
+              <h1 className="ticket-detail-title" style={{
                 fontSize: 20, fontWeight: 900, color: '#fff',
                 margin: 0, letterSpacing: '-0.4px', lineHeight: 1.2,
               }}>

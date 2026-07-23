@@ -15,13 +15,14 @@ export function AdminNavigation() {
   const [hoveredHref, setHoveredHref] = useState<string | null>(null);
 
   return (
-    <nav style={navigationStyle} aria-label="Navegação do Painel Master">
+    <nav className="master-navigation" style={navigationStyle} aria-label="Navegação do Painel Master">
       {items.map((item) => {
         const active = pathname === item.href;
         const hovered = hoveredHref === item.href;
 
         return (
           <Link
+            className={`master-navigation-link ${active ? 'master-navigation-link--active' : ''}`}
             key={item.href}
             href={item.href}
             style={{

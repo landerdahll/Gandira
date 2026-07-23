@@ -177,7 +177,7 @@ export default function ClubeOutrahoraPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1180, margin: '0 auto', padding: '32px 20px 80px', color: '#fff' }}>
+    <div className="master-club-panel" style={{ maxWidth: 1180, margin: '0 auto', padding: '32px 20px 80px', color: '#fff' }}>
       <AdminNavigation />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, margin: '26px 0 24px', flexWrap: 'wrap' }}>
@@ -209,7 +209,7 @@ export default function ClubeOutrahoraPage() {
         />
       </div>
 
-      <div style={{ border: '1px solid #222', borderRadius: 15, overflow: 'hidden', background: '#101010' }}>
+      <div className="master-club-list" style={{ border: '1px solid #222', borderRadius: 15, overflow: 'hidden', background: '#101010' }}>
         {loading ? (
           <div style={{ padding: 48, textAlign: 'center', color: '#555' }}>Carregando membros...</div>
         ) : members.length === 0 ? (
@@ -222,7 +222,7 @@ export default function ClubeOutrahoraPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 850 }}>
               <thead><tr>{['Membro', 'E-mail', 'Telefone', 'Desconto', 'Conta vinculada', 'Status', 'Ações'].map((title) => <th key={title} style={th}>{title}</th>)}</tr></thead>
               <tbody>{members.map((member) => (
-                <tr key={member.id} style={{ borderTop: '1px solid #1d1d1d' }}>
+                <tr className="master-club-row" key={member.id} style={{ borderTop: '1px solid #1d1d1d' }}>
                   <td style={td}>
                     <button onClick={() => openDetail(member.id)} style={memberButton}>{member.name || 'Nome não informado'}</button>
                     <small style={small}>{member.email || 'E-mail não informado'}</small>
@@ -341,7 +341,7 @@ function MemberDetail({ member, acting, onToggle, onEditDiscount }: { member: Cl
 }
 
 function UsageCard({ usage }: { usage: BenefitUsage }) {
-  return <div style={{ background: '#151515', border: '1px solid #252525', borderRadius: 12, padding: 14, marginTop: 10 }}>
+  return <div className="master-club-usage" style={{ background: '#151515', border: '1px solid #252525', borderRadius: 12, padding: 14, marginTop: 10 }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}><strong>{usage.event.title}</strong><Badge color="#67bed9" background="#0d1e28">{usage.status}</Badge></div>
     <p style={usageLine}>Lote: {usage.batch?.name || '—'}</p>
     <p style={usageLine}>Pedido reservado: {orderLabel(usage.reservedOrder)}</p>
@@ -355,7 +355,7 @@ function UsageCard({ usage }: { usage: BenefitUsage }) {
 }
 
 function SummaryCard({ label, value, icon, color }: { label: string; value: number; icon: React.ReactNode; color: string }) {
-  return <div style={{ background: '#111', border: '1px solid #222', borderRadius: 15, padding: 18 }}>
+  return <div className="master-club-summary" style={{ background: '#111', border: '1px solid #222', borderRadius: 15, padding: 18 }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, color, marginBottom: 10 }}>{icon}<span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>{label}</span></div>
     <strong style={{ fontSize: 27 }}>{value}</strong>
   </div>;
@@ -363,7 +363,7 @@ function SummaryCard({ label, value, icon, color }: { label: string; value: numb
 
 function Modal({ title, children, onClose, wide = false }: { title: string; children: React.ReactNode; onClose: () => void; wide?: boolean }) {
   return <div onMouseDown={onClose} style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#000c', display: 'grid', placeItems: 'center', padding: 18 }}>
-    <div onMouseDown={(event) => event.stopPropagation()} style={{ width: '100%', maxWidth: wide ? 760 : 480, maxHeight: '88vh', overflowY: 'auto', background: '#111', border: '1px solid #292929', borderRadius: 18, padding: 24, boxSizing: 'border-box' }}>
+    <div className="master-club-modal" onMouseDown={(event) => event.stopPropagation()} style={{ width: '100%', maxWidth: wide ? 760 : 480, maxHeight: '88vh', overflowY: 'auto', background: '#111', border: '1px solid #292929', borderRadius: 18, padding: 24, boxSizing: 'border-box' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}><h2 style={{ fontSize: 20 }}>{title}</h2><button onClick={onClose} style={iconButton}><X size={17} /></button></div>
       {children}
     </div>
@@ -371,8 +371,8 @@ function Modal({ title, children, onClose, wide = false }: { title: string; chil
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) { return <label style={{ display: 'flex', flexDirection: 'column', gap: 7, color: '#888', fontSize: 13 }}>{label}{children}</label>; }
-function Info({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) { return <div style={{ background: '#151515', border: '1px solid #222', borderRadius: 11, padding: 12 }}><small style={{ display: 'block', color: '#555', marginBottom: 5 }}>{label}</small><span style={{ color: '#ccc', fontSize: 14, fontFamily: mono ? 'monospace' : undefined }}>{value}</span></div>; }
-function Badge({ children, color, background }: { children: React.ReactNode; color: string; background: string }) { return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color, background, padding: '4px 9px', borderRadius: 999, fontSize: 11, fontWeight: 700 }}>{children}</span>; }
+function Info({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) { return <div className="master-club-info" style={{ background: '#151515', border: '1px solid #222', borderRadius: 11, padding: 12 }}><small style={{ display: 'block', color: '#555', marginBottom: 5 }}>{label}</small><span style={{ color: '#ccc', fontSize: 14, fontFamily: mono ? 'monospace' : undefined }}>{value}</span></div>; }
+function Badge({ children, color, background }: { children: React.ReactNode; color: string; background: string }) { return <span className="master-club-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color, background, padding: '4px 9px', borderRadius: 999, fontSize: 11, fontWeight: 700 }}>{children}</span>; }
 function StatusBadge({ active }: { active: boolean }) { return active ? <Badge color="#67bed9" background="#0d1e28">Ativo</Badge> : <Badge color="#888" background="#1b1b1b">Inativo</Badge>; }
 
 function formatPhoneInput(value: string) { const d = value.replace(/\D/g, '').slice(0, 11); if (d.length <= 2) return d; if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`; return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`; }
