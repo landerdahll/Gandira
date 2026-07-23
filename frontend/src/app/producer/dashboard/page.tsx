@@ -142,7 +142,7 @@ export default function ProducerDashboard() {
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '999px', color: s.color, background: s.bg, flexShrink: 0 }}>
+                    <span className={`event-status-badge event-status-badge--${event.status.toLowerCase()}`} style={{ fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '999px', color: s.color, background: s.bg, flexShrink: 0 }}>
                       {s.label}
                     </span>
                     <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff', wordBreak: 'break-word' }}>

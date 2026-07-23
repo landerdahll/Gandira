@@ -178,12 +178,13 @@ export default function ProfilePage() {
         >
           {profile.avatarUrl ? (
             <img
+              className="profile-avatar profile-avatar--image"
               src={profile.avatarUrl}
               alt={profile.name}
               style={{ width: '72px', height: '72px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #67bed9', display: 'block' }}
             />
           ) : (
-            <div style={{
+            <div className="profile-avatar profile-avatar--fallback" style={{
               width: '72px', height: '72px', borderRadius: '50%',
               background: '#0d1e28', border: '2px solid #67bed9',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -235,7 +236,7 @@ export default function ProfilePage() {
         </div>
         <div>
           <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#fff', marginBottom: '4px' }}>{profile.name}</h1>
-          <span style={{
+          <span className="profile-role-badge" style={{
             fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: '999px',
             background: '#0d1e28', color: '#67bed9', border: '1px solid #67bed933',
           }}>

@@ -71,6 +71,7 @@ export default function MyTicketsPage() {
               if (f !== 'ALL' && counts[f] === 0) return null;
               return (
                 <button
+                  className={`ticket-filter ${active ? 'ticket-filter--active' : 'ticket-filter--inactive'}`}
                   key={f}
                   onClick={() => setFilter(f)}
                   style={{
@@ -84,7 +85,7 @@ export default function MyTicketsPage() {
                   onMouseLeave={e => { if (!active) { e.currentTarget.style.color = '#666'; e.currentTarget.style.background = '#141414'; }}}
                 >
                   {labels[f]}
-                  <span style={{
+                  <span className="ticket-filter-count" style={{
                     marginLeft: 6, fontSize: 11, fontWeight: 700,
                     background: active ? 'rgba(255,255,255,0.2)' : '#1e1e1e',
                     color: active ? '#fff' : '#555',

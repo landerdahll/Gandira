@@ -287,6 +287,74 @@
   content: url('/icon-black.svg');
 }
 
+/* Light user surfaces */
+:root[data-theme='light'] .user-dropdown {
+  background: var(--theme-surface) !important;
+  border-color: var(--theme-border) !important;
+  box-shadow: var(--theme-shadow) !important;
+}
+
+:root[data-theme='light'] .user-dropdown-item:hover,
+:root[data-theme='light'] .user-dropdown-logout:hover {
+  background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface)) !important;
+  color: var(--theme-text) !important;
+}
+
+:root[data-theme='light'] :is(.user-dropdown-item, .user-dropdown-logout):hover svg {
+  color: var(--theme-primary) !important;
+}
+
+:root[data-theme='light'] .event-status-badge--published,
+:root[data-theme='light'] .profile-role-badge {
+  background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface)) !important;
+  color: var(--theme-primary) !important;
+}
+
+:root[data-theme='light'] .event-status-badge--published {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-primary) 38%, var(--theme-border));
+}
+
+:root[data-theme='light'] .profile-role-badge {
+  border-color: color-mix(in srgb, var(--theme-primary) 38%, var(--theme-border)) !important;
+}
+
+:root[data-theme='light'] .profile-avatar--fallback {
+  background: var(--theme-primary) !important;
+  border-color: color-mix(in srgb, var(--theme-primary) 48%, var(--theme-surface)) !important;
+  color: #fff !important;
+}
+
+:root[data-theme='light'] .profile-avatar--image {
+  border-color: color-mix(in srgb, var(--theme-primary) 48%, var(--theme-surface)) !important;
+}
+
+:root[data-theme='light'] .ticket-filter--active {
+  background: var(--theme-primary) !important;
+  color: #fff !important;
+}
+
+:root[data-theme='light'] .ticket-filter--active .ticket-filter-count {
+  background: color-mix(in srgb, var(--theme-text) 12%, transparent) !important;
+  color: #fff !important;
+}
+
+:root[data-theme='light'] .ticket-filter--inactive {
+  background: color-mix(in srgb, var(--theme-primary) 7%, var(--theme-surface)) !important;
+  color: var(--theme-primary) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-primary) 34%, var(--theme-border));
+}
+
+:root[data-theme='light'] .ticket-filter--inactive .ticket-filter-count {
+  background: color-mix(in srgb, var(--theme-primary) 13%, var(--theme-surface)) !important;
+  color: var(--theme-primary) !important;
+}
+
+:root[data-theme='light'] .ticket-filter--inactive:hover {
+  background: color-mix(in srgb, var(--theme-primary) 14%, var(--theme-surface)) !important;
+  color: var(--theme-primary) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-primary) 52%, var(--theme-border));
+}
+
 @layer utilities {
   .line-clamp-2 {
     overflow: hidden;

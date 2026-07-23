@@ -84,7 +84,7 @@ export function Navbar() {
                   </button>
 
                   {dropdownOpen && (
-                    <div style={{
+                    <div className="user-dropdown" style={{
                       position: 'absolute', top: 'calc(100% + 10px)', right: 0,
                       minWidth: '200px', background: '#141414',
                       border: '1px solid #252525', borderRadius: '14px',
@@ -96,6 +96,7 @@ export function Navbar() {
                       {isAdmin && <DropItem href="/admin/users" icon={<ShieldCheck size={14} />} onClick={() => setDropdownOpen(false)}>Painel Master</DropItem>}
                       <div style={{ height: '1px', background: '#222', margin: '4px 0' }} />
                       <button
+                        className="user-dropdown-logout"
                         onClick={() => { setDropdownOpen(false); logout(); }}
                         style={{
                           display: 'flex', alignItems: 'center', gap: '8px',
@@ -329,6 +330,7 @@ function NavItem({ href, children }: { href: string; children: React.ReactNode }
 function DropItem({ href, icon, children, onClick }: { href: string; icon: React.ReactNode; children: React.ReactNode; onClick: () => void }) {
   return (
     <Link
+      className="user-dropdown-item"
       href={href}
       onClick={onClick}
       style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '8px', color: '#aaa', fontSize: '14px', textDecoration: 'none' }}
