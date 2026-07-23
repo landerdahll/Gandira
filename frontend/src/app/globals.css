@@ -71,10 +71,10 @@
 
 :root[data-theme='light'] .theme-navbar {
   background:
-    radial-gradient(ellipse at 14% 18%, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0.13) 29%, transparent 56%),
-    radial-gradient(ellipse at 72% 4%, rgba(255, 255, 255, 0.27) 0%, rgba(255, 255, 255, 0.08) 27%, transparent 50%),
-    radial-gradient(ellipse at 46% 112%, rgba(112, 166, 215, 0.34) 0%, rgba(130, 171, 220, 0.12) 31%, transparent 58%),
-    radial-gradient(ellipse at 94% 72%, rgba(221, 218, 255, 0.18) 0%, transparent 43%),
+    radial-gradient(ellipse at -8% -82%, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.07) 34%, transparent 68%),
+    radial-gradient(ellipse at 108% -64%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 35%, transparent 67%),
+    radial-gradient(ellipse at 47% 128%, rgba(112, 166, 215, 0.31) 0%, rgba(130, 171, 220, 0.09) 38%, transparent 68%),
+    radial-gradient(ellipse at 92% 118%, rgba(221, 218, 255, 0.13) 0%, transparent 58%),
     linear-gradient(115deg, #8dbce3 0%, #a8cbed 45%, #a4c8ec 63%, #82b5df 100%) !important;
   border-bottom-color: rgba(79, 122, 166, 0.22) !important;
   box-shadow: 0 2px 14px rgba(66, 103, 143, 0.1);
@@ -259,7 +259,7 @@
 }
 
 :root[data-theme='light'] .theme-navbar .nav-primary-action {
-  background: #378fca !important;
+  background: var(--theme-primary) !important;
   color: #fff !important;
   box-shadow: 0 4px 14px rgba(38, 105, 151, 0.2);
 }
@@ -268,6 +268,23 @@
   color: #fff !important;
   background: rgba(255, 255, 255, 0.08) !important;
   border-color: rgba(255, 255, 255, 0.45) !important;
+}
+
+/* data-theme is set in <head>, so the correct asset is selected before first paint. */
+:root[data-theme='light'] .brand-mark--logo.brand-mark--on-brand {
+  content: url('/logo-white.svg');
+}
+
+:root[data-theme='light'] .brand-mark--logo.brand-mark--on-light {
+  content: url('/logo-black.svg');
+}
+
+:root[data-theme='light'] .brand-mark--icon.brand-mark--on-brand {
+  content: url('/icon-white.svg');
+}
+
+:root[data-theme='light'] .brand-mark--icon.brand-mark--on-light {
+  content: url('/icon-black.svg');
 }
 
 @layer utilities {

@@ -1,7 +1,3 @@
-'use client';
-
-import { useTheme } from '@/components/providers/theme-provider';
-
 type BrandMarkProps = {
   kind?: 'logo' | 'icon';
   lightBackground?: 'brand' | 'light';
@@ -17,8 +13,12 @@ export function BrandMark({
   style,
   className,
 }: BrandMarkProps) {
-  const { theme } = useTheme();
-  const color = theme === 'dark' ? 'blue' : lightBackground === 'brand' ? 'white' : 'black';
+  const classes = [
+    'brand-mark',
+    `brand-mark--${kind}`,
+    `brand-mark--on-${lightBackground}`,
+    className,
+  ].filter(Boolean).join(' ');
 
-  return <img src={`/${kind}-${color}.svg`} alt={alt} className={className} style={style} />;
+  return <img src={`/${kind}-blue.svg`} alt={alt} className={classes} style={style} />;
 }
