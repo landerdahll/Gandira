@@ -135,31 +135,31 @@ export default function ProfilePage() {
     <div style={{ maxWidth: '680px', margin: '0 auto', padding: '40px 20px 80px' }}>
 
       {shouldShowClubMembershipCard(profile.clubMembership) && (
-        <div style={{
+        <div className="club-membership-card" style={{
           marginBottom: '24px', padding: '20px', borderRadius: '18px',
           background: 'linear-gradient(135deg, #0d1e28 0%, #10191d 100%)',
           border: '1px solid #67bed944', boxShadow: '0 16px 40px #00000024',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '14px', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '13px', background: '#67bed919', border: '1px solid #67bed933', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="club-membership-icon" style={{ width: '42px', height: '42px', borderRadius: '13px', background: '#67bed919', border: '1px solid #67bed933', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <BadgePercent size={21} color="#67bed9" />
               </div>
               <div>
-                <p style={{ color: '#fff', fontSize: '17px', fontWeight: 800 }}>{profile.clubMembership.label}</p>
+                <p className="club-membership-title" style={{ color: '#fff', fontSize: '17px', fontWeight: 800 }}>{profile.clubMembership.label}</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
                   <CheckCircle2 size={12} color="#67bed9" />
-                  <span style={{ color: '#67bed9', fontSize: '12px', fontWeight: 700 }}>Membro · Benefício ativo</span>
+                  <span className="club-membership-status" style={{ color: '#67bed9', fontSize: '12px', fontWeight: 700 }}>Membro · Benefício ativo</span>
                 </div>
               </div>
             </div>
-            <div style={{ color: '#fff', fontSize: '24px', lineHeight: 1, fontWeight: 900, whiteSpace: 'nowrap' }}>
+            <div className="club-membership-discount" style={{ color: '#fff', fontSize: '24px', lineHeight: 1, fontWeight: 900, whiteSpace: 'nowrap' }}>
               {formatClubDiscountPercentage(profile.clubMembership.discountPercentage)}
               <span style={{ display: 'block', color: '#67bed9', fontSize: '10px', fontWeight: 700, textAlign: 'right', marginTop: '5px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>de desconto</span>
             </div>
           </div>
 
-          <div style={{ borderTop: '1px solid #67bed922', marginTop: '17px', paddingTop: '15px', display: 'grid', gap: '9px' }}>
+          <div className="club-membership-benefits" style={{ borderTop: '1px solid #67bed922', marginTop: '17px', paddingTop: '15px', display: 'grid', gap: '9px' }}>
             <ClubBenefitLine icon={<CheckCircle2 size={13} />} text="O desconto é aplicado automaticamente nas compras elegíveis." />
             <ClubBenefitLine icon={<TicketCheck size={13} />} text="Válido para 1 ingresso por evento." />
             <ClubBenefitLine icon={<Lock size={13} />} text="O ingresso beneficiado não poderá ser transferido." />
@@ -349,7 +349,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function ClubBenefitLine({ icon, text }: { icon: React.ReactNode; text: string }) {
-  return <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#8ba4ad', fontSize: '12px', lineHeight: 1.45 }}>
+  return <div className="club-membership-benefit" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#8ba4ad', fontSize: '12px', lineHeight: 1.45 }}>
     <span style={{ color: '#67bed9', display: 'flex', flexShrink: 0 }}>{icon}</span>
     <span>{text}</span>
   </div>;

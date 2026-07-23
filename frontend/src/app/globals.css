@@ -355,6 +355,105 @@
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-primary) 52%, var(--theme-border));
 }
 
+/* Light ticket batches */
+:root[data-theme='light'] .ticket-batch-card {
+  background: var(--theme-surface) !important;
+  border-color: var(--theme-border) !important;
+  box-shadow: var(--theme-shadow);
+}
+
+:root[data-theme='light'] .ticket-batch-card--current {
+  background: color-mix(in srgb, var(--theme-primary) 5%, var(--theme-surface)) !important;
+  border-color: color-mix(in srgb, var(--theme-primary) 42%, var(--theme-border)) !important;
+}
+
+:root[data-theme='light'] :is(.ticket-batch-card--future, .ticket-batch-card--sold-out) {
+  background: color-mix(in srgb, var(--theme-border) 22%, var(--theme-surface)) !important;
+  opacity: 0.72 !important;
+}
+
+:root[data-theme='light'] .ticket-batch-title,
+:root[data-theme='light'] .ticket-batch-price,
+:root[data-theme='light'] .ticket-batch-quantity-count {
+  color: var(--theme-text) !important;
+}
+
+:root[data-theme='light'] :is(.ticket-batch-description, .ticket-batch-fees, .ticket-batch-quantity-label) {
+  color: var(--theme-text-secondary) !important;
+}
+
+:root[data-theme='light'] .ticket-batch-badge--available {
+  background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface)) !important;
+  color: var(--theme-primary) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--theme-primary) 34%, var(--theme-border));
+}
+
+:root[data-theme='light'] :is(.ticket-batch-badge--future, .ticket-batch-badge--sold-out) {
+  background: color-mix(in srgb, var(--theme-border) 32%, var(--theme-surface)) !important;
+  color: var(--theme-text-secondary) !important;
+  box-shadow: inset 0 0 0 1px var(--theme-border);
+}
+
+:root[data-theme='light'] .ticket-batch-quantity,
+:root[data-theme='light'] .ticket-batch-future-note {
+  border-top-color: var(--theme-border) !important;
+}
+
+:root[data-theme='light'] .ticket-batch-future-note,
+:root[data-theme='light'] .ticket-batch-future-note span,
+:root[data-theme='light'] .ticket-batch-future-note svg {
+  color: var(--theme-text-secondary) !important;
+}
+
+:root[data-theme='light'] .ticket-batch-quantity-button {
+  background: var(--theme-surface) !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-text) !important;
+}
+
+:root[data-theme='light'] .ticket-batch-quantity-button:not(:disabled):hover {
+  background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface)) !important;
+  border-color: color-mix(in srgb, var(--theme-primary) 42%, var(--theme-border)) !important;
+  color: var(--theme-primary) !important;
+}
+
+:root[data-theme='light'] .ticket-batch-quantity-button:disabled {
+  background: color-mix(in srgb, var(--theme-border) 24%, var(--theme-surface)) !important;
+  color: var(--theme-text-secondary) !important;
+  opacity: 0.55;
+}
+
+/* Light club membership card */
+:root[data-theme='light'] .club-membership-card {
+  background: color-mix(in srgb, var(--theme-primary) 5%, var(--theme-surface)) !important;
+  border-color: color-mix(in srgb, var(--theme-primary) 38%, var(--theme-border)) !important;
+  box-shadow: var(--theme-shadow) !important;
+}
+
+:root[data-theme='light'] .club-membership-icon {
+  background: color-mix(in srgb, var(--theme-primary) 11%, var(--theme-surface)) !important;
+  border-color: color-mix(in srgb, var(--theme-primary) 34%, var(--theme-border)) !important;
+}
+
+:root[data-theme='light'] .club-membership-title,
+:root[data-theme='light'] .club-membership-discount {
+  color: var(--theme-text) !important;
+}
+
+:root[data-theme='light'] .club-membership-status,
+:root[data-theme='light'] .club-membership-card svg,
+:root[data-theme='light'] .club-membership-discount span {
+  color: var(--theme-primary) !important;
+}
+
+:root[data-theme='light'] .club-membership-benefits {
+  border-top-color: color-mix(in srgb, var(--theme-primary) 25%, var(--theme-border)) !important;
+}
+
+:root[data-theme='light'] .club-membership-benefit {
+  color: var(--theme-text-secondary) !important;
+}
+
 @layer utilities {
   .line-clamp-2 {
     overflow: hidden;

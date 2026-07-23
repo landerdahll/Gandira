@@ -122,7 +122,7 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
         const locked = batch.status !== 'ACTIVE' && batch.status !== 'SOLD_OUT' || lockedByPrevious;
 
         return (
-          <div key={batch.id} style={{
+          <div className={`ticket-batch-card ${isCurrent ? 'ticket-batch-card--current' : ''} ${locked ? 'ticket-batch-card--future' : ''} ${isSoldOut ? 'ticket-batch-card--sold-out' : ''}`} key={batch.id} style={{
             borderRadius: '14px',
             border: `1px solid ${isCurrent ? '#67bed933' : '#1e1e1e'}`,
             background: isCurrent ? '#081419' : '#0f0f0f',
@@ -134,44 +134,44 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ marginBottom: '6px' }}>
                   {isSoldOut ? (
-                    <Badge color="#555" bg="#1a1a1a">Esgotado</Badge>
+                    <Badge className="ticket-batch-badge ticket-batch-badge--sold-out" color="#555" bg="#1a1a1a">Esgotado</Badge>
                   ) : locked ? (
-                    <Badge color="#555" bg="#1a1a1a" icon={<Lock size={9} />}>Em breve</Badge>
+                    <Badge className="ticket-batch-badge ticket-batch-badge--future" color="#555" bg="#1a1a1a" icon={<Lock size={9} />}>Em breve</Badge>
                   ) : isCurrent ? (
-                    <Badge color="#67bed9" bg="#0d1e28" icon={<CheckCircle2 size={9} />}>Disponível</Badge>
+                    <Badge className="ticket-batch-badge ticket-batch-badge--available" color="#67bed9" bg="#0d1e28" icon={<CheckCircle2 size={9} />}>Disponível</Badge>
                   ) : null}
                 </div>
-                <p style={{ fontSize: '15px', fontWeight: 700, color: locked || isSoldOut ? '#555' : '#fff', marginBottom: '2px' }}>
+                <p className="ticket-batch-title" style={{ fontSize: '15px', fontWeight: 700, color: locked || isSoldOut ? '#555' : '#fff', marginBottom: '2px' }}>
                   {batch.name}
                 </p>
-                {batch.description && <p style={{ fontSize: '12px', color: '#555' }}>{batch.description}</p>}
+                {batch.description && <p className="ticket-batch-description" style={{ fontSize: '12px', color: '#555' }}>{batch.description}</p>}
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '12px' }}>
-                <p style={{ fontSize: '17px', fontWeight: 800, color: locked || isSoldOut ? '#444' : '#fff' }}>
+                <p className="ticket-batch-price" style={{ fontSize: '17px', fontWeight: 800, color: locked || isSoldOut ? '#444' : '#fff' }}>
                   {Number(batch.price) === 0 ? 'Grátis' : formatCurrency(Number(batch.price))}
                 </p>
                 {Number(batch.price) > 0 && !isSoldOut && (
-                  <p style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>+ taxas</p>
+                  <p className="ticket-batch-fees" style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>+ taxas</p>
                 )}
               </div>
             </div>
 
             {isCurrent && (
-              <div style={{
+              <div className="ticket-batch-quantity" style={{
                 padding: '10px 16px 14px', borderTop: '1px solid #1e1e1e',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
-                <span style={{ fontSize: '13px', color: '#666' }}>Quantidade</span>
+                <span className="ticket-batch-quantity-label" style={{ fontSize: '13px', color: '#666' }}>Quantidade</span>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <button onClick={() => changeQty(-1)} disabled={qty === 0} style={{
+                  <button className="ticket-batch-quantity-button" onClick={() => changeQty(-1)} disabled={qty === 0} style={{
                     width: '32px', height: '32px', borderRadius: '8px',
                     border: '1px solid #252525', background: '#1a1a1a',
                     color: qty === 0 ? '#333' : '#aaa',
                     cursor: qty === 0 ? 'not-allowed' : 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}><Minus size={14} /></button>
-                  <span style={{ width: '40px', textAlign: 'center', fontSize: '16px', fontWeight: 700, color: '#fff' }}>{qty}</span>
-                  <button onClick={() => changeQty(1)} disabled={qty >= maxQty} style={{
+                  <span className="ticket-batch-quantity-count" style={{ width: '40px', textAlign: 'center', fontSize: '16px', fontWeight: 700, color: '#fff' }}>{qty}</span>
+                  <button className="ticket-batch-quantity-button" onClick={() => changeQty(1)} disabled={qty >= maxQty} style={{
                     width: '32px', height: '32px', borderRadius: '8px',
                     border: '1px solid #252525', background: '#1a1a1a',
                     color: qty >= maxQty ? '#333' : '#aaa',
@@ -183,7 +183,7 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
             )}
 
             {locked && (
-              <div style={{ padding: '8px 16px 12px', borderTop: '1px solid #161616', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div className="ticket-batch-future-note" style={{ padding: '8px 16px 12px', borderTop: '1px solid #161616', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Lock size={11} color="#444" />
                 <span style={{ fontSize: '12px', color: '#444' }}>Disponível após o esgotamento do lote anterior</span>
               </div>
@@ -311,9 +311,9 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
   );
 }
 
-function Badge({ children, color, bg, icon }: { children: React.ReactNode; color: string; bg: string; icon?: React.ReactNode }) {
+function Badge({ children, color, bg, icon, className }: { children: React.ReactNode; color: string; bg: string; icon?: React.ReactNode; className?: string }) {
   return (
-    <span style={{
+    <span className={className} style={{
       display: 'inline-flex', alignItems: 'center', gap: '4px',
       padding: '2px 8px', borderRadius: '999px',
       background: bg, color, fontSize: '11px', fontWeight: 600,
