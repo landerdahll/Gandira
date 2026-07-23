@@ -70,7 +70,7 @@ function ResetPasswordForm() {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <img src="/logonovo.svg" alt="Pago" style={{ height: '44px', objectFit: 'contain' }} />
+            <img src="/Vector.svg" alt="Pago" style={{ height: '44px', objectFit: 'contain' }} />
           </Link>
         </div>
 
