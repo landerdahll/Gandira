@@ -139,7 +139,7 @@ function RegisterForm() {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <img src="/pago.svg" alt="Pago" style={{ height: '44px', objectFit: 'contain' }} />
+            <img src="/logonovo.svg" alt="Pago" style={{ height: '44px', objectFit: 'contain' }} />
           </Link>
         </div>
 
