@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { Eye, EyeOff, Loader2, ShieldCheck, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authApi } from '@/lib/api';
+import { BrandMark } from '@/components/brand/brand-mark';
 
 const schema = z
   .object({
@@ -70,7 +71,7 @@ function ResetPasswordForm() {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <img src="/Vector.svg" alt="Pago" style={{ height: '44px', objectFit: 'contain' }} />
+            <BrandMark style={{ height: '44px', objectFit: 'contain' }} />
           </Link>
         </div>
 

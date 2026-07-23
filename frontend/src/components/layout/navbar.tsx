@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { LogOut, UserCircle, LayoutDashboard, QrCode, Menu, X, ChevronDown, ShieldCheck, Ticket, Moon, Sun } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useTheme } from '@/components/providers/theme-provider';
+import { BrandMark } from '@/components/brand/brand-mark';
 
 export function Navbar() {
   const { user, logout, isProducer, isStaff, isAdmin, loading } = useAuth();
@@ -49,7 +50,7 @@ export function Navbar() {
 
         {/* Logo */}
         <Link href="/" style={{ textDecoration: 'none', flexShrink: 0 }}>
-          <img src="/Vector.svg" alt="Pago" style={{ height: '31px', objectFit: 'contain', display: 'block' }} />
+          <BrandMark lightBackground="brand" style={{ height: '31px', objectFit: 'contain', display: 'block' }} />
         </Link>
 
         {/* ── Desktop right side ─────────────────────────────────────── */}

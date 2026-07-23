@@ -9,6 +9,7 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { BrandMark } from '@/components/brand/brand-mark';
 
 const schema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -60,7 +61,7 @@ function LoginForm() {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <img src="/Vector.svg" alt="Pago" style={{ height: '44px', objectFit: 'contain' }} />
+            <BrandMark style={{ height: '44px', objectFit: 'contain' }} />
           </Link>
         </div>
 

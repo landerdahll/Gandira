@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { CheckCircle2, Ticket, Loader2, CalendarDays, MapPin, Award } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { ordersApi, paymentsApi } from '@/lib/api';
+import { BrandMark } from '@/components/brand/brand-mark';
 
 function fmtDate(d?: string) {
   if (!d) return '';
@@ -79,7 +80,7 @@ function SuccessContent() {
     }}>
       {/* Logo */}
       <div style={{ marginBottom: '40px' }}>
-        <img src="/Vector.svg" alt="Pago" style={{ height: '36px', objectFit: 'contain' }} />
+        <BrandMark style={{ height: '36px', objectFit: 'contain' }} />
       </div>
 
       <div style={{ width: '100%', maxWidth: '420px', textAlign: 'center' }}>

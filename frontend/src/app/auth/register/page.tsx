@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { authApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
+import { BrandMark } from '@/components/brand/brand-mark';
 
 const schema = z
   .object({
@@ -139,7 +140,7 @@ function RegisterForm() {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <img src="/Vector.svg" alt="Pago" style={{ height: '44px', objectFit: 'contain' }} />
+            <BrandMark style={{ height: '44px', objectFit: 'contain' }} />
           </Link>
         </div>
 

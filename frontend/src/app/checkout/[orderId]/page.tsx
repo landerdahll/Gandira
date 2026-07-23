@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { ordersApi, pixApi } from '@/lib/api';
 import { formatClubDiscountPercentage } from '@/lib/club-membership';
 import { getDiscountLabel } from '@/lib/club-checkout';
+import { BrandMark } from '@/components/brand/brand-mark';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -293,7 +294,7 @@ function CheckoutContent() {
 
           {/* Logo */}
           <div style={{ marginBottom: '8px' }}>
-            <img src="/Vector.svg" alt="Pago" style={{ height: '32px', objectFit: 'contain' }} />
+            <BrandMark style={{ height: '32px', objectFit: 'contain' }} />
           </div>
 
           {/* Event card */}

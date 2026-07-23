@@ -33,7 +33,7 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: { default: 'Pago', template: '%s | Pago' },
   description: 'Ingressos para os melhores eventos',
-  icons: { icon: '/logonovo.svg' },
+  icons: { icon: '/icon-blue.svg' },
   openGraph: { type: 'website', locale: 'pt_BR', siteName: 'Pago' },
 };
 

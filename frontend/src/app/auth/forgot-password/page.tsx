@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Mail, Loader2, CheckCircle2 } from 'lucide-react';
 import { authApi } from '@/lib/api';
+import { BrandMark } from '@/components/brand/brand-mark';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -40,7 +41,7 @@ export default function ForgotPasswordPage() {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <img src="/Vector.svg" alt="Pago" style={{ height: '44px', objectFit: 'contain' }} />
+            <BrandMark style={{ height: '44px', objectFit: 'contain' }} />
           </Link>
         </div>
 
