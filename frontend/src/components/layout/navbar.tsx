@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
-import { LogOut, UserCircle, LayoutDashboard, QrCode, Menu, X, ChevronDown, ShieldCheck, Ticket } from 'lucide-react';
+import { LogOut, UserCircle, LayoutDashboard, QrCode, Menu, X, ChevronDown, ShieldCheck, Ticket, Moon, Sun } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import { useTheme } from '@/components/providers/theme-provider';
 
 export function Navbar() {
   const { user, logout, isProducer, isStaff, isAdmin, loading } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -25,7 +27,7 @@ export function Navbar() {
   useEffect(() => { setMobileOpen(false); }, []);
 
   return (
-    <header style={{
+    <header className="theme-navbar" style={{
       position: 'sticky',
       top: 0,
       zIndex: 50,
@@ -55,6 +57,7 @@ export function Navbar() {
           <div className="nav-desktop" style={{ alignItems: 'center', gap: '4px' }}>
             <NavItem href="/">Ver eventos</NavItem>
             <div style={{ width: '1px', height: '20px', background: '#2a2a2a', margin: '0 8px' }} />
+            <ThemeToggle theme={theme} onToggle={toggleTheme} />
 
             {user ? (
               <>
@@ -138,6 +141,8 @@ export function Navbar() {
         {/* ── Mobile right side: avatar/login + hamburger ─────────────── */}
         {!loading && (
           <div className="nav-mobile" style={{ alignItems: 'center', gap: '10px' }}>
+
+            <ThemeToggle theme={theme} onToggle={toggleTheme} />
 
             {user ? (
               /* Avatar compacto — abre menu mobile */
@@ -263,6 +268,22 @@ export function Navbar() {
         </div>
       )}
     </header>
+  );
+}
+
+function ThemeToggle({ theme, onToggle }: { theme: 'dark' | 'light'; onToggle: () => void }) {
+  const nextTheme = theme === 'dark' ? 'claro' : 'escuro';
+
+  return (
+    <button
+      type="button"
+      className="theme-toggle"
+      onClick={onToggle}
+      aria-label={`Ativar modo ${nextTheme}`}
+      title={`Ativar modo ${nextTheme}`}
+    >
+      {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+    </button>
   );
 }
 
