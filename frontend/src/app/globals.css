@@ -637,11 +637,17 @@ body {
 }
 
 :root[data-theme='light'] .master-club-create-button {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding-right: 13px !important;
-  padding-left: 13px !important;
+  width: fit-content !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  flex: 0 0 auto !important;
+  padding-right: 8px !important;
+  padding-left: 8px !important;
   text-align: center;
+  white-space: nowrap;
 }
 
 :root[data-theme='light'] :is(.master-club-list, .master-club-summary, .master-club-usage, .master-club-info, .master-club-modal) {

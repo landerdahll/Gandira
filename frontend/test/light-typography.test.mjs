@@ -26,5 +26,14 @@ test('only light changes the theme font while dark retains Space Grotesk', () =>
 
 test('club create button is centered and only narrowed in light mode', () => {
   assert.match(club, /className="master-club-create-button"/);
-  assert.match(styles, /:root\[data-theme='light'\] \.master-club-create-button\s*{[^}]*align-items:\s*center;[^}]*justify-content:\s*center;[^}]*padding-right:\s*13px !important;[^}]*padding-left:\s*13px !important;[^}]*text-align:\s*center;/s);
+  const rule = styles.match(/:root\[data-theme='light'\] \.master-club-create-button\s*{([^}]*)}/)?.[1] ?? '';
+  assert.match(rule, /display:\s*inline-flex;/);
+  assert.match(rule, /align-items:\s*center;/);
+  assert.match(rule, /justify-content:\s*center;/);
+  assert.match(rule, /width:\s*fit-content !important;/);
+  assert.match(rule, /min-width:\s*0 !important;/);
+  assert.match(rule, /max-width:\s*none !important;/);
+  assert.match(rule, /flex:\s*0 0 auto !important;/);
+  assert.match(rule, /padding-right:\s*8px !important;/);
+  assert.match(rule, /padding-left:\s*8px !important;/);
 });
