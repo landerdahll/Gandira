@@ -57,13 +57,14 @@ export function Navbar() {
         {!loading && (
           <div className="nav-desktop" style={{ alignItems: 'center', gap: '4px' }}>
             <NavItem href="/">Ver eventos</NavItem>
-            <div style={{ width: '1px', height: '20px', background: '#2a2a2a', margin: '0 8px' }} />
+            <div className="nav-divider" style={{ width: '1px', height: '20px', background: '#2a2a2a', margin: '0 8px' }} />
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
 
             {user ? (
               <>
                 <div style={{ position: 'relative' }} ref={dropdownRef}>
                   <button
+                    className="nav-user-button"
                     onClick={() => setDropdownOpen(v => !v)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '7px',
@@ -111,7 +112,7 @@ export function Navbar() {
                   )}
                 </div>
 
-                <Link href="/my-tickets" style={{
+                <Link className="nav-primary-action" href="/my-tickets" style={{
                   marginLeft: '8px', padding: '9px 20px', borderRadius: '999px',
                   background: '#67bed9', color: '#fff', fontSize: '14px',
                   fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0,
@@ -121,13 +122,13 @@ export function Navbar() {
               </>
             ) : (
               <>
-                <Link href="/auth/login" style={{
+                <Link className="nav-login-link" href="/auth/login" style={{
                   padding: '9px 16px', borderRadius: '8px', color: '#aaa',
                   fontSize: '14px', fontWeight: 500, textDecoration: 'none', whiteSpace: 'nowrap',
                 }}>
                   Login
                 </Link>
-                <Link href="/auth/register" style={{
+                <Link className="nav-primary-action" href="/auth/register" style={{
                   marginLeft: '4px', padding: '9px 20px', borderRadius: '999px',
                   background: '#67bed9', color: '#fff', fontSize: '14px',
                   fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0,
@@ -152,7 +153,7 @@ export function Navbar() {
               </Link>
             ) : (
               /* Botão "Entrar" compacto */
-              <Link href="/auth/login" style={{
+              <Link className="nav-mobile-login" href="/auth/login" style={{
                 padding: '7px 14px', borderRadius: '999px',
                 background: '#1a1a1a', border: '1px solid #2a2a2a',
                 color: '#ccc', fontSize: '13px', fontWeight: 600,
@@ -164,6 +165,7 @@ export function Navbar() {
 
             {/* Hamburger */}
             <button
+              className="nav-menu-toggle"
               onClick={() => setMobileOpen(v => !v)}
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
@@ -313,6 +315,7 @@ function Avatar({ user, size }: { user: { name: string; avatarUrl?: string | nul
 function NavItem({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <Link
+      className="nav-events-link"
       href={href}
       style={{ padding: '8px 14px', borderRadius: '8px', color: '#aaa', fontSize: '14px', fontWeight: 500, textDecoration: 'none', whiteSpace: 'nowrap' }}
       onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
