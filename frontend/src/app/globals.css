@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Alte Haas Grotesk';
+  src: url('/fonts/alte-haas-grotesk/alte-haas-grotesk-regular.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 300 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Alte Haas Grotesk';
+  src: url('/fonts/alte-haas-grotesk/alte-haas-grotesk-bold.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 600 900;
+  font-display: swap;
+}
+
 :root,
 :root[data-theme='dark'] {
   --theme-background: #111111;
@@ -13,6 +29,7 @@
   --theme-border: #252525;
   --theme-header: rgba(10, 10, 10, 0.96);
   --theme-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  --theme-font-family: var(--font-space), system-ui, sans-serif;
 }
 
 :root[data-theme='light'] {
@@ -25,6 +42,7 @@
   --theme-border: #d8e3ee;
   --theme-header: #abc9e8;
   --theme-shadow: 0 8px 24px rgba(65, 91, 117, 0.08);
+  --theme-font-family: 'Alte Haas Grotesk', sans-serif;
 }
 
 @layer base {
@@ -45,6 +63,10 @@
     background-color: var(--theme-background);
     color: var(--theme-text);
   }
+}
+
+body {
+  font-family: var(--theme-font-family);
 }
 
 .theme-navbar {
@@ -612,6 +634,14 @@
 /* Light Master club listing */
 :root[data-theme='light'] .master-club-panel {
   color: var(--theme-text) !important;
+}
+
+:root[data-theme='light'] .master-club-create-button {
+  align-items: center;
+  justify-content: center;
+  padding-right: 13px !important;
+  padding-left: 13px !important;
+  text-align: center;
 }
 
 :root[data-theme='light'] :is(.master-club-list, .master-club-summary, .master-club-usage, .master-club-info, .master-club-modal) {

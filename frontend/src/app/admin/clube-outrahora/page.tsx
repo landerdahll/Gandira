@@ -188,7 +188,7 @@ export default function ClubeOutrahoraPage() {
           </div>
           <p style={{ color: '#666', fontSize: 14, marginTop: 5 }}>Gestão da lista de benefícios por e-mail</p>
         </div>
-        <button onClick={() => setCreateOpen(true)} style={primaryButton}>
+        <button className="master-club-create-button" onClick={() => setCreateOpen(true)} style={primaryButton}>
           <Plus size={16} /> Cadastrar membro
         </button>
       </div>
