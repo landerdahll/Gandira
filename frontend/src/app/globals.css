@@ -640,7 +640,7 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: fit-content !important;
+  width: auto !important;
   min-width: 0 !important;
   max-width: none !important;
   flex: 0 0 auto !important;
@@ -648,6 +648,10 @@ body {
   padding-left: 8px !important;
   text-align: center;
   white-space: nowrap;
+}
+
+:root[data-theme='light'] .master-club-create-button > svg {
+  display: none;
 }
 
 :root[data-theme='light'] :is(.master-club-list, .master-club-summary, .master-club-usage, .master-club-info, .master-club-modal) {
