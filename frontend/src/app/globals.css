@@ -40,13 +40,27 @@
   }
   body {
     @apply antialiased;
+    margin: 0;
+    padding: 0;
     background-color: var(--theme-background);
     color: var(--theme-text);
   }
 }
 
 .theme-navbar {
+  width: 100%;
+  margin: 0;
   background: var(--theme-header) !important;
+}
+
+.navbar-inner {
+  padding: 24px 16px;
+}
+
+@media (max-width: 640px) {
+  .navbar-inner {
+    padding: 20px 16px;
+  }
 }
 
 .theme-toggle {

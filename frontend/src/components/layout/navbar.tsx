@@ -37,11 +37,9 @@ export function Navbar() {
       borderBottom: '1px solid #1a1a1a',
     }}>
       {/* ── Bar ─────────────────────────────────────────────────────────── */}
-      <div style={{
+      <div className="navbar-inner" style={{
         maxWidth: '1280px',
         margin: '0 auto',
-        padding: '0 16px',
-        height: '70px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
