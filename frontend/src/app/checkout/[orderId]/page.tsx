@@ -294,7 +294,7 @@ function CheckoutContent() {
 
           {/* Logo */}
           <div style={{ marginBottom: '8px' }}>
-            <BrandMark style={{ height: '48px', objectFit: 'contain' }} />
+            <BrandMark style={{ height: '62.4px', objectFit: 'contain' }} />
           </div>
 
           {/* Event card */}
