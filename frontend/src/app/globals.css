@@ -29,7 +29,7 @@
   --theme-border: #252525;
   --theme-header: rgba(10, 10, 10, 0.96);
   --theme-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-  --theme-font-family: var(--font-space), system-ui, sans-serif;
+  --theme-font-family: 'Alte Haas Grotesk', Arial, sans-serif;
 }
 
 :root[data-theme='light'] {
@@ -42,7 +42,6 @@
   --theme-border: #d8e3ee;
   --theme-header: #abc9e8;
   --theme-shadow: 0 8px 24px rgba(65, 91, 117, 0.08);
-  --theme-font-family: 'Alte Haas Grotesk', sans-serif;
 }
 
 @layer base {

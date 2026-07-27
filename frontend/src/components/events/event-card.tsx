@@ -57,7 +57,7 @@ export function EventCard({ event, past }: EventCardProps) {
       </div>
 
       {/* Info */}
-      <div style={{ paddingTop: '12px', paddingBottom: '4px', fontFamily: 'var(--font-montserrat), Arial, sans-serif' }}>
+      <div style={{ paddingTop: '12px', paddingBottom: '4px' }}>
         <h3
           className="group-hover:text-[#67bed9] transition-colors"
           style={{

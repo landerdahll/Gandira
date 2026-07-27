@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { Space_Grotesk, Montserrat } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { AuthProvider } from '@/lib/auth-context';
@@ -18,18 +17,6 @@ const themeInitScript = `
   }
 `;
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-space',
-});
-
-const montserrat = Montserrat({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-montserrat',
-});
-
 export const metadata: Metadata = {
   title: { default: 'Pago', template: '%s | Pago' },
   description: 'Ingressos para os melhores eventos',
@@ -46,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className={`${spaceGrotesk.variable} ${montserrat.variable} font-sans`}>
+      <body className="font-sans">
         <ThemeProvider>
           <QueryProvider>
             <AuthProvider>

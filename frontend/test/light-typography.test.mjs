@@ -18,9 +18,9 @@ test('Alte Haas Grotesk is bundled locally in WOFF2 regular and bold cuts', asyn
   assert.match(styles, /@font-face\s*{[^}]*font-family:\s*'Alte Haas Grotesk';[^}]*format\('woff2'\)/s);
 });
 
-test('only light changes the theme font while dark retains Space Grotesk', () => {
-  assert.match(styles, /:root,\s*:root\[data-theme='dark'\]\s*{[^}]*--theme-font-family:\s*var\(--font-space\), system-ui, sans-serif;/s);
-  assert.match(styles, /:root\[data-theme='light'\]\s*{[^}]*--theme-font-family:\s*'Alte Haas Grotesk', sans-serif;/s);
+test('Alte Haas Grotesk is the application font in light and dark themes', () => {
+  assert.match(styles, /:root,\s*:root\[data-theme='dark'\]\s*{[^}]*--theme-font-family:\s*'Alte Haas Grotesk', Arial, sans-serif;/s);
+  assert.doesNotMatch(styles, /--theme-font-family:\s*var\(/);
   assert.match(styles, /body\s*{\s*font-family:\s*var\(--theme-font-family\);\s*}/);
 });
 

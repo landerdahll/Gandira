@@ -8,7 +8,7 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      fontFamily: { sans: ['var(--font-space)', 'system-ui', 'sans-serif'] },
+      fontFamily: { sans: ['Alte Haas Grotesk', 'Arial', 'sans-serif'] },
       colors: {
         brand: {
           lime: '#67bed9',
