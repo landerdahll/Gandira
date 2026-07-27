@@ -312,11 +312,11 @@ body {
 
 /* data-theme is set in <head>, so the correct asset is selected before first paint. */
 :root[data-theme='light'] .brand-mark--logo.brand-mark--on-brand {
-  content: url('/logo-white.svg');
+  content: url('/logo-full-white.svg');
 }
 
 :root[data-theme='light'] .brand-mark--logo.brand-mark--on-light {
-  content: url('/logo-black.svg');
+  content: url('/logo-full-black.svg');
 }
 
 :root[data-theme='light'] .brand-mark--icon.brand-mark--on-brand {

@@ -44,9 +44,9 @@ test('header refinements are scoped exclusively to light theme', () => {
 
 test('logo is selected by pre-paint theme CSS without waiting for hydration', () => {
   assert.doesNotMatch(brandMark, /useTheme|useEffect|useState/);
-  assert.match(brandMark, /src=\{`\/\$\{kind\}-blue\.svg`\}/);
+  assert.match(brandMark, /kind === 'logo' \? '\/logo-full-blue\.svg' : '\/icon-blue\.svg'/);
   assert.match(styles, /data-theme='light'.*brand-mark--logo\.brand-mark--on-brand/);
-  assert.match(styles, /content: url\('\/logo-white\.svg'\)/);
+  assert.match(styles, /content: url\('\/logo-full-white\.svg'\)/);
 });
 
 test('primary header action reuses the application primary token', () => {

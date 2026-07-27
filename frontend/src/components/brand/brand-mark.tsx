@@ -20,5 +20,7 @@ export function BrandMark({
     className,
   ].filter(Boolean).join(' ');
 
-  return <img src={`/${kind}-blue.svg`} alt={alt} className={classes} style={style} />;
+  const src = kind === 'logo' ? '/logo-full-blue.svg' : '/icon-blue.svg';
+
+  return <img src={src} alt={alt} className={classes} style={style} />;
 }
