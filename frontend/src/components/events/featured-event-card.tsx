@@ -38,17 +38,18 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        borderRadius: '16px',
+        borderRadius: '18px',
         overflow: 'hidden',
-        background: '#141414',
-        border: '1px solid #1e1e1e',
+        background: 'var(--theme-surface-raised)',
+        border: '1px solid var(--theme-border)',
+        boxShadow: 'var(--theme-shadow)',
       }}
     >
       {/* Image */}
       <Link
         href={`/events/${event.slug}`}
         className="featured-card-img"
-        style={{ display: 'block', width: '100%', aspectRatio: '21 / 8', background: '#1e1e1e' }}
+        style={{ display: 'block', width: '100%', aspectRatio: '21 / 5', overflow: 'hidden', borderRadius: '17px 17px 0 0', background: 'var(--theme-surface)' }}
       >
         {image ? (
           <img
@@ -59,6 +60,7 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
               width: '100%',
               height: '100%',
               objectFit: 'cover',
+              objectPosition: 'center',
             }}
           />
         ) : (
@@ -69,7 +71,7 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: '#1e1e1e',
+              background: 'var(--theme-surface)',
               fontSize: '3rem',
             }}
           >
@@ -79,14 +81,14 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
       </Link>
 
       {/* Details */}
-      <div className="featured-card-body" style={{ padding: '28px 32px 30px', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <div className="featured-card-body" style={{ padding: '32px 32px 32px', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <div>
           <Link href={`/events/${event.slug}`} style={{ textDecoration: 'none' }}>
             <h2
               style={{
                 fontSize: '22px',
                 fontWeight: 700,
-                color: '#fff',
+                color: 'var(--theme-text)',
                 lineHeight: 1.2,
                 marginBottom: '16px',
               }}
@@ -97,26 +99,26 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
           </Link>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 24px', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#67bed9', fontWeight: 500, textTransform: 'capitalize' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--theme-primary)', fontWeight: 500, textTransform: 'capitalize' }}>
               <Calendar size={14} />
               <span>{dateLabel} · {timeLabel}</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#888' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--theme-text-secondary)' }}>
               <MapPin size={14} />
               <span>{event.venue} · {event.city}, {event.state}</span>
             </div>
           </div>
 
           {shortDesc && (
-            <p style={{ fontSize: '14px', lineHeight: 1.6, color: '#666' }}>
+            <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--theme-text-secondary)' }}>
               {shortDesc}
             </p>
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginTop: '20px' }}>
+        <div className="featured-card-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginTop: '28px' }}>
           {lowestPrice !== null && (
-            <p style={{ fontSize: '16px', fontWeight: 600, color: '#aaa' }}>
+            <p style={{ fontSize: '16px', fontWeight: 600, color: 'var(--theme-text)' }}>
               {lowestPrice === 0 ? 'Gratuito' : `A partir de ${formatCurrency(lowestPrice)} + taxas`}
             </p>
           )}
@@ -124,9 +126,10 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
             href={`/events/${event.slug}`}
             style={{
               flexShrink: 0,
+              marginLeft: 'auto',
               padding: '10px 24px',
               borderRadius: '999px',
-              background: '#67bed9',
+              background: 'var(--theme-primary)',
               color: '#fff',
               fontWeight: 700,
               fontSize: '14px',
