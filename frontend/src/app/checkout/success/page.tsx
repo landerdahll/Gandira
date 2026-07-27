@@ -80,7 +80,7 @@ function SuccessContent() {
     }}>
       {/* Logo */}
       <div style={{ marginBottom: '40px' }}>
-        <BrandMark style={{ height: '36px', objectFit: 'contain' }} />
+        <BrandMark style={{ height: '54px', objectFit: 'contain' }} />
       </div>
 
       <div style={{ width: '100%', maxWidth: '420px', textAlign: 'center' }}>

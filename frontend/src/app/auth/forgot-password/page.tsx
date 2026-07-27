@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <BrandMark style={{ height: '44px', objectFit: 'contain' }} />
+            <BrandMark style={{ height: '66px', objectFit: 'contain' }} />
           </Link>
         </div>
 

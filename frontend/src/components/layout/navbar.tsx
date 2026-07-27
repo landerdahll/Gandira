@@ -48,7 +48,7 @@ export function Navbar() {
 
         {/* Logo */}
         <Link href="/" style={{ textDecoration: 'none', flexShrink: 0 }}>
-          <BrandMark lightBackground="brand" style={{ height: '31px', objectFit: 'contain', display: 'block' }} />
+          <BrandMark lightBackground="brand" style={{ height: '46.5px', objectFit: 'contain', display: 'block' }} />
         </Link>
 
         {/* ── Desktop right side ─────────────────────────────────────── */}

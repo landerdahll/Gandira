@@ -20,7 +20,7 @@ test('navbar keeps a centered inner container and uses responsive vertical paddi
 
 test('theme backgrounds and navbar content sizing remain unchanged', () => {
   assert.match(navbar, /background:\s*'rgba\(10,10,10,0\.96\)'/);
-  assert.match(navbar, /height:\s*'31px'/);
+  assert.match(navbar, /height:\s*'46\.5px'/);
   assert.match(globals, /\.theme-toggle\s*{[^}]*width:\s*36px;[^}]*height:\s*36px;/s);
   assert.match(globals, /:root\[data-theme='light'\] \.theme-navbar\s*{/);
   assert.match(globals, /:root\[data-theme='light'\] \.theme-navbar[\s\S]*?linear-gradient\(115deg,/);

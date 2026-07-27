@@ -11,19 +11,6 @@ const ThemeContext = createContext<{
   toggleTheme: () => void;
 }>({ theme: 'light', toggleTheme: () => undefined });
 
-function updateFavicon(theme: Theme) {
-  const href = theme === 'dark' ? '/icon-blue.svg' : '/icon-black.svg';
-  let favicon = document.querySelector<HTMLLinkElement>("link[rel='icon']");
-
-  if (!favicon) {
-    favicon = document.createElement('link');
-    favicon.rel = 'icon';
-    document.head.appendChild(favicon);
-  }
-
-  favicon.href = href;
-}
-
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
 
@@ -31,7 +18,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const savedTheme = window.localStorage.getItem(STORAGE_KEY);
     const initialTheme = savedTheme === 'dark' ? 'dark' : 'light';
     setTheme(initialTheme);
-    updateFavicon(initialTheme);
   }, []);
 
   const toggleTheme = useCallback(() => {
@@ -40,7 +26,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       document.documentElement.dataset.theme = nextTheme;
       document.documentElement.style.colorScheme = nextTheme;
       window.localStorage.setItem(STORAGE_KEY, nextTheme);
-      updateFavicon(nextTheme);
       return nextTheme;
     });
   }, []);
