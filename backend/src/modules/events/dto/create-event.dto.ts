@@ -8,6 +8,7 @@ import {
   IsArray,
   IsUrl,
   IsBoolean,
+  ValidateIf,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -82,6 +83,12 @@ export class CreateEventDto {
   @IsOptional()
   @IsUrl()
   coverImage?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @ValidateIf((_object, value) => value !== '')
+  @IsUrl()
+  bannerImage?: string;
 
   @ApiPropertyOptional({ default: true })
   @IsOptional()

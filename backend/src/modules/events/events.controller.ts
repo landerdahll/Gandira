@@ -19,6 +19,7 @@ import { memoryStorage } from 'multer';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
+import { SetEventFeaturedDto } from './dto/set-event-featured.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
@@ -52,6 +53,33 @@ export class EventsController {
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
   ) {
     return this.events.findAll({ city, category, search, page, limit, past: past === 'true' });
+  }
+
+  @Public()
+  @Get('featured')
+  @ApiOperation({ summary: 'Evento em destaque da Home' })
+  featured() {
+    return this.events.findFeatured();
+  }
+
+  @Get('admin/all')
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Listar todos os eventos para o Painel Master' })
+  adminList(
+    @Query('search') search?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit = 50,
+  ) {
+    return this.events.findAdminEvents({ search, page, limit });
+  }
+
+  @Patch('admin/:id/featured')
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Definir evento como destaque da Home' })
+  setFeatured(@Param('id') id: string, @Body() dto: SetEventFeaturedDto) {
+    return this.events.setFeatured(id, dto.featured);
   }
 
   @Public()

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Trash2, Plus, ArrowLeft, Calendar, MapPin, ImageIcon, Ticket, Tag, Save, Upload, Link2, X } from 'lucide-react';
 import { eventsApi, couponsApi } from '@/lib/api';
+import { EventBannerField } from '@/components/events/event-banner-field';
 
 const inp: React.CSSProperties = {
   width: '100%', background: '#0f0f0f', border: '1px solid #252525',
@@ -59,7 +60,7 @@ export default function EditEventPage() {
 
   const [form, setForm] = useState({
     title: '', description: '', venue: '', address: '', city: '', state: '',
-    startDate: '', endDate: '', doorsOpen: '', coverImage: '',
+    startDate: '', endDate: '', doorsOpen: '', coverImage: '', bannerImage: '',
     category: 'Música', ageRating: '18', tags: '',
   });
 
@@ -82,6 +83,7 @@ export default function EditEventPage() {
           endDate: utcToLocalInput(e.endDate),
           doorsOpen: utcToLocalInput(e.doorsOpen),
           coverImage: e.coverImage ?? '',
+          bannerImage: e.bannerImage ?? '',
           category: e.category ?? 'Música',
           ageRating: String(e.ageRating ?? 18),
           tags: (e.tags ?? []).join(', '),
@@ -205,6 +207,7 @@ export default function EditEventPage() {
         endDate: new Date(form.endDate).toISOString(),
         ...(form.doorsOpen && { doorsOpen: new Date(form.doorsOpen).toISOString() }),
         ...(form.coverImage && { coverImage: form.coverImage }),
+        bannerImage: form.bannerImage,
         category: form.category,
         ageRating: parseInt(form.ageRating) || 0,
         ...(form.tags && { tags: form.tags.split(',').map(t => t.trim()).filter(Boolean) }),
@@ -368,6 +371,8 @@ export default function EditEventPage() {
             </div>
           )}
         </Card>
+
+        <EventBannerField value={form.bannerImage} onChange={value => setField('bannerImage', value)} />
 
         {/* ── Data e horário ────────────────────────────────────────────── */}
         <Card icon={<Calendar size={15} />} title="Data e Horário">

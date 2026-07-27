@@ -68,6 +68,7 @@ api.interceptors.response.use(
 
 export const eventsApi = {
   list: (params?: Record<string, any>) => api.get('/events', { params }),
+  featured: () => api.get('/events/featured'),
   get: (slug: string) => api.get(`/events/${slug}`),
   getById: (id: string) => api.get(`/events/${id}/manage`),
   create: (data: any) => api.post('/events', data),
@@ -75,6 +76,10 @@ export const eventsApi = {
   publish: (id: string) => api.patch(`/events/${id}/publish`),
   cancel: (id: string) => api.patch(`/events/${id}/cancel`),
   myEvents: (params?: any) => api.get('/events/producer/my-events', { params }),
+  adminList: (params?: { page?: number; limit?: number; search?: string }) =>
+    api.get('/events/admin/all', { params }),
+  setFeatured: (id: string, featured: boolean) =>
+    api.patch(`/events/admin/${id}/featured`, { featured }),
   uploadImage: (file: File) => {
     const form = new FormData();
     form.append('file', file);

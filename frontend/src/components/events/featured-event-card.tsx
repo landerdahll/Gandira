@@ -11,6 +11,7 @@ interface FeaturedEventCardProps {
     slug: string;
     description?: string;
     coverImage?: string;
+    bannerImage?: string;
     venue: string;
     city: string;
     state: string;
@@ -29,13 +30,14 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
   const shortDesc = event.description
     ? event.description.slice(0, 200) + (event.description.length > 200 ? '...' : '')
     : null;
+  const image = event.bannerImage || event.coverImage;
 
   return (
     <div
       className="featured-card"
       style={{
         display: 'flex',
-        flexDirection: 'row',
+        flexDirection: 'column',
         borderRadius: '16px',
         overflow: 'hidden',
         background: '#141414',
@@ -46,17 +48,16 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
       <Link
         href={`/events/${event.slug}`}
         className="featured-card-img"
-        style={{ display: 'block', flexShrink: 0, width: '320px' }}
+        style={{ display: 'block', width: '100%', aspectRatio: '21 / 8', background: '#1e1e1e' }}
       >
-        {event.coverImage ? (
+        {image ? (
           <img
-            src={event.coverImage}
+            src={image}
             alt={event.title}
             style={{
               display: 'block',
               width: '100%',
               height: '100%',
-              minHeight: '280px',
               objectFit: 'cover',
             }}
           />
@@ -64,7 +65,7 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
           <div
             style={{
               width: '100%',
-              minHeight: '280px',
+              height: '100%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -78,7 +79,7 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
       </Link>
 
       {/* Details */}
-      <div className="featured-card-body" style={{ flex: 1, padding: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
+      <div className="featured-card-body" style={{ padding: '28px 32px 30px', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <div>
           <Link href={`/events/${event.slug}`} style={{ textDecoration: 'none' }}>
             <h2
@@ -95,14 +96,14 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
             </h2>
           </Link>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 24px', marginBottom: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#67bed9', fontWeight: 500, textTransform: 'capitalize' }}>
               <Calendar size={14} />
               <span>{dateLabel} · {timeLabel}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#888' }}>
               <MapPin size={14} />
-              <span>{event.venue}</span>
+              <span>{event.venue} · {event.city}, {event.state}</span>
             </div>
           </div>
 

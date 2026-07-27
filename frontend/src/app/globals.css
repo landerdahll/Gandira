@@ -696,6 +696,10 @@ body {
   color: var(--theme-text) !important;
 }
 
+:root[data-theme='light'] .master-events-panel {
+  color: var(--theme-text);
+}
+
 :root[data-theme='light'] .master-transfer-filters :is(input, select) {
   background: var(--theme-surface) !important;
   border-color: var(--theme-border) !important;
@@ -770,6 +774,14 @@ body {
 
 /* ── Responsive utilities ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
+  .master-event-card {
+    grid-template-columns: 56px minmax(0, 1fr) !important;
+  }
+  .master-event-card > label {
+    grid-column: 1 / -1;
+    padding: 4px 2px 2px;
+  }
+
   /* Dashboard stats */
   .stats-grid {
     grid-template-columns: 1fr 1fr !important;
@@ -826,8 +838,8 @@ body {
     min-height: unset !important;
   }
   .featured-card-img img {
-    min-height: unset !important;
-    height: auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
     width: 100% !important;
   }
   .featured-card-body {

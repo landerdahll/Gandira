@@ -35,22 +35,37 @@ async function getPast() {
   }
 }
 
+async function getFeatured() {
+  try {
+    const res = await eventsApi.featured();
+    return res.data;
+  } catch {
+    return null;
+  }
+}
+
 export default async function HomePage({ searchParams }: { searchParams: SearchParams }) {
   const hasFilters = !!(searchParams.city || searchParams.category || searchParams.search);
 
-  const [upcoming, pastEvents] = await Promise.all([
+  const [upcoming, pastEvents, featuredEvent] = await Promise.all([
     getUpcoming(searchParams),
     hasFilters ? Promise.resolve([]) : getPast(),
+    hasFilters ? Promise.resolve(null) : getFeatured(),
   ]);
 
   const upcomingEvents: any[] = upcoming.data;
-  const featured = !hasFilters && upcomingEvents.length > 0 ? upcomingEvents[0] : null;
-  const rest = featured ? upcomingEvents.slice(1) : upcomingEvents;
+  const featured = !hasFilters ? featuredEvent : null;
+  const rest = featured
+    ? upcomingEvents.filter((event: any) => event.id !== featured.id)
+    : upcomingEvents;
+  const visiblePastEvents = featured
+    ? pastEvents.filter((event: any) => event.id !== featured.id)
+    : pastEvents;
 
   return (
     <div className="page-container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px 80px' }}>
 
-      {upcomingEvents.length === 0 && pastEvents.length === 0 ? (
+      {!featured && upcomingEvents.length === 0 && visiblePastEvents.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '112px 0' }}>
           <p style={{ fontSize: '3rem', marginBottom: '16px' }}>🎵</p>
           <p style={{ fontSize: '18px', fontWeight: 600, color: '#fff' }}>Nenhum evento encontrado</p>
@@ -89,7 +104,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
           )}
 
           {/* Eventos Passados */}
-          {pastEvents.length > 0 && (
+          {visiblePastEvents.length > 0 && (
             <section>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
                 <SectionTitle>Eventos Passados</SectionTitle>
@@ -99,7 +114,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
                 gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
                 gap: '20px',
               }}>
-                {pastEvents.map((event: any) => (
+                {visiblePastEvents.map((event: any) => (
                   <EventCard key={event.id} event={event} past />
                 ))}
               </div>

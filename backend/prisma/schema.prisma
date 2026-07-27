@@ -155,6 +155,7 @@ model Event {
   tags      String[] @default([])
 
   status               EventStatus @default(DRAFT)
+  featured             Boolean     @default(false)
   allowTicketTransfers Boolean     @default(true)
 
   batches           Batch[]
@@ -171,6 +172,7 @@ model Event {
   @@index([slug])
   @@index([producerId])
   @@index([status, startDate])
+  @@index([featured, endDate])
   @@index([city, status])
 }
 

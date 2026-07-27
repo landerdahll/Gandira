@@ -6,6 +6,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Trash2, Plus, ArrowLeft, Calendar, MapPin, ImageIcon, Ticket, Tag, AlertTriangle, Rocket, Save, Upload, Link2, X } from 'lucide-react';
 import { eventsApi, batchesApi, couponsApi } from '@/lib/api';
+import { EventBannerField } from '@/components/events/event-banner-field';
 
 interface Batch {
   name: string; price: string; quantity: string;
@@ -67,7 +68,7 @@ export default function NewEventPage() {
 
   const [form, setForm] = useState({
     title: '', description: '', venue: '', address: '', city: '', state: '',
-    startDate: '', endDate: '', doorsOpen: '', coverImage: '',
+    startDate: '', endDate: '', doorsOpen: '', coverImage: '', bannerImage: '',
     category: 'Música', ageRating: '18', tags: '',
   });
 
@@ -167,6 +168,7 @@ export default function NewEventPage() {
         endDate: new Date(form.endDate).toISOString(),
         ...(form.doorsOpen && { doorsOpen: new Date(form.doorsOpen).toISOString() }),
         ...(form.coverImage && { coverImage: form.coverImage }),
+        ...(form.bannerImage && { bannerImage: form.bannerImage }),
         category: form.category,
         ageRating: parseInt(form.ageRating) || 0,
         ...(form.tags && { tags: form.tags.split(',').map(t => t.trim()).filter(Boolean) }),
@@ -365,6 +367,8 @@ export default function NewEventPage() {
             </div>
           )}
         </Card>
+
+        <EventBannerField value={form.bannerImage} onChange={value => setField('bannerImage', value)} />
 
         {/* ── Data e horário ────────────────────────────────────────────── */}
         <Card icon={<Calendar size={15} />} title="Data e Horário">

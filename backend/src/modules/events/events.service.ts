@@ -2,8 +2,10 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { EventStatus } from '@prisma/client';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
@@ -91,6 +93,118 @@ export class EventsService {
       data,
       meta: { total, page, lastPage: Math.ceil(total / take) },
     };
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async clearExpiredFeaturedEvents(now = new Date()) {
+    return this.prisma.event.updateMany({
+      where: { featured: true, endDate: { lte: now } },
+      data: { featured: false },
+    });
+  }
+
+  async findFeatured() {
+    const now = new Date();
+    await this.clearExpiredFeaturedEvents(now);
+
+    const select = {
+      id: true,
+      title: true,
+      slug: true,
+      description: true,
+      coverImage: true,
+      bannerImage: true,
+      venue: true,
+      city: true,
+      state: true,
+      startDate: true,
+      endDate: true,
+      featured: true,
+      batches: {
+        where: { status: 'ACTIVE' as const },
+        orderBy: { price: 'asc' as const },
+        take: 1,
+        select: { price: true, name: true },
+      },
+    };
+
+    const featured = await this.prisma.event.findFirst({
+      where: {
+        status: EventStatus.PUBLISHED,
+        featured: true,
+        endDate: { gt: now },
+      },
+      orderBy: { startDate: 'asc' },
+      select,
+    });
+
+    if (featured) return featured;
+
+    return this.prisma.event.findFirst({
+      where: {
+        status: EventStatus.PUBLISHED,
+        startDate: { gte: now },
+      },
+      orderBy: { startDate: 'asc' },
+      select,
+    });
+  }
+
+  async findAdminEvents(query: { search?: string; page?: number; limit?: number }) {
+    const { search, page = 1, limit = 50 } = query;
+    const take = Math.min(limit, 100);
+    const skip = (page - 1) * take;
+    await this.clearExpiredFeaturedEvents();
+
+    const where = search
+      ? {
+          OR: [
+            { title: { contains: search, mode: 'insensitive' as const } },
+            { venue: { contains: search, mode: 'insensitive' as const } },
+            { city: { contains: search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {};
+
+    const [data, total] = await Promise.all([
+      this.prisma.event.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { startDate: 'asc' },
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          coverImage: true,
+          bannerImage: true,
+          venue: true,
+          city: true,
+          state: true,
+          startDate: true,
+          endDate: true,
+          status: true,
+          featured: true,
+          producer: { select: { id: true, name: true } },
+        },
+      }),
+      this.prisma.event.count({ where }),
+    ]);
+
+    return { data, meta: { total, page, lastPage: Math.ceil(total / take) } };
+  }
+
+  async setFeatured(eventId: string, featured: boolean) {
+    const event = await this.prisma.event.findUnique({ where: { id: eventId } });
+    if (!event) throw new NotFoundException('Evento não encontrado');
+    if (featured && event.endDate <= new Date()) {
+      throw new BadRequestException('Eventos encerrados não podem ser destacados');
+    }
+
+    return this.prisma.event.update({
+      where: { id: eventId },
+      data: { featured },
+    });
   }
 
   async findBySlug(slug: string) {
@@ -194,7 +308,7 @@ export class EventsService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      await tx.event.update({ where: { id: eventId }, data: { status: EventStatus.CANCELLED } });
+      await tx.event.update({ where: { id: eventId }, data: { status: EventStatus.CANCELLED, featured: false } });
       await tx.batch.updateMany({ where: { eventId }, data: { status: 'CANCELLED' } });
       // Cancel active tickets — webhook will trigger refunds
       await tx.ticket.updateMany({
