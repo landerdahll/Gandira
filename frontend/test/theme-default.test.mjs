@@ -8,6 +8,7 @@ const layout = await readFile(new URL('src/app/layout.tsx', root), 'utf8');
 const provider = await readFile(new URL('src/components/providers/theme-provider.tsx', root), 'utf8');
 const navbar = await readFile(new URL('src/components/layout/navbar.tsx', root), 'utf8');
 const styles = await readFile(new URL('src/app/globals.css', root), 'utf8');
+const favicon = await readFile(new URL('public/favicon-pago-black.svg', root), 'utf8');
 const initScript = layout.match(/const themeInitScript = `([\s\S]*?)`;/)?.[1];
 
 function runThemeInit(savedTheme) {
@@ -41,4 +42,13 @@ test('theme is selected pre-paint without system preference or logo flash', () =
   assert.match(styles, /data-theme='dark'.*theme-toggle-icon--dark/);
   assert.match(styles, /data-theme='light'.*theme-toggle-icon--light/);
   assert.match(styles, /data-theme='light'.*brand-mark--logo\.brand-mark--on-brand/);
+});
+
+test('metadata uses the cache-busted black brand favicon', () => {
+  assert.match(layout, /url: '\/favicon-pago-black\.svg'/);
+  assert.match(layout, /shortcut: '\/favicon-pago-black\.svg'/);
+  assert.doesNotMatch(layout, /icon\.svg|icon-blue\.svg/);
+  assert.match(favicon, /viewBox="0 0 113\.09 89\.75"/);
+  assert.match(favicon, /fill="#000000"/);
+  assert.doesNotMatch(favicon, /#72CDFE/i);
 });
