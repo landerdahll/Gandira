@@ -8,11 +8,13 @@ export class MailService {
   private resend: Resend | null = null;
   private fromAddress: string;
   private devMode: boolean;
+  private logoUrl: string;
 
   constructor(private config: ConfigService) {
     const apiKey = config.get<string>('RESEND_API_KEY');
     this.fromAddress = config.get<string>('RESEND_FROM', 'onboarding@resend.dev');
     this.devMode = !apiKey;
+    this.logoUrl = `${config.get<string>('FRONTEND_URL', 'http://localhost:3000').replace(/\/$/, '')}/logo-full-white.svg`;
 
     if (apiKey) {
       this.resend = new Resend(apiKey);
@@ -21,7 +23,7 @@ export class MailService {
 
   async sendTicketTransferEmail(to: string, subject: string, message: string, actionUrl?: string) {
     const button = actionUrl ? `<p style="margin:28px 0"><a href="${actionUrl}" style="background:#67bed9;color:#fff;padding:14px 24px;border-radius:12px;text-decoration:none;font-weight:700">Abrir no Pago</a></p>` : '';
-    const html = `<!doctype html><html><body style="margin:0;background:#0a0a0a;font-family:Arial,sans-serif;color:#fff"><div style="max-width:480px;margin:40px auto;background:#111;border:1px solid #1e1e1e;border-radius:16px;padding:32px"><img src="https://gandira.vercel.app/gandira-logo.png" alt="Pago" style="height:36px"><h1 style="font-size:20px;margin:28px 0 12px">${subject}</h1><p style="color:#999;line-height:1.6">${message}</p>${button}<p style="color:#444;font-size:12px;margin-top:32px">© ${new Date().getFullYear()} Pago</p></div></body></html>`;
+    const html = `<!doctype html><html><body style="margin:0;background:#0a0a0a;font-family:Arial,sans-serif;color:#fff"><div style="max-width:480px;margin:40px auto;background:#111;border:1px solid #1e1e1e;border-radius:16px;padding:32px"><img src="${this.logoUrl}" alt="Pago" style="height:36px"><h1 style="font-size:20px;margin:28px 0 12px">${subject}</h1><p style="color:#999;line-height:1.6">${message}</p>${button}<p style="color:#444;font-size:12px;margin-top:32px">© ${new Date().getFullYear()} Pago</p></div></body></html>`;
     if (this.devMode) { this.logger.warn(`E-mail de transferência (dev) — ${to}: ${subject}${actionUrl ? ` | ${actionUrl}` : ''}`); return; }
     const { error } = await this.resend!.emails.send({ from: `Pago <${this.fromAddress}>`, to, subject, html });
     if (error) throw new Error(error.message);
@@ -38,7 +40,7 @@ export class MailService {
       <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1e1e1e;border-radius:16px;overflow:hidden;max-width:480px;width:100%;">
         <tr>
           <td style="padding:28px 32px;border-bottom:1px solid #1a1a1a;">
-            <img src="https://gandira.vercel.app/gandira-logo.png" alt="Pago" style="height:36px;display:block;" />
+            <img src="${this.logoUrl}" alt="Pago" style="height:36px;display:block;" />
           </td>
         </tr>
         <tr>
@@ -132,7 +134,7 @@ export class MailService {
       <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1e1e1e;border-radius:16px;overflow:hidden;max-width:480px;width:100%;">
         <tr>
           <td style="padding:28px 32px;border-bottom:1px solid #1a1a1a;">
-            <img src="https://gandira.vercel.app/gandira-logo.png" alt="Pago" style="height:36px;display:block;" />
+            <img src="${this.logoUrl}" alt="Pago" style="height:36px;display:block;" />
           </td>
         </tr>
         <tr>
@@ -218,7 +220,7 @@ export class MailService {
       <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1e1e1e;border-radius:16px;overflow:hidden;max-width:480px;width:100%;">
         <tr>
           <td style="padding:28px 32px;border-bottom:1px solid #1a1a1a;">
-            <img src="https://gandira.vercel.app/gandira-logo.png" alt="Pago" style="height:36px;display:block;" />
+            <img src="${this.logoUrl}" alt="Pago" style="height:36px;display:block;" />
           </td>
         </tr>
         <tr>

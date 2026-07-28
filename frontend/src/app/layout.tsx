@@ -21,8 +21,8 @@ export const metadata: Metadata = {
   title: { default: 'Pago', template: '%s | Pago' },
   description: 'Ingressos para os melhores eventos',
   icons: {
-    icon: [{ url: '/favicon-pago-black.svg', type: 'image/svg+xml' }],
-    shortcut: '/favicon-pago-black.svg',
+    icon: [{ url: '/favicon-pago-black.svg?v=20260728', type: 'image/svg+xml' }],
+    shortcut: '/favicon-pago-black.svg?v=20260728',
   },
   openGraph: { type: 'website', locale: 'pt_BR', siteName: 'Pago' },
 };

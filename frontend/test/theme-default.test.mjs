@@ -45,10 +45,10 @@ test('theme is selected pre-paint without system preference or logo flash', () =
 });
 
 test('metadata uses the cache-busted black brand favicon', () => {
-  assert.match(layout, /url: '\/favicon-pago-black\.svg'/);
-  assert.match(layout, /shortcut: '\/favicon-pago-black\.svg'/);
+  assert.match(layout, /url: '\/favicon-pago-black\.svg\?v=20260728'/);
+  assert.match(layout, /shortcut: '\/favicon-pago-black\.svg\?v=20260728'/);
   assert.doesNotMatch(layout, /icon\.svg|icon-blue\.svg/);
-  assert.match(favicon, /viewBox="0 0 113\.09 89\.75"/);
-  assert.match(favicon, /fill="#000000"/);
+  assert.match(favicon, /viewBox="0 0 4047\.16 3172\.4"/);
+  assert.match(favicon, /fill(?:=|:)"?#000000/);
   assert.doesNotMatch(favicon, /#72CDFE/i);
 });
