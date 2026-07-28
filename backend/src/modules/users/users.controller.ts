@@ -7,9 +7,15 @@ import { UsersService, UpdateProfileDto, ChangePasswordDto } from './users.servi
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CloudinaryService } from '../../cloudinary/cloudinary.service';
+import { Equals } from 'class-validator';
 
 const AVATAR_MAX_BYTES = 3 * 1024 * 1024;
 const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
+
+class PurgeTestMembersDto {
+  @Equals('REMOVE_TEST_MEMBERS')
+  confirmation: string;
+}
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -92,6 +98,13 @@ export class UsersController {
     @Query('role') role?: Role,
   ) {
     return this.users.listAll(page, limit, search, role);
+  }
+
+  @Post('admin/purge-test-members')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Remover permanentemente a allowlist de membros de teste' })
+  purgeTestMembers(@Body() dto: PurgeTestMembersDto) {
+    return this.users.purgeTestMembers();
   }
 
   @Patch(':id/reset-password')
