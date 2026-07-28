@@ -1,5 +1,5 @@
-import { EventCard } from '@/components/events/event-card';
 import { FeaturedEventCard } from '@/components/events/featured-event-card';
+import { EventCarousel } from '@/components/events/event-carousel';
 import { eventsApi } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
@@ -85,40 +85,18 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
 
           {/* Próximos Eventos */}
           {rest.length > 0 && (
-            <section style={{ marginBottom: '56px' }}>
-              <SectionTitle>{featured ? 'Próximos Eventos' : 'Eventos'}</SectionTitle>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                gap: '20px',
-              }}>
-                {rest.map((event: any) => (
-                  <EventCard key={event.id} event={event} />
-                ))}
-              </div>
+            <div style={{ marginBottom: '56px' }} className="home-event-section">
+              <EventCarousel title="Próximos eventos" events={rest} />
 
               {upcoming.meta.lastPage > 1 && (
                 <Pagination currentPage={upcoming.meta.page} totalPages={upcoming.meta.lastPage} />
               )}
-            </section>
+            </div>
           )}
 
           {/* Eventos Passados */}
           {visiblePastEvents.length > 0 && (
-            <section>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-                <SectionTitle>Eventos Passados</SectionTitle>
-              </div>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                gap: '20px',
-              }}>
-                {visiblePastEvents.map((event: any) => (
-                  <EventCard key={event.id} event={event} past />
-                ))}
-              </div>
-            </section>
+            <EventCarousel title="Eventos passados" events={visiblePastEvents} kind="past" />
           )}
         </>
       )}
