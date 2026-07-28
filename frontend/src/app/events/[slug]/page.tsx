@@ -12,6 +12,7 @@ function fmtTime(d: Date) {
 }
 import { eventsApi } from '@/lib/api';
 import { BatchSelector } from '@/components/checkout/batch-selector';
+import { EventDescription } from '@/components/events/event-description';
 
 async function getEvent(slug: string) {
   try {
@@ -114,14 +115,7 @@ export default async function EventPage({ params }: { params: { slug: string } }
           <Divider />
 
           {/* Description */}
-          <div style={{ padding: '24px 0' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#fff', marginBottom: '12px' }}>
-              Sobre o evento
-            </h2>
-            <p style={{ color: '#888', lineHeight: 1.75, fontSize: '14px', whiteSpace: 'pre-wrap' }}>
-              {event.description}
-            </p>
-          </div>
+          <EventDescription description={event.description} />
 
           {/* Tags */}
           {event.tags?.length > 0 && (

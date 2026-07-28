@@ -198,6 +198,9 @@ body {
 
 @keyframes event-skeleton { to { opacity: 0.48; } }
 
+.event-description__mobile-text,
+.event-description__toggle { display: none; }
+
 @media (max-width: 768px) {
   .home-event-section { margin-bottom: 30px !important; }
   .event-section-header { margin-bottom: 12px; }
@@ -230,7 +233,7 @@ body {
   .compact-event-card__date,
   .compact-event-card__venue,
   .compact-event-card__price { font-size: 12px; }
-  .featured-card-img { aspect-ratio: 35 / 12 !important; }
+  .featured-card-img { aspect-ratio: 175 / 66 !important; }
   .featured-card-description {
     display: -webkit-box;
     margin: 0;
@@ -239,6 +242,27 @@ body {
     -webkit-line-clamp: 2;
   }
   .featured-card-footer { margin-top: 14px !important; }
+  .event-description__desktop-text { display: none; }
+  .event-description__mobile-text { display: inline; }
+  .event-description__toggle {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    margin: 4px 0 -8px;
+    padding: 8px 2px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--theme-primary);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .event-description__toggle:focus-visible {
+    outline: 2px solid var(--theme-primary);
+    outline-offset: 2px;
+  }
 }
 
 @media (min-width: 600px) and (max-width: 768px) {
