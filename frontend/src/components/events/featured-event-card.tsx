@@ -110,7 +110,7 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
           </div>
 
           {shortDesc && (
-            <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--theme-text-secondary)' }}>
+            <p className="featured-card-description" style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--theme-text-secondary)' }}>
               {shortDesc}
             </p>
           )}
