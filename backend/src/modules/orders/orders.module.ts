@@ -6,9 +6,10 @@ import { PaymentsModule } from '../payments/payments.module';
 import { CouponsModule } from '../coupons/coupons.module';
 import { OrderFulfillmentModule } from '../order-fulfillment/order-fulfillment.module';
 import { ClubBenefitsModule } from '../club-benefits/club-benefits.module';
+import { RefundsModule } from '../refunds/refunds.module';
 
 @Module({
-  imports: [BatchesModule, PaymentsModule, CouponsModule, OrderFulfillmentModule, ClubBenefitsModule],
+  imports: [BatchesModule, PaymentsModule, CouponsModule, OrderFulfillmentModule, ClubBenefitsModule, RefundsModule],
   controllers: [OrdersController],
   providers: [OrdersService],
   exports: [OrdersService],

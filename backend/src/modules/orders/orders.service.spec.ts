@@ -28,7 +28,7 @@ describe('OrdersService expiration', () => {
       createReservationInTransaction: jest.fn().mockResolvedValue(null),
       toResponse: jest.fn((value) => value),
     };
-    const service = new OrdersService(prisma as never, batches as never, payments as never, coupons as never, expiration as never, clubBenefits as never);
+    const service = new OrdersService(prisma as never, batches as never, payments as never, coupons as never, expiration as never, clubBenefits as never, { eligibility: jest.fn() } as never);
     return { service, prisma, batches, payments, expiration, clubBenefits };
   }
 

@@ -11,7 +11,7 @@ describe('AbacatepayService fulfillment integration', () => {
       ...orderOverrides,
     };
     const config = { get: jest.fn((key: string, fallback?: string) => fallback ?? `${key}_value`) };
-    const prisma = { order: { findUnique: jest.fn().mockResolvedValue(order) } };
+    const prisma = { order: { findUnique: jest.fn().mockResolvedValue(order), update: jest.fn().mockResolvedValue(order) } };
     const fulfillment = { confirmPaidOrder: jest.fn().mockResolvedValue({ status: 'FULFILLED', orderStatus: 'PAID' }) };
     return { service: new AbacatepayService(config as never, prisma as never, fulfillment as never), fulfillment };
   }

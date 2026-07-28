@@ -281,4 +281,13 @@ export class MailService {
       this.logger.log(`E-mail de redefinição enviado para ${to}`);
     }
   }
+
+  async sendRefundConfirmation(to: string, name: string, data: { orderId: string; eventTitle: string; eventDate: Date; total: number; refundId: string }) {
+    const date = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'America/Sao_Paulo' }).format(data.eventDate);
+    const total = data.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const html = `<!doctype html><html><body style="background:#0a0a0a;color:#fff;font-family:Arial;padding:32px"><div style="max-width:520px;margin:auto;background:#111;border:1px solid #222;border-radius:16px;padding:32px"><h1>Cancelamento confirmado</h1><p>Olá, ${name}. O pedido <strong>${data.orderId}</strong> para <strong>${data.eventTitle}</strong> foi cancelado.</p><p>O reembolso de <strong>${total}</strong> foi solicitado automaticamente para o mesmo meio de pagamento.</p><p>Evento: ${date}<br>Referência do reembolso: ${data.refundId}</p><p style="color:#777">O prazo de crédito depende da instituição financeira, operadora do cartão ou provedor de pagamento.</p></div></body></html>`;
+    if (this.devMode) { this.logger.warn(`Confirmação de reembolso (dev) — ${to} | Pedido: ${data.orderId}`); return; }
+    const { error } = await this.resend!.emails.send({ from: `Pago <${this.fromAddress}>`, to, subject: `Cancelamento confirmado — ${data.eventTitle}`, html });
+    if (error) this.logger.error(`Falha ao enviar confirmação de reembolso: ${error.message}`);
+  }
 }

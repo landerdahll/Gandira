@@ -19,6 +19,7 @@ import { MailModule } from './modules/mail/mail.module';
 import { CouponsModule } from './modules/coupons/coupons.module';
 import { AbacatepayModule } from './modules/abacatepay/abacatepay.module';
 import { ClubMembersModule } from './modules/club-members/club-members.module';
+import { RefundsModule } from './modules/refunds/refunds.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { ClubMembersModule } from './modules/club-members/club-members.module';
     CouponsModule,
     AbacatepayModule,
     ClubMembersModule,
+    RefundsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

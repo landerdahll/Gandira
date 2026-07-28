@@ -7,5 +7,6 @@ import { OrderFulfillmentModule } from '../order-fulfillment/order-fulfillment.m
   imports: [OrderFulfillmentModule],
   controllers: [AbacatepayController],
   providers: [AbacatepayService],
+  exports: [AbacatepayService],
 })
 export class AbacatepayModule {}

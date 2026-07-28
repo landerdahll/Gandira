@@ -17,6 +17,7 @@ import { OrderExpirationService } from '../order-fulfillment/order-expiration.se
 import { Prisma } from '@prisma/client';
 import { withSerializableRetry } from '../../common/utils/serializable-retry.util';
 import { ClubBenefitsService, DiscountType } from '../club-benefits/club-benefits.service';
+import { RefundsService } from '../refunds/refunds.service';
 
 const ORDER_EXPIRY_MINUTES = 60;
 const PLATFORM_FEE_PERCENT = Number(process.env.PLATFORM_FEE_PERCENT ?? 10);
@@ -32,6 +33,7 @@ export class OrdersService {
     private coupons: CouponsService,
     private orderExpiration: OrderExpirationService,
     private clubBenefits: ClubBenefitsService,
+    private refunds: RefundsService,
   ) {}
 
   /**
@@ -232,7 +234,7 @@ export class OrdersService {
     if (!order) throw new NotFoundException('Pedido não encontrado');
     if (order.userId !== userId) throw new ForbiddenException('Acesso negado');
 
-    return this.withBenefitResponse(order);
+    return { ...this.withBenefitResponse(order), cancellation: this.refunds.eligibility(order) };
   }
 
   /**
@@ -241,47 +243,7 @@ export class OrdersService {
    * - Not allowed within 48h before the event
    */
   async cancel(orderId: string, userId: string, reason?: string) {
-    const order = await this.prisma.order.findUnique({
-      where: { id: orderId },
-      include: { event: true, items: true },
-    });
-
-    if (!order) throw new NotFoundException('Pedido não encontrado');
-    if (order.userId !== userId) throw new ForbiddenException('Acesso negado');
-    if (order.status !== 'PAID') {
-      throw new BadRequestException('Apenas pedidos pagos podem ser cancelados');
-    }
-
-    const daysSincePurchase = (Date.now() - order.createdAt.getTime()) / (1000 * 60 * 60 * 24);
-    if (daysSincePurchase > 7) {
-      throw new BadRequestException('Prazo de cancelamento (7 dias) expirado');
-    }
-
-    const hoursUntilEvent = (order.event.startDate.getTime() - Date.now()) / (1000 * 60 * 60);
-    if (hoursUntilEvent <= 48) {
-      throw new BadRequestException('Cancelamento não permitido nas 48h antes do evento');
-    }
-
-    await this.prisma.$transaction(async (tx) => {
-      await tx.order.update({
-        where: { id: orderId },
-        data: { status: 'CANCELLED', cancelledAt: new Date(), cancelReason: reason },
-      });
-      await tx.ticket.updateMany({
-        where: { orderId },
-        data: { status: 'CANCELLED', cancelledAt: new Date() },
-      });
-      for (const item of order.items) {
-        await this.batches.releaseStock(item.batchId, item.quantity);
-      }
-    });
-
-    // Trigger Stripe refund
-    if (order.stripePaymentIntentId) {
-      await this.payments.refund(orderId, order.stripePaymentIntentId);
-    }
-
-    this.logger.log(`Order ${orderId} cancelled by user ${userId}`);
+    return this.refunds.cancel(orderId, userId, true);
   }
 
   // ── Cron: expire unpaid orders every 5 min ──────────────────────────────

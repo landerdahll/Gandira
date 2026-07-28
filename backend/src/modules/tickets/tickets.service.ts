@@ -97,7 +97,7 @@ export class TicketsService {
     const ticket: any = await (this.prisma as any).ticket.findUnique({
       where: { id: ticketId },
       include: {
-        order: { select: { userId: true } },
+        order: { include: { event: { select: { startDate: true } }, tickets: { select: { status: true, checkIn: true } } } },
         owner: { select: { id: true, name: true } },
         event: { select: { title: true, startDate: true, venue: true, address: true } },
         batch: { select: { name: true, ticketType: true, price: true } },
@@ -120,7 +120,17 @@ export class TicketsService {
       clubBenefitApplied: Boolean(ticket.clubBenefitUsage),
       transferAllowed: !ticket.clubBenefitUsage,
       qrCodeUrl: ticket.ownerUserId === userId && ticket.status === 'ACTIVE' ? ticket.qrCodeUrl : null,
+      cancellation: this.ticketCancellation(ticket.order),
     };
+  }
+
+  private ticketCancellation(order: any) {
+    const now = Date.now();
+    if (order.status !== 'PAID') return { eligible: false, code: order.status, message: order.status === 'REFUNDED' ? 'Este pedido já foi reembolsado.' : 'Este pedido não permite cancelamento.' };
+    if (order.tickets.some((t: any) => t.status === 'USED' || t.checkIn)) return { eligible: false, code: 'TICKET_USED', message: 'Pedidos com ingresso já utilizado não podem ser cancelados.' };
+    if (now - new Date(order.createdAt).getTime() > 7 * 86400000) return { eligible: false, code: 'PURCHASE_WINDOW_EXPIRED', message: 'O período para cancelamento deste ingresso expirou.' };
+    if (new Date(order.event.startDate).getTime() - now < 48 * 3600000) return { eligible: false, code: 'EVENT_TOO_CLOSE', message: 'Este evento inicia em menos de 48 horas e não permite mais cancelamento automático.' };
+    return { eligible: true, code: 'ELIGIBLE', message: 'Pedido elegível para cancelamento.' };
   }
 
   /**

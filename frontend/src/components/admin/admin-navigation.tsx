@@ -8,6 +8,7 @@ const items = [
   { href: '/admin/users', label: 'Usuários' },
   { href: '/admin/clube-outrahora', label: 'Clube Outrahora' },
   { href: '/admin/transfers', label: 'Transferências' },
+  { href: '/admin/refunds', label: 'Cancelamentos' },
   { href: '/admin/events', label: 'Eventos' },
 ];
 

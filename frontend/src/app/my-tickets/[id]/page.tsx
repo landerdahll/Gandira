@@ -6,9 +6,10 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar, MapPin, ArrowLeft, Share2, CheckCircle2, XCircle, Clock, Send, Loader2, Award } from 'lucide-react';
 import Link from 'next/link';
-import { ticketsApi, ticketTransfersApi } from '@/lib/api';
+import { refundsApi, ticketsApi, ticketTransfersApi } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { canTransferTicket } from '@/lib/club-checkout';
+import { CancelTicketModal } from '@/components/refunds/cancel-ticket-modal';
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string; border: string; icon: React.ReactNode }> = {
   ACTIVE:    { label: 'Ativo',      bg: '#0a2018', color: '#4ade80', border: '#1a3828', icon: <CheckCircle2 size={13} /> },
@@ -24,6 +25,8 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
   const [showTransfer, setShowTransfer] = useState(false);
   const [recipientEmail, setRecipientEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showCancellation, setShowCancellation] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const { data: ticket, isLoading } = useQuery({
     queryKey: ['ticket', params.id],
     queryFn: () => ticketsApi.get(params.id).then((r) => r.data),
@@ -64,6 +67,17 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
     if (!transfer?.id || !confirm('Cancelar esta transferência pendente e gerar um novo QR Code?')) return;
     try { await ticketTransfersApi.cancel(transfer.id); toast.success('Transferência cancelada'); await queryClient.invalidateQueries({ queryKey: ['ticket', params.id] }); }
     catch (e: any) { toast.error(e.response?.data?.message ?? 'Não foi possível cancelar'); }
+  }
+
+  async function handleCancellation() {
+    setCancelling(true);
+    try {
+      await refundsApi.cancel(ticket.orderId, true);
+      setShowCancellation(false);
+      toast.success('Seu cancelamento foi realizado com sucesso. O reembolso foi solicitado automaticamente.');
+      await Promise.all([queryClient.invalidateQueries({ queryKey: ['ticket', params.id] }), queryClient.invalidateQueries({ queryKey: ['my-tickets'] })]);
+    } catch (e: any) { toast.error(e.response?.data?.message ?? 'Não foi possível cancelar o ingresso.'); }
+    finally { setCancelling(false); }
   }
 
   return (
@@ -277,6 +291,8 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
           <input type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} placeholder="E-mail do destinatário" disabled={submitting} style={{ width: '100%', boxSizing: 'border-box', padding: 13, borderRadius: 10, border: '1px solid #333', background: '#171717', color: '#fff', margin: '8px 0 12px' }} />
           <div style={{ display: 'flex', gap: 8 }}><button onClick={() => setShowTransfer(false)} disabled={submitting} style={{ flex: 1, padding: 12, borderRadius: 10, border: '1px solid #333', background: 'transparent', color: '#888' }}>Voltar</button><button onClick={handleTransfer} disabled={submitting} style={{ flex: 1, padding: 12, borderRadius: 10, border: 0, background: '#67bed9', color: '#fff', fontWeight: 700 }}>{submitting ? <Loader2 size={16} className="animate-spin" /> : 'Revisar e confirmar'}</button></div>
         </div>}
+        {ticket.cancellation?.eligible ? <button onClick={() => setShowCancellation(true)} style={{ width:'100%', marginTop:16, padding:14, borderRadius:12, border:'1px solid #7f1d1d', background:'#210b0b', color:'#f87171', fontWeight:700, cursor:'pointer' }}>Cancelar ingresso</button> : ticket.cancellation?.message ? <p style={{ marginTop:16, padding:14, borderRadius:12, background:'#151515', border:'1px solid #252525', color:'#777', fontSize:13 }}>{ticket.cancellation.message}</p> : null}
+        {showCancellation && <CancelTicketModal busy={cancelling} onBack={() => !cancelling && setShowCancellation(false)} onConfirm={handleCancellation}/>}
       </div>
     </div>
   );

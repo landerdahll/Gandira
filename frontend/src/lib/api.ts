@@ -140,6 +140,11 @@ export const ordersApi = {
   cancel: (id: string, reason?: string) => api.delete(`/orders/${id}`, { data: { reason } }),
 };
 
+export const refundsApi = {
+  cancel: (orderId: string, acceptedPolicy: boolean) => api.post(`/refunds/orders/${orderId}`, { acceptedPolicy }),
+  adminList: (params?: any) => api.get('/refunds/admin', { params }),
+};
+
 export const paymentsApi = {
   confirmOrder: (orderId: string) => api.post('/payments/confirm-order', { orderId }),
 };

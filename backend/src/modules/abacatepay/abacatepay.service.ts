@@ -65,6 +65,11 @@ export class AbacatepayService {
     this.logger.log(`AbacatePay create response: ${JSON.stringify(body)}`);
     const data = body.data;
 
+    await (this.prisma as any).order.update({
+      where: { id: orderId },
+      data: { paymentProvider: 'ABACATEPAY', externalPaymentId: data.id },
+    });
+
     return {
       id: data.id,
       brCode: data.brCode,
