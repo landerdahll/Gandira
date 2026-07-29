@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { Trash2, Plus, ArrowLeft, Calendar, MapPin, ImageIcon, Ticket, Tag, AlertTriangle, Rocket, Save, Upload, Link2, X } from 'lucide-react';
+import { Trash2, Plus, ArrowLeft, Calendar, MapPin, ImageIcon, Ticket, Tag, AlertTriangle, Rocket, Save, Upload, Link2, X, Headphones } from 'lucide-react';
 import { eventsApi, batchesApi, couponsApi } from '@/lib/api';
 import { EventBannerField } from '@/components/events/event-banner-field';
 
@@ -69,7 +69,7 @@ export default function NewEventPage() {
   const [form, setForm] = useState({
     title: '', description: '', venue: '', address: '', city: '', state: '',
     startDate: '', endDate: '', doorsOpen: '', coverImage: '', bannerImage: '',
-    category: 'Música', ageRating: '18', tags: '',
+    category: 'Música', ageRating: '18', tags: '', spotifyUrl: '',
   });
 
   const [batches, setBatches] = useState<Batch[]>([emptyBatch()]);
@@ -169,6 +169,7 @@ export default function NewEventPage() {
         ...(form.doorsOpen && { doorsOpen: new Date(form.doorsOpen).toISOString() }),
         ...(form.coverImage && { coverImage: form.coverImage }),
         ...(form.bannerImage && { bannerImage: form.bannerImage }),
+        ...(form.spotifyUrl && { spotifyUrl: form.spotifyUrl.trim() }),
         category: form.category,
         ageRating: parseInt(form.ageRating) || 0,
         ...(form.tags && { tags: form.tags.split(',').map(t => t.trim()).filter(Boolean) }),
@@ -283,6 +284,19 @@ export default function NewEventPage() {
                 onFocus={focus} onBlur={blur} />
             </Field>
           </div>
+        </Card>
+
+        {/* ── Spotify ───────────────────────────────────────────────────── */}
+        <Card icon={<Headphones size={15} />} title="Spotify (opcional)">
+          <Field label="Link do Spotify">
+            <input style={inp} type="url" value={form.spotifyUrl}
+              onChange={e => setField('spotifyUrl', e.target.value)}
+              placeholder="https://open.spotify.com/playlist/..."
+              onFocus={focus} onBlur={blur} />
+            <span style={{ fontSize: '12px', color: '#555', lineHeight: 1.5 }}>
+              Cole o link de uma playlist, álbum, artista ou música. O player aparecerá na página pública do evento.
+            </span>
+          </Field>
         </Card>
 
         {/* ── Capa ──────────────────────────────────────────────────────── */}

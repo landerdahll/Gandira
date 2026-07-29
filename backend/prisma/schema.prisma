@@ -144,6 +144,7 @@ model Event {
   slug        String  @unique
   coverImage  String?
   bannerImage String?
+  spotifyUrl  String?
 
   venue     String
   address   String

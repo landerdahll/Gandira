@@ -8,6 +8,7 @@ import {
   IsArray,
   IsUrl,
   IsBoolean,
+  Matches,
   ValidateIf,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -89,6 +90,18 @@ export class CreateEventDto {
   @ValidateIf((_object, value) => value !== '')
   @IsUrl()
   bannerImage?: string;
+
+  @ApiPropertyOptional({
+    description: 'Link de playlist, álbum, artista ou música no Spotify',
+    example: 'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M',
+  })
+  @IsOptional()
+  @ValidateIf((_object, value) => value !== '')
+  @IsUrl({ protocols: ['https'], require_protocol: true })
+  @Matches(/^https:\/\/open\.spotify\.com\/(?:intl-[a-z]{2}\/)?(?:playlist|album|artist|track)\/[A-Za-z0-9]+(?:[/?#].*)?$/i, {
+    message: 'spotifyUrl deve ser um link de playlist, álbum, artista ou música do Spotify',
+  })
+  spotifyUrl?: string;
 
   @ApiPropertyOptional({ default: true })
   @IsOptional()

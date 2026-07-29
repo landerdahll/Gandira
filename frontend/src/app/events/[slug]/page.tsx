@@ -13,6 +13,7 @@ function fmtTime(d: Date) {
 import { eventsApi } from '@/lib/api';
 import { BatchSelector } from '@/components/checkout/batch-selector';
 import { EventDescription } from '@/components/events/event-description';
+import { SpotifyEmbed } from '@/components/events/spotify-embed';
 
 async function getEvent(slug: string) {
   try {
@@ -116,6 +117,13 @@ export default async function EventPage({ params }: { params: { slug: string } }
 
           {/* Description */}
           <EventDescription description={event.description} />
+
+          {event.spotifyUrl && (
+            <>
+              <Divider />
+              <SpotifyEmbed url={event.spotifyUrl} />
+            </>
+          )}
 
           {/* Tags */}
           {event.tags?.length > 0 && (
