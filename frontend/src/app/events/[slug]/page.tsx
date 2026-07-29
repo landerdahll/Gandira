@@ -14,6 +14,7 @@ import { eventsApi } from '@/lib/api';
 import { BatchSelector } from '@/components/checkout/batch-selector';
 import { EventDescription } from '@/components/events/event-description';
 import { SpotifyEmbed } from '@/components/events/spotify-embed';
+import { getInstagramProfileUrl, InstagramLink } from '@/components/events/instagram-link';
 
 async function getEvent(slug: string) {
   try {
@@ -41,6 +42,7 @@ export default async function EventPage({ params }: { params: { slug: string } }
   const startDate = new Date(event.startDate);
   const endDate = new Date(event.endDate);
   const doorsOpen = event.doorsOpen ? new Date(event.doorsOpen) : null;
+  const instagramProfileUrl = event.instagramUrl ? getInstagramProfileUrl(event.instagramUrl) : null;
   const isPast = endDate < new Date();
   const activeBatches = event.batches.filter((b: any) => b.status === 'ACTIVE');
   const lowestPrice = !isPast && activeBatches.length
@@ -122,6 +124,13 @@ export default async function EventPage({ params }: { params: { slug: string } }
             <>
               <Divider />
               <SpotifyEmbed url={event.spotifyUrl} />
+            </>
+          )}
+
+          {instagramProfileUrl && (
+            <>
+              <Divider />
+              <InstagramLink url={instagramProfileUrl} />
             </>
           )}
 

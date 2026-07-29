@@ -145,6 +145,7 @@ model Event {
   coverImage  String?
   bannerImage String?
   spotifyUrl  String?
+  instagramUrl String?
 
   venue     String
   address   String

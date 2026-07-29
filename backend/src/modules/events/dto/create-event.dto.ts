@@ -103,6 +103,18 @@ export class CreateEventDto {
   })
   spotifyUrl?: string;
 
+  @ApiPropertyOptional({
+    description: 'Link do perfil oficial do artista ou da banda no Instagram',
+    example: 'https://www.instagram.com/artista',
+  })
+  @IsOptional()
+  @ValidateIf((_object, value) => value !== '')
+  @IsUrl({ protocols: ['https'], require_protocol: true })
+  @Matches(/^https:\/\/(?:www\.)?instagram\.com\/[A-Za-z0-9._]{1,30}\/?(?:[?#].*)?$/i, {
+    message: 'instagramUrl deve ser um link HTTPS de perfil do Instagram',
+  })
+  instagramUrl?: string;
+
   @ApiPropertyOptional({ default: true })
   @IsOptional()
   @IsBoolean()

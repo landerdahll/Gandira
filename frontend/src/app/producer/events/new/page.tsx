@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { Trash2, Plus, ArrowLeft, Calendar, MapPin, ImageIcon, Ticket, Tag, AlertTriangle, Rocket, Save, Upload, Link2, X, Headphones } from 'lucide-react';
+import { Trash2, Plus, ArrowLeft, Calendar, MapPin, ImageIcon, Ticket, Tag, AlertTriangle, Rocket, Save, Upload, Link2, X, Headphones, Instagram } from 'lucide-react';
 import { eventsApi, batchesApi, couponsApi } from '@/lib/api';
 import { EventBannerField } from '@/components/events/event-banner-field';
 
@@ -69,7 +69,7 @@ export default function NewEventPage() {
   const [form, setForm] = useState({
     title: '', description: '', venue: '', address: '', city: '', state: '',
     startDate: '', endDate: '', doorsOpen: '', coverImage: '', bannerImage: '',
-    category: 'Música', ageRating: '18', tags: '', spotifyUrl: '',
+    category: 'Música', ageRating: '18', tags: '', spotifyUrl: '', instagramUrl: '',
   });
 
   const [batches, setBatches] = useState<Batch[]>([emptyBatch()]);
@@ -170,6 +170,7 @@ export default function NewEventPage() {
         ...(form.coverImage && { coverImage: form.coverImage }),
         ...(form.bannerImage && { bannerImage: form.bannerImage }),
         ...(form.spotifyUrl && { spotifyUrl: form.spotifyUrl.trim() }),
+        ...(form.instagramUrl && { instagramUrl: form.instagramUrl.trim() }),
         category: form.category,
         ageRating: parseInt(form.ageRating) || 0,
         ...(form.tags && { tags: form.tags.split(',').map(t => t.trim()).filter(Boolean) }),
@@ -295,6 +296,19 @@ export default function NewEventPage() {
               onFocus={focus} onBlur={blur} />
             <span style={{ fontSize: '12px', color: '#555', lineHeight: 1.5 }}>
               Cole o link de uma playlist, álbum, artista ou música. O player aparecerá na página pública do evento.
+            </span>
+          </Field>
+        </Card>
+
+        {/* ── Instagram ─────────────────────────────────────────────────── */}
+        <Card icon={<Instagram size={15} />} title="Instagram (opcional)">
+          <Field label="Instagram do artista">
+            <input style={inp} type="url" value={form.instagramUrl}
+              onChange={e => setField('instagramUrl', e.target.value)}
+              placeholder="https://www.instagram.com/usuario"
+              onFocus={focus} onBlur={blur} />
+            <span style={{ fontSize: '12px', color: '#555', lineHeight: 1.5 }}>
+              Cole o link do perfil oficial do artista ou da banda.
             </span>
           </Field>
         </Card>
