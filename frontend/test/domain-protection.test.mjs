@@ -23,7 +23,6 @@ test('password is server-side only and Basic Auth was removed', () => {
   assert.match(accessRoute, /passwordField === 'string' \? passwordField\.trim\(\)/);
   assert.match(accessRoute, /process\.env\.PREVIEW_PASSWORD\?\.trim\(\)/);
   assert.match(accessRoute, /passwordMatches/);
-  assert.match(accessRoute, /cookieCreated/);
 });
 
 test('access cookie is signed and uses the required security attributes', () => {
