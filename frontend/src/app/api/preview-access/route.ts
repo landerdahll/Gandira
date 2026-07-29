@@ -48,6 +48,11 @@ export async function POST(request: NextRequest) {
     errorUrl.searchParams.set('next', destination);
     const response = NextResponse.redirect(errorUrl, 303);
     response.headers.set('Cache-Control', 'no-store');
+    response.headers.set('X-Preview-Password-Defined', String(configuredPassword.length > 0));
+    response.headers.set('X-Preview-Secret-Defined', String(Boolean(cookieSecret)));
+    response.headers.set('X-Preview-Received-Length', String(receivedPassword.length));
+    response.headers.set('X-Preview-Configured-Length', String(configuredPassword.length));
+    response.headers.set('X-Preview-Password-Matches', String(passwordMatches));
     return response;
   }
 
