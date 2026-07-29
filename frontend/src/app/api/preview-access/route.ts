@@ -7,6 +7,8 @@ import {
   createPreviewCookieValue,
 } from '@/lib/preview-access';
 
+export const runtime = 'nodejs';
+
 function requestHostname(request: NextRequest) {
   return (request.headers.get('host') ?? '').split(':')[0].toLowerCase();
 }
@@ -23,12 +25,24 @@ export async function POST(request: NextRequest) {
   }
 
   const form = await request.formData();
-  const password = form.get('password');
+  const passwordField = form.get('password');
   const destination = safeDestination(form.get('next'));
-  const configuredPassword = process.env.PREVIEW_PASSWORD;
+  const receivedPassword = typeof passwordField === 'string' ? passwordField.trim() : '';
+  const configuredPassword = process.env.PREVIEW_PASSWORD?.trim() ?? '';
   const cookieSecret = process.env.PREVIEW_COOKIE_SECRET;
+  const passwordMatches = configuredPassword.length > 0 && receivedPassword === configuredPassword;
 
-  if (!configuredPassword || !cookieSecret || password !== configuredPassword) {
+  console.info('[preview-access]', {
+    routeExecuted: true,
+    previewPasswordDefined: configuredPassword.length > 0,
+    previewCookieSecretDefined: Boolean(cookieSecret),
+    receivedPasswordLength: receivedPassword.length,
+    configuredPasswordLength: configuredPassword.length,
+    passwordMatches,
+    cookieCreated: false,
+  });
+
+  if (!passwordMatches || !cookieSecret) {
     const errorUrl = new URL(PREVIEW_ACCESS_PATH, request.url);
     errorUrl.searchParams.set('error', 'invalid');
     errorUrl.searchParams.set('next', destination);
@@ -46,6 +60,15 @@ export async function POST(request: NextRequest) {
     sameSite: 'lax',
     path: '/',
     maxAge: PREVIEW_ACCESS_MAX_AGE,
+  });
+  console.info('[preview-access]', {
+    routeExecuted: true,
+    previewPasswordDefined: true,
+    previewCookieSecretDefined: true,
+    receivedPasswordLength: receivedPassword.length,
+    configuredPasswordLength: configuredPassword.length,
+    passwordMatches: true,
+    cookieCreated: true,
   });
   response.headers.set('Cache-Control', 'no-store');
   return response;
