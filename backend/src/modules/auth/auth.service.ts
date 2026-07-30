@@ -147,8 +147,14 @@ export class AuthService {
 
   async verifyEmail(token: string) {
     const recordId = token.split('.')[0];
-    const record = recordId ? await this.prisma.emailVerificationToken.findUnique({ where: { id: recordId }, include: { user: { select: { isVerified: true } } } }) : null;
-    if (!record || !this.tokenService.matches(token, record.tokenHash)) throw new BadRequestException('Token inválido');
+    const hashedRecord = recordId ? await this.prisma.emailVerificationToken.findUnique({ where: { id: recordId }, include: { user: { select: { isVerified: true } } } }) : null;
+    // Transição expand/contract: novos links sempre validam tokenHash. O fallback
+    // abaixo aceita somente registros legados já existentes; nenhum token novo é
+    // persistido em texto puro e o fallback desaparece na migration de limpeza.
+    const record = hashedRecord?.tokenHash && this.tokenService.matches(token, hashedRecord.tokenHash)
+      ? hashedRecord
+      : await this.prisma.emailVerificationToken.findFirst({ where: { token }, include: { user: { select: { isVerified: true } } } });
+    if (!record) throw new BadRequestException('Token inválido');
     if (record.usedAt && record.user.isVerified) return { message: 'E-mail já confirmado.', alreadyConfirmed: true, ticketTransfersCompleted: 0 };
     if (record.usedAt) throw new BadRequestException('Token já utilizado');
     if (record.expiresAt < new Date()) throw new BadRequestException('Token expirado. Solicite um novo link.');
@@ -284,12 +290,15 @@ export class AuthService {
 
   async resetPassword(token: string, newPassword: string) {
     const recordId = token.split('.')[0];
-    const record = recordId ? await this.prisma.passwordResetToken.findUnique({
+    const hashedRecord = recordId ? await this.prisma.passwordResetToken.findUnique({
       where: { id: recordId },
       include: { user: true },
     }) : null;
+    const record = hashedRecord?.tokenHash && this.tokenService.matches(token, hashedRecord.tokenHash)
+      ? hashedRecord
+      : await this.prisma.passwordResetToken.findFirst({ where: { token }, include: { user: true } });
 
-    if (!record || !this.tokenService.matches(token, record.tokenHash) || record.usedAt || record.expiresAt < new Date()) {
+    if (!record || record.usedAt || record.expiresAt < new Date()) {
       throw new BadRequestException('Link inválido ou expirado');
     }
 

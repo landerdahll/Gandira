@@ -77,6 +77,8 @@ describe('AuthService registration with transfer invite', () => {
       data: expect.objectContaining({ isVerified: true }),
     }));
     expect(context.outbox.enqueue).toHaveBeenCalledWith(expect.objectContaining({ recipient: dto.email, template: 'EMAIL_VERIFICATION' }), expect.anything());
+    expect(context.tx.emailVerificationToken.create).toHaveBeenCalledWith({ data: expect.objectContaining({ tokenHash: 'token-hash' }) });
+    expect(context.tx.emailVerificationToken.create.mock.calls[0][0].data).not.toHaveProperty('token');
   });
 
   it('preserva cadastro não verificado quando DEMO_EMAIL_MODE=false', async () => {
