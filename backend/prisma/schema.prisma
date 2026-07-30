@@ -417,7 +417,10 @@ model EmailVerificationToken {
   id        String    @id @default(cuid())
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash String    @unique
+  // Transição expand/contract: novos registros usam apenas tokenHash.
+  // token existe temporariamente para compatibilidade com o backend anterior.
+  token     String?   @unique
+  tokenHash String?   @unique
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
@@ -430,7 +433,9 @@ model PasswordResetToken {
   id        String    @id @default(cuid())
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash String    @unique
+  // Transição expand/contract: remover token apenas na fase de limpeza adiada.
+  token     String?   @unique
+  tokenHash String?   @unique
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())

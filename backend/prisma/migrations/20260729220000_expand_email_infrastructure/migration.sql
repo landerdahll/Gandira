@@ -1,7 +1,5 @@
--- Tokens antigos são deliberadamente invalidados: contas confirmadas e senhas não são alteradas.
-DELETE FROM "EmailVerificationToken";
-DELETE FROM "PasswordResetToken";
-
+-- Fase 1 (expansão): compatível com backend antigo, backend novo e rollback.
+-- Nenhum registro ou coluna existente é removido.
 ALTER TYPE "TicketTransferStatus" ADD VALUE 'PENDING_EMAIL_VERIFICATION';
 
 CREATE TYPE "EmailOutboxStatus" AS ENUM ('PENDING', 'PROCESSING', 'SENT', 'RETRY', 'FAILED');
@@ -10,13 +8,15 @@ ALTER TABLE "User"
   ADD COLUMN "verificationEmailLastSentAt" TIMESTAMP(3),
   ADD COLUMN "passwordResetLastSentAt" TIMESTAMP(3);
 
+-- O backend antigo continua gravando token. O novo grava somente tokenHash.
+-- Ambas ficam nullable durante a transição para permitir os dois binários.
 ALTER TABLE "EmailVerificationToken"
-  DROP COLUMN "token",
-  ADD COLUMN "tokenHash" TEXT NOT NULL;
+  ALTER COLUMN "token" DROP NOT NULL,
+  ADD COLUMN "tokenHash" TEXT;
 
 ALTER TABLE "PasswordResetToken"
-  DROP COLUMN "token",
-  ADD COLUMN "tokenHash" TEXT NOT NULL;
+  ALTER COLUMN "token" DROP NOT NULL,
+  ADD COLUMN "tokenHash" TEXT;
 
 CREATE UNIQUE INDEX "EmailVerificationToken_tokenHash_key" ON "EmailVerificationToken"("tokenHash");
 CREATE INDEX "EmailVerificationToken_tokenHash_idx" ON "EmailVerificationToken"("tokenHash");
