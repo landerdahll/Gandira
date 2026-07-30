@@ -4,14 +4,13 @@ import { CreateCouponDto } from './dto/create-coupon.dto';
 import { OrganizationAccessService } from '../organizations/organization-access.service';
 import { OrganizationActor } from '../organizations/organization-access.types';
 
-const EVENT_MANAGEMENT_ROLES = ['ORG_ADMIN', 'PRODUCER'] as const;
 
 @Injectable()
 export class CouponsService {
   constructor(private prisma: PrismaService, private organizationAccess: OrganizationAccessService) {}
 
   async create(eventId: string, actor: OrganizationActor, dto: CreateCouponDto) {
-    await this.organizationAccess.forEvent(actor, eventId, EVENT_MANAGEMENT_ROLES);
+    await this.organizationAccess.forEventPermission(actor, eventId, 'EVENTS_MANAGE');
     const event = await this.prisma.event.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Evento não encontrado');
 
@@ -35,7 +34,7 @@ export class CouponsService {
   }
 
   async list(eventId: string, actor: OrganizationActor) {
-    await this.organizationAccess.forEvent(actor, eventId, EVENT_MANAGEMENT_ROLES);
+    await this.organizationAccess.forEventPermission(actor, eventId, 'EVENTS_MANAGE');
     const event = await this.prisma.event.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Evento não encontrado');
 
@@ -46,7 +45,7 @@ export class CouponsService {
   }
 
   async remove(eventId: string, couponId: string, actor: OrganizationActor) {
-    await this.organizationAccess.forEvent(actor, eventId, EVENT_MANAGEMENT_ROLES);
+    await this.organizationAccess.forEventPermission(actor, eventId, 'EVENTS_MANAGE');
     const coupon = await (this.prisma.coupon.findUnique as any)({
       where: { id: couponId },
       include: { event: { select: { organizationId: true } } },

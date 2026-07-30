@@ -2,8 +2,9 @@ import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 
 describe('OrganizationsService', () => {
-  const prisma = { organizationMember: { findMany: jest.fn() } };
-  const service = new OrganizationsService(prisma as any);
+  const prisma = { organizationMember: { findMany: jest.fn() }, organization: { findMany: jest.fn(), findFirst: jest.fn() } };
+  const access = { forOrganization: jest.fn() };
+  const service = new OrganizationsService(prisma as any, access as any);
 
   beforeEach(() => jest.clearAllMocks());
 
@@ -29,5 +30,24 @@ describe('OrganizationsService', () => {
       { organizationId: 'org-2' },
     ]);
     await expect(service.resolveForEventCreation('user-1')).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('returns a single validated membership as active context with branding', async () => {
+    prisma.organizationMember.findMany.mockResolvedValue([{
+      id: 'membership-1', role: 'PRODUCER',
+      organization: { id: 'org-1', name: 'OutraHora', slug: 'outrahora', logoUrl: 'logo', primaryColor: '#111111', secondaryColor: '#ffffff', website: 'https://example.com', instagram: '@outrahora' },
+    }]);
+    await expect(service.getContext({ id: 'producer', platformRole: 'MEMBER' })).resolves.toMatchObject({
+      selectionRequired: false,
+      active: { organizationMemberId: 'membership-1', organizationRole: 'PRODUCER', organization: { website: 'https://example.com', instagram: '@outrahora' } },
+    });
+  });
+
+  it('does not select an organization when multiple memberships exist', async () => {
+    prisma.organizationMember.findMany.mockResolvedValue([
+      { id: 'membership-1', role: 'ORG_ADMIN', organization: { id: 'org-1' } },
+      { id: 'membership-2', role: 'PRODUCER', organization: { id: 'org-2' } },
+    ]);
+    await expect(service.getContext({ id: 'member', platformRole: 'MEMBER' })).resolves.toMatchObject({ active: null, selectionRequired: true });
   });
 });

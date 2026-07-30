@@ -169,6 +169,21 @@ export const ticketTransfersApi = {
   adminDetail: (id: string) => api.get(`/ticket-transfers/admin/${id}`),
 };
 
+export const organizationsApi = {
+  context: () => api.get('/organizations/context'),
+  get: (organizationId: string) => api.get(`/organizations/${organizationId}`),
+  members: (organizationId: string, params?: any) => api.get(`/organizations/${organizationId}/members`, { params }),
+  changeMemberRole: (organizationId: string, memberId: string, role: string) =>
+    api.patch(`/organizations/${organizationId}/members/${memberId}/role`, { role }),
+  changeMemberStatus: (organizationId: string, memberId: string, status: string) =>
+    api.patch(`/organizations/${organizationId}/members/${memberId}/status`, { status }),
+  removeMember: (organizationId: string, memberId: string) =>
+    api.delete(`/organizations/${organizationId}/members/${memberId}`),
+  transfers: (organizationId: string, params?: any) =>
+    api.get('/ticket-transfers/admin/list', { params: { ...params, organizationId } }),
+  transfer: (id: string) => api.get(`/ticket-transfers/admin/${id}`),
+};
+
 export const checkinApi = {
   scan: (eventId: string, token: string) =>
     api.post(`/events/${eventId}/checkin/scan`, { token }),

@@ -1,5 +1,15 @@
 export type OrganizationRoleName = 'ORG_ADMIN' | 'PRODUCER' | 'STAFF';
 
+export type OrganizationPermission =
+  | 'ORGANIZATION_VIEW'
+  | 'MEMBERS_VIEW'
+  | 'MEMBERS_MANAGE'
+  | 'TRANSFERS_VIEW'
+  | 'EVENTS_MANAGE'
+  | 'REPORTS_VIEW'
+  | 'CHECK_IN_MANAGE'
+  | 'SALES_VIEW';
+
 export type OrganizationActor = {
   id: string;
   platformRole?: 'MEMBER' | 'SUPER_ADMIN' | string;

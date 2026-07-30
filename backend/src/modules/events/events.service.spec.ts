@@ -15,8 +15,8 @@ describe('EventsService featured events', () => {
     },
   };
   const organizationAccess = {
-    forCollection: jest.fn(),
-    forEvent: jest.fn(),
+    forCollectionPermission: jest.fn(),
+    forEventPermission: jest.fn(),
     eventOrganizationWhere: jest.fn(),
   };
   const service = new EventsService(prisma as any, organizationAccess as any);
@@ -24,7 +24,7 @@ describe('EventsService featured events', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('assigns a newly created event to the resolved organization', async () => {
-    organizationAccess.forCollection.mockResolvedValue({ organizationId: 'org-1' });
+    organizationAccess.forCollectionPermission.mockResolvedValue({ organizationId: 'org-1' });
     prisma.event.findUnique.mockResolvedValue(null);
     prisma.event.create.mockImplementation(({ data }) => Promise.resolve(data));
 
@@ -41,9 +41,9 @@ describe('EventsService featured events', () => {
 
     await service.create(dto as any, { id: 'producer-1', platformRole: 'MEMBER' });
 
-    expect(organizationAccess.forCollection).toHaveBeenCalledWith(
+    expect(organizationAccess.forCollectionPermission).toHaveBeenCalledWith(
       { id: 'producer-1', platformRole: 'MEMBER' },
-      ['ORG_ADMIN', 'PRODUCER'],
+      'EVENTS_MANAGE',
     );
     expect(prisma.event.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ organizationId: 'org-1', producerId: 'producer-1' }),
@@ -51,7 +51,7 @@ describe('EventsService featured events', () => {
   });
 
   it('lists administrative events using organizationId instead of producerId', async () => {
-    organizationAccess.forCollection.mockResolvedValue({ organizationId: 'org-a', isSuperAdmin: false });
+    organizationAccess.forCollectionPermission.mockResolvedValue({ organizationId: 'org-a', isSuperAdmin: false });
     organizationAccess.eventOrganizationWhere.mockReturnValue({ organizationId: 'org-a' });
     prisma.event.findMany.mockResolvedValue([]);
     prisma.event.count.mockResolvedValue(0);

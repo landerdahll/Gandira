@@ -9,15 +9,58 @@ import { PrismaService } from '../../prisma/prisma.service';
 import {
   OrganizationAccessContext,
   OrganizationActor,
+  OrganizationPermission,
   OrganizationRoleName,
   OrganizationSelection,
 } from './organization-access.types';
 
 type DatabaseClient = PrismaService | Prisma.TransactionClient | PrismaClient;
 
+const ORGANIZATION_PERMISSION_ROLES: Record<OrganizationPermission, readonly OrganizationRoleName[]> = {
+  ORGANIZATION_VIEW: ['ORG_ADMIN', 'PRODUCER', 'STAFF'],
+  MEMBERS_VIEW: ['ORG_ADMIN', 'PRODUCER'],
+  MEMBERS_MANAGE: ['ORG_ADMIN'],
+  TRANSFERS_VIEW: ['ORG_ADMIN', 'PRODUCER'],
+  EVENTS_MANAGE: ['ORG_ADMIN', 'PRODUCER'],
+  REPORTS_VIEW: ['ORG_ADMIN', 'PRODUCER'],
+  CHECK_IN_MANAGE: ['ORG_ADMIN', 'PRODUCER', 'STAFF'],
+  SALES_VIEW: ['ORG_ADMIN', 'PRODUCER'],
+};
+
 @Injectable()
 export class OrganizationAccessService {
   constructor(private readonly prisma: PrismaService) {}
+
+  rolesFor(permission: OrganizationPermission): readonly OrganizationRoleName[] {
+    return ORGANIZATION_PERMISSION_ROLES[permission];
+  }
+
+  forOrganization(
+    actor: OrganizationActor,
+    organizationId: string,
+    permission: OrganizationPermission,
+    database: DatabaseClient = this.prisma,
+  ) {
+    return this.forCollection(actor, this.rolesFor(permission), { organizationId }, database);
+  }
+
+  forCollectionPermission(
+    actor: OrganizationActor,
+    permission: OrganizationPermission,
+    selection: OrganizationSelection = {},
+    database: DatabaseClient = this.prisma,
+  ) {
+    return this.forCollection(actor, this.rolesFor(permission), selection, database);
+  }
+
+  forEventPermission(
+    actor: OrganizationActor,
+    eventId: string,
+    permission: OrganizationPermission,
+    database: DatabaseClient = this.prisma,
+  ) {
+    return this.forEvent(actor, eventId, this.rolesFor(permission), database);
+  }
 
   /**
    * Event.organizationId is the sole ownership source. When an eventId exists,

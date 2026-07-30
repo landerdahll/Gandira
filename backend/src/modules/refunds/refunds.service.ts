@@ -9,7 +9,6 @@ import { EmailOutboxService } from '../mail/email-outbox.service';
 import { OrganizationAccessService } from '../organizations/organization-access.service';
 import { OrganizationActor } from '../organizations/organization-access.types';
 
-const SALES_ADMIN_ROLES = ['ORG_ADMIN', 'PRODUCER'] as const;
 
 export const CANCELLATION_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 export const EVENT_CUTOFF_MS = 48 * 60 * 60 * 1000;
@@ -83,7 +82,7 @@ export class RefundsService {
 
   async adminList(actor: OrganizationActor, page = 1, limit = 20) {
     if (!this.organizationAccess) throw new Error('OrganizationAccessService não configurado');
-    const access = await this.organizationAccess.forCollection(actor, SALES_ADMIN_ROLES);
+    const access = await this.organizationAccess.forCollectionPermission(actor, 'SALES_VIEW');
     const eventWhere = this.organizationAccess.eventOrganizationWhere(access);
     const take = Math.min(limit, 50), skip = (page - 1) * take;
     const db = this.prisma as any;

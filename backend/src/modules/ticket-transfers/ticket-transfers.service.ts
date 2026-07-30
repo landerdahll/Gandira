@@ -18,7 +18,6 @@ import { OrganizationActor } from '../organizations/organization-access.types';
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
 const normalizeEmail = (value: string) => value.trim().toLowerCase();
-const TRANSFER_ADMIN_ROLES = ['ORG_ADMIN', 'PRODUCER'] as const;
 type InviteRecipient = Pick<User, 'id' | 'email' | 'name'>;
 
 @Injectable()
@@ -228,8 +227,8 @@ export class TicketTransfersService {
 
   async adminList(query: any, actor: OrganizationActor) {
     const access = query.eventId
-      ? await this.access.forEvent(actor, query.eventId, TRANSFER_ADMIN_ROLES)
-      : await this.access.forCollection(actor, TRANSFER_ADMIN_ROLES);
+      ? await this.access.forEventPermission(actor, query.eventId, 'TRANSFERS_VIEW')
+      : await this.access.forOrganization(actor, query.organizationId, 'TRANSFERS_VIEW');
     const eventOrganizationWhere = this.access.eventOrganizationWhere(access);
     const take = Math.min(Math.max(query.limit || 20, 1), 100), page = Math.max(query.page || 1, 1);
     const where: any = {
@@ -241,14 +240,14 @@ export class TicketTransfersService {
       ...(query.ticketCode && { ticket: { id: { contains: query.ticketCode, mode: 'insensitive' } } }),
       ...((query.from || query.to) && { requestedAt: { ...(query.from && { gte: new Date(query.from) }), ...(query.to && { lte: new Date(query.to) }) } }),
     };
-    const include = { event: { select: { title: true } }, ticket: { include: { batch: { select: { name: true } }, order: { include: { user: { select: { name: true, email: true } } } }, owner: { select: { name: true, email: true } }, checkIn: true } }, sender: { select: { name: true, email: true } }, recipient: { select: { name: true, email: true } } } as const;
+    const include = { event: { select: { id: true, title: true, slug: true } }, ticket: { include: { batch: { select: { name: true } }, order: { include: { user: { select: { name: true, email: true } } } }, owner: { select: { name: true, email: true } }, checkIn: true } }, sender: { select: { name: true, email: true } }, recipient: { select: { name: true, email: true } } } as const;
     const [data, total] = await Promise.all([this.prisma.ticketTransfer.findMany({ where, include, orderBy: { requestedAt: 'desc' }, skip: (page - 1) * take, take }), this.prisma.ticketTransfer.count({ where })]);
     return { data, meta: { total, page, lastPage: Math.ceil(total / take) } };
   }
   async adminDetail(id: string, actor: OrganizationActor) {
     const reference = await this.prisma.ticketTransfer.findUnique({ where: { id }, select: { eventId: true } });
     if (!reference) throw new NotFoundException('Transferência não encontrada');
-    await this.access.forEvent(actor, reference.eventId, TRANSFER_ADMIN_ROLES);
+    await this.access.forEventPermission(actor, reference.eventId, 'TRANSFERS_VIEW');
     const transfer = await this.prisma.ticketTransfer.findUnique({ where: { id }, include: { event: true, sender: { select: { name: true, email: true } }, recipient: { select: { name: true, email: true } }, ticket: { include: { batch: true, order: { include: { user: { select: { name: true, email: true } } } }, owner: { select: { name: true, email: true } }, checkIn: true } }, history: { orderBy: { createdAt: 'asc' } } } });
     if (!transfer) throw new NotFoundException('Transferência não encontrada');
     return transfer;

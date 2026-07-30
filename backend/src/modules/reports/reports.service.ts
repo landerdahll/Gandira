@@ -3,14 +3,13 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { OrganizationAccessService } from '../organizations/organization-access.service';
 import { OrganizationActor } from '../organizations/organization-access.types';
 
-const REPORT_ROLES = ['ORG_ADMIN', 'PRODUCER'] as const;
 
 @Injectable()
 export class ReportsService {
   constructor(private prisma: PrismaService, private organizationAccess: OrganizationAccessService) {}
 
   async getEventReport(eventId: string, actor: OrganizationActor) {
-    await this.organizationAccess.forEvent(actor, eventId, REPORT_ROLES);
+    await this.organizationAccess.forEventPermission(actor, eventId, 'REPORTS_VIEW');
     const event = await this.prisma.event.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Evento não encontrado');
 
@@ -147,7 +146,7 @@ export class ReportsService {
   }
 
   async getProducerDashboard(actor: OrganizationActor) {
-    const access = await this.organizationAccess.forCollection(actor, REPORT_ROLES);
+    const access = await this.organizationAccess.forCollectionPermission(actor, 'REPORTS_VIEW');
     const eventWhere = this.organizationAccess.eventOrganizationWhere(access);
     const [eventCount, totalRevenue, totalTickets, recentOrders, revenueByEvent, couponStats] =
       await Promise.all([

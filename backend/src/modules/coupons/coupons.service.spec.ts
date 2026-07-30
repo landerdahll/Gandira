@@ -5,7 +5,7 @@ describe('CouponsService organization isolation', () => {
     event: { findUnique: jest.fn() },
     coupon: { findUnique: jest.fn(), create: jest.fn() },
   };
-  const access = { forEvent: jest.fn().mockResolvedValue({ organizationId: 'org-a' }) };
+  const access = { forEventPermission: jest.fn().mockResolvedValue({ organizationId: 'org-a' }) };
   const service = new CouponsService(prisma as any, access as any);
 
   beforeEach(() => jest.clearAllMocks());
@@ -18,13 +18,13 @@ describe('CouponsService organization isolation', () => {
 
     await service.create('event-a', actor, { code: 'PAGO10', discount: 10 } as any);
 
-    expect(access.forEvent).toHaveBeenCalledWith(actor, 'event-a', ['ORG_ADMIN', 'PRODUCER']);
+    expect(access.forEventPermission).toHaveBeenCalledWith(actor, 'event-a', 'EVENTS_MANAGE');
     expect(prisma.coupon.create).toHaveBeenCalled();
   });
 
   it('keeps public coupon validation independent from organization membership', async () => {
     prisma.coupon.findUnique.mockResolvedValue({ id: 'coupon-a', isActive: true, discount: 10, maxUses: null, usedCount: 0, expiresAt: null, code: 'PAGO10' });
     await service.validate('event-a', 'pago10');
-    expect(access.forEvent).not.toHaveBeenCalled();
+    expect(access.forEventPermission).not.toHaveBeenCalled();
   });
 });

@@ -4,11 +4,24 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import Cookies from 'js-cookie';
 import { authApi } from './api';
 
+export interface OrganizationMembership {
+  id: string;
+  role: 'ORG_ADMIN' | 'PRODUCER' | 'STAFF';
+  status: 'ACTIVE' | 'INACTIVE';
+  organization: {
+    id: string; name: string; slug: string; logoUrl?: string | null;
+    primaryColor?: string | null; secondaryColor?: string | null;
+    website?: string | null; instagram?: string | null;
+  };
+}
+
 interface User {
   id: string;
   name: string;
   email: string;
   role: 'CUSTOMER' | 'PRODUCER' | 'STAFF' | 'ADMIN';
+  platformRole: 'MEMBER' | 'SUPER_ADMIN';
+  organizationMemberships?: OrganizationMembership[];
   avatarUrl?: string | null;
   isVerified: boolean;
   clubMembership?: {
@@ -52,7 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (credentials: { email: string; password: string }) => {
     const res = await authApi.login(credentials);
     Cookies.set('access_token', res.data.accessToken, { secure: true, sameSite: 'strict' });
-    setUser(res.data.user);
+    const profile = await authApi.me();
+    setUser(profile.data);
   };
 
   const logout = async () => {

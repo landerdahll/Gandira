@@ -36,8 +36,8 @@ export class UsersService {
         organizationMemberships: {
           where: { status: 'ACTIVE', organization: { isActive: true } },
           select: {
-            role: true,
-            organization: { select: { id: true, name: true, slug: true, logoUrl: true } },
+            id: true, role: true, status: true,
+            organization: { select: { id: true, name: true, slug: true, logoUrl: true, primaryColor: true, secondaryColor: true, website: true, instagram: true } },
           },
           orderBy: { createdAt: 'asc' },
         },

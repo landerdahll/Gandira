@@ -4,6 +4,7 @@ import { QueryProvider } from '@/components/providers/query-provider';
 import { AuthProvider } from '@/lib/auth-context';
 import { Navbar } from '@/components/layout/navbar';
 import { ThemeProvider } from '@/components/providers/theme-provider';
+import { OrganizationProvider } from '@/lib/organization-context';
 import './globals.css';
 
 const themeInitScript = `
@@ -37,9 +38,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <QueryProvider>
             <AuthProvider>
-              <Navbar />
-              <main className="min-h-screen">{children}</main>
-              <Toaster
+              <OrganizationProvider>
+                <Navbar />
+                <main className="min-h-screen">{children}</main>
+                <Toaster
                 position="bottom-right"
                 toastOptions={{
                   className: 'theme-toast',
@@ -51,7 +53,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     fontSize: '14px',
                   },
                 }}
-              />
+                />
+              </OrganizationProvider>
             </AuthProvider>
           </QueryProvider>
         </ThemeProvider>

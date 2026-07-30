@@ -12,7 +12,7 @@ describe('ReportsService organization isolation', () => {
     coupon: { findMany: jest.fn().mockResolvedValue([]) },
   };
   const access = {
-    forCollection: jest.fn().mockResolvedValue({ organizationId: 'org-a', isSuperAdmin: false }),
+    forCollectionPermission: jest.fn().mockResolvedValue({ organizationId: 'org-a', isSuperAdmin: false }),
     eventOrganizationWhere: jest.fn().mockReturnValue({ organizationId: 'org-a' }),
   };
   const service = new ReportsService(prisma as any, access as any);

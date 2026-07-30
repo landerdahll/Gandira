@@ -81,4 +81,10 @@ describe('OrganizationAccessService', () => {
     await expect(service.forCollection(superAdmin, ['ORG_ADMIN'], { organizationId: 'org-a' }))
       .resolves.toMatchObject({ organizationId: 'org-a', isSuperAdmin: true });
   });
+
+  it('keeps organizational permissions in one role matrix', () => {
+    expect(service.rolesFor('MEMBERS_VIEW')).toEqual(['ORG_ADMIN', 'PRODUCER']);
+    expect(service.rolesFor('MEMBERS_MANAGE')).toEqual(['ORG_ADMIN']);
+    expect(service.rolesFor('TRANSFERS_VIEW')).toEqual(['ORG_ADMIN', 'PRODUCER']);
+  });
 });

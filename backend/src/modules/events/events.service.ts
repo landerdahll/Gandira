@@ -14,7 +14,6 @@ import { randomBytes } from 'crypto';
 import { OrganizationAccessService } from '../organizations/organization-access.service';
 import { OrganizationActor } from '../organizations/organization-access.types';
 
-const EVENT_MANAGEMENT_ROLES = ['ORG_ADMIN', 'PRODUCER'] as const;
 
 @Injectable()
 export class EventsService {
@@ -24,7 +23,7 @@ export class EventsService {
   ) {}
 
   async create(dto: CreateEventDto, actor: OrganizationActor) {
-    const access = await this.organizationAccess.forCollection(actor, EVENT_MANAGEMENT_ROLES);
+    const access = await this.organizationAccess.forCollectionPermission(actor, 'EVENTS_MANAGE');
     let slug = slugify(dto.title);
     const existing = await this.prisma.event.findUnique({ where: { slug } });
     if (existing) slug = `${slug}-${randomBytes(3).toString('hex')}`;
@@ -248,7 +247,7 @@ export class EventsService {
   }
 
   async findProducerEvents(actor: OrganizationActor, page = 1, limit = 20) {
-    const access = await this.organizationAccess.forCollection(actor, EVENT_MANAGEMENT_ROLES);
+    const access = await this.organizationAccess.forCollectionPermission(actor, 'EVENTS_MANAGE');
     const organizationWhere = this.organizationAccess.eventOrganizationWhere(access);
     const take = Math.min(limit, 50);
     const skip = (page - 1) * take;
@@ -274,7 +273,7 @@ export class EventsService {
   }
 
   async findByIdForProducer(eventId: string, actor: OrganizationActor) {
-    await this.organizationAccess.forEvent(actor, eventId, EVENT_MANAGEMENT_ROLES);
+    await this.organizationAccess.forEventPermission(actor, eventId, 'EVENTS_MANAGE');
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
       include: {
@@ -332,11 +331,11 @@ export class EventsService {
   }
 
   async authorizeUpload(actor: OrganizationActor) {
-    return this.organizationAccess.forCollection(actor, EVENT_MANAGEMENT_ROLES);
+    return this.organizationAccess.forCollectionPermission(actor, 'EVENTS_MANAGE');
   }
 
   private async getOwnedEvent(eventId: string, actor: OrganizationActor) {
-    await this.organizationAccess.forEvent(actor, eventId, EVENT_MANAGEMENT_ROLES);
+    await this.organizationAccess.forEventPermission(actor, eventId, 'EVENTS_MANAGE');
     const event = await this.prisma.event.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Evento não encontrado');
     return event;

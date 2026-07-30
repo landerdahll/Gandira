@@ -7,7 +7,6 @@ import { withSerializableRetry } from '../../common/utils/serializable-retry.uti
 import { OrganizationAccessService } from '../organizations/organization-access.service';
 import { OrganizationActor } from '../organizations/organization-access.types';
 
-const CHECK_IN_ROLES = ['ORG_ADMIN', 'PRODUCER', 'STAFF'] as const;
 
 interface GenerateTicketInput {
   orderId: string;
@@ -145,7 +144,7 @@ export class TicketsService {
   async validateAndCheckIn(token: string, eventId: string, actor: OrganizationActor) {
     const result = await withSerializableRetry(() => this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       if (!this.organizationAccess) throw new Error('OrganizationAccessService não configurado');
-      await this.organizationAccess.forEvent(actor, eventId, CHECK_IN_ROLES, tx);
+      await this.organizationAccess.forEventPermission(actor, eventId, 'CHECK_IN_MANAGE', tx);
       const ticket = await tx.ticket.findUnique({
         where: { token },
         include: {

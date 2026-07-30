@@ -2,14 +2,16 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
-import { LogOut, UserCircle, LayoutDashboard, QrCode, Menu, X, ChevronDown, ShieldCheck, Ticket, Moon, Sun } from 'lucide-react';
+import { LogOut, UserCircle, LayoutDashboard, QrCode, Menu, X, ChevronDown, ShieldCheck, Ticket, Moon, Sun, Building2 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useTheme } from '@/components/providers/theme-provider';
 import { BrandMark } from '@/components/brand/brand-mark';
+import { useOrganization } from '@/lib/organization-context';
 
 export function Navbar() {
   const { user, logout, isProducer, isStaff, isAdmin, loading } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { active } = useOrganization();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -89,6 +91,7 @@ export function Navbar() {
                       padding: '6px', boxShadow: '0 12px 40px rgba(0,0,0,0.6)', zIndex: 200,
                     }}>
                       <DropItem href="/profile" icon={<UserCircle size={14} />} onClick={() => setDropdownOpen(false)}>Meu perfil</DropItem>
+                      {active && <DropItem href="/organization" icon={<Building2 size={14} />} onClick={() => setDropdownOpen(false)}>Organização</DropItem>}
                       {isProducer && <DropItem href="/producer/dashboard" icon={<LayoutDashboard size={14} />} onClick={() => setDropdownOpen(false)}>Dashboard</DropItem>}
                       {isStaff && <DropItem href="/checkin" icon={<QrCode size={14} />} onClick={() => setDropdownOpen(false)}>Check-in</DropItem>}
                       {isAdmin && <DropItem href="/admin/users" icon={<ShieldCheck size={14} />} onClick={() => setDropdownOpen(false)}>Painel Master</DropItem>}
