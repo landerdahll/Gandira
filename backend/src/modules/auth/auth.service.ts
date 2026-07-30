@@ -18,6 +18,10 @@ import { TicketTransfersService } from '../ticket-transfers/ticket-transfers.ser
 import { Prisma } from '@prisma/client';
 import { withSerializableRetry } from '../../common/utils/serializable-retry.util';
 import { isDemoEmailMode, maskEmail } from '../../common/utils/demo-email.util';
+import { randomUUID } from 'crypto';
+import { EmailOutboxService } from '../mail/email-outbox.service';
+import { EmailTokenService } from '../mail/email-token.service';
+import { getPublicFrontendUrl } from '../../common/utils/public-url.util';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -31,6 +35,8 @@ export class AuthService {
     private config: ConfigService,
     private mail: MailService,
     private ticketTransfers: TicketTransfersService,
+    private outbox?: EmailOutboxService,
+    private emailTokens?: EmailTokenService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -68,14 +74,13 @@ export class AuthService {
     const password = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
     const cpf = dto.cpf ? dto.cpf.replace(/\D/g, '') : undefined;
     const preparedVerification = dto.invitationToken ? {
-      token: generateSecureToken(),
+      id: randomUUID(),
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     } : null;
     const preparedRefresh = dto.invitationToken ? {
       token: generateSecureToken(40),
       expiresAt: this.refreshTokenExpiresAt(),
     } : null;
-    let completedInvite: Awaited<ReturnType<TicketTransfersService['completeInviteInTransaction']>> | null = null;
     let invitedTokens: { accessToken: string; refreshToken: string } | null = null;
 
     const createUser = async (db: Prisma.TransactionClient | PrismaService) => db.user.create({
@@ -116,18 +121,13 @@ export class AuthService {
           const created = await createUser(tx);
           const accessToken = await this.jwt.signAsync({ sub: created.id, email: created.email, role: created.role });
           await this.auditLog(created.id, 'USER_REGISTERED', 'User', created.id, undefined, tx);
-          await this.persistVerificationToken(tx, created.id, preparedVerification.token, preparedVerification.expiresAt);
+          await this.persistVerificationToken(tx, created.id, preparedVerification.id, preparedVerification.expiresAt);
           await tx.refreshToken.create({ data: { userId: created.id, token: preparedRefresh.token, expiresAt: preparedRefresh.expiresAt } });
-          const inviteCompletion = await this.ticketTransfers.completeInviteInTransaction(
-            tx,
-            dto.invitationToken!,
-            created,
-            preparedInvite,
-          );
-          return { user: created, completedInvite: inviteCompletion, accessToken };
+          await this.ticketTransfers.linkInviteToUnverifiedUserInTransaction(tx, dto.invitationToken!, created);
+          await this.enqueueVerification(tx, preparedVerification.id, created.email, created.name);
+          return { user: created, accessToken };
         }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }));
       user = registration.user;
-      completedInvite = registration.completedInvite;
       invitedTokens = { accessToken: registration.accessToken, refreshToken: preparedRefresh.token };
     } else {
       user = await createUser(this.prisma);
@@ -138,66 +138,76 @@ export class AuthService {
       await this.auditLog(user.id, 'USER_REGISTERED', 'User', user.id);
       await this.dispatchVerificationEmail(user.id, user.email, user.name);
     } else {
-      this.sendVerificationEmail(user.email, user.name, preparedVerification!.token);
+      // O e-mail já foi registrado na outbox dentro da transação do convite.
     }
-    if (completedInvite) this.ticketTransfers.notifyInviteCompleted(completedInvite.transfer, completedInvite.user);
 
     const tokens = invitedTokens ?? await this.generateTokenPair(user.id, user.email, user.role);
     return { user, ...tokens };
   }
 
   async verifyEmail(token: string) {
-    const record = await this.prisma.emailVerificationToken.findUnique({ where: { token } });
-    if (!record || record.usedAt) throw new BadRequestException('Token inválido ou já utilizado');
+    const recordId = token.split('.')[0];
+    const hashedRecord = recordId ? await this.prisma.emailVerificationToken.findUnique({ where: { id: recordId }, include: { user: { select: { isVerified: true } } } }) : null;
+    // Transição expand/contract: novos links sempre validam tokenHash. O fallback
+    // abaixo aceita somente registros legados já existentes; nenhum token novo é
+    // persistido em texto puro e o fallback desaparece na migration de limpeza.
+    const record = hashedRecord?.tokenHash && this.tokenService.matches(token, hashedRecord.tokenHash)
+      ? hashedRecord
+      : await this.prisma.emailVerificationToken.findFirst({ where: { token }, include: { user: { select: { isVerified: true } } } });
+    if (!record) throw new BadRequestException('Token inválido');
+    if (record.usedAt && record.user.isVerified) return { message: 'E-mail já confirmado.', alreadyConfirmed: true, ticketTransfersCompleted: 0 };
+    if (record.usedAt) throw new BadRequestException('Token já utilizado');
     if (record.expiresAt < new Date()) throw new BadRequestException('Token expirado. Solicite um novo link.');
 
-    await this.prisma.$transaction([
-      this.prisma.user.update({ where: { id: record.userId }, data: { isVerified: true } }),
-      this.prisma.emailVerificationToken.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
-    ]);
+    const ticketTransfersCompleted = await this.prisma.$transaction(async tx => {
+      const user = await tx.user.update({ where: { id: record.userId }, data: { isVerified: true }, select: { id: true, email: true, name: true } });
+      await tx.emailVerificationToken.update({ where: { id: record.id }, data: { usedAt: new Date() } });
+      return this.ticketTransfers.completePendingVerificationForUserInTransaction(tx, user);
+    });
 
-    return { message: 'E-mail verificado com sucesso!' };
+    return { message: 'E-mail verificado com sucesso!', ticketTransfersCompleted };
   }
 
   async resendVerificationByEmail(email: string) {
     if (!email) throw new BadRequestException('E-mail obrigatório');
     const user = await this.prisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },
-      select: { id: true, email: true, name: true, isVerified: true, isActive: true },
+      select: { id: true, email: true, name: true, isVerified: true, isActive: true, verificationEmailLastSentAt: true },
     });
     // Always return 200 to avoid enumeration
     if (!user || !user.isActive || user.isVerified) return { message: 'E-mail de verificação reenviado.' };
 
+    if (!this.cooldownElapsed(user.verificationEmailLastSentAt)) return { message: 'E-mail de verificação reenviado.' };
     await this.dispatchVerificationEmail(user.id, user.email, user.name);
     return { message: 'E-mail de verificação reenviado.' };
   }
 
   private async dispatchVerificationEmail(userId: string, email: string, name: string) {
-    const token = generateSecureToken();
+    const id = randomUUID();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    await this.persistVerificationToken(this.prisma, userId, token, expiresAt, true);
-    this.sendVerificationEmail(email, name, token);
+    await this.prisma.$transaction(async tx => {
+      await this.persistVerificationToken(tx, userId, id, expiresAt, true);
+      await tx.user.update({ where: { id: userId }, data: { verificationEmailLastSentAt: new Date() } });
+      await this.enqueueVerification(tx, id, email, name);
+    });
   }
 
   private async persistVerificationToken(
     db: Prisma.TransactionClient | PrismaService,
     userId: string,
-    token: string,
+    id: string,
     expiresAt: Date,
     replaceExisting = false,
   ) {
     if (replaceExisting) await db.emailVerificationToken.deleteMany({ where: { userId } });
-    await db.emailVerificationToken.create({ data: { userId, token, expiresAt } });
+    await db.emailVerificationToken.create({ data: { id, userId, tokenHash: this.tokenService.hashForRecord(id, 'email-verification'), expiresAt } });
   }
 
-  private sendVerificationEmail(email: string, name: string, token: string) {
-    const baseUrl = (this.config.get<string>('FRONTEND_URL', 'http://localhost:3000')).split(',')[0].trim();
-    const verifyUrl = `${baseUrl}/auth/verify-email?token=${token}`;
-    if (isDemoEmailMode(this.config)) {
-      this.logger.log(`[DEMO EMAIL MODE] Confirmação de e-mail\nDestinatário: ${maskEmail(email)}\nLink: ${verifyUrl}`);
-    }
-    this.mail.sendVerificationEmail(email, name, verifyUrl)
-      .catch(err => this.logger.error(`Falha ao enviar e-mail de verificação para ${email}: ${err.message}`));
+  private enqueueVerification(db: Prisma.TransactionClient, id: string, email: string, name: string) {
+    if (!this.outbox) return this.mail.sendVerificationEmail(email, name, `${getPublicFrontendUrl(this.config)}/auth/verify-email?token=${this.tokenService.reconstruct(id, 'email-verification')}`) as any;
+    return this.outbox.enqueue({ type: 'EMAIL_VERIFICATION', recipient: email, template: 'EMAIL_VERIFICATION',
+      payload: { name, tokenRecordId: id, tokenPurpose: 'email-verification', tokenPath: '/auth/verify-email' },
+      idempotencyKey: `EMAIL_VERIFICATION:${id}`, relatedEntityType: 'EmailVerificationToken', relatedEntityId: id }, db);
   }
 
   async login(dto: LoginDto, ipAddress?: string) {
@@ -258,7 +268,7 @@ export class AuthService {
     });
 
     // Always return 200 — don't leak whether email exists
-    if (!user || !user.isActive) return;
+    if (!user || !user.isActive || !this.cooldownElapsed(user.passwordResetLastSentAt)) return;
 
     // Invalidate any existing unused tokens for this user
     await this.prisma.passwordResetToken.updateMany({
@@ -266,25 +276,27 @@ export class AuthService {
       data: { expiresAt: new Date() },
     });
 
-    const token = generateSecureToken(32);
+    const id = randomUUID();
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-
-    await this.prisma.passwordResetToken.create({
-      data: { userId: user.id, token, expiresAt },
+    await this.prisma.$transaction(async tx => {
+      await tx.passwordResetToken.create({ data: { id, userId: user.id, tokenHash: this.tokenService.hashForRecord(id, 'password-reset'), expiresAt } });
+      await tx.user.update({ where: { id: user.id }, data: { passwordResetLastSentAt: new Date() } });
+      if (this.outbox) await this.outbox.enqueue({ type: 'PASSWORD_RESET', recipient: user.email, template: 'PASSWORD_RESET',
+        payload: { name: user.name, tokenRecordId: id, tokenPurpose: 'password-reset', tokenPath: '/auth/reset-password' },
+        idempotencyKey: `PASSWORD_RESET:${id}`, relatedEntityType: 'PasswordResetToken', relatedEntityId: id }, tx);
     });
-
-    const frontendUrl = (this.config.get<string>('FRONTEND_URL', 'http://localhost:3000')).split(',')[0].trim();
-    const resetUrl = `${frontendUrl}/auth/reset-password?token=${token}`;
-
-    await this.mail.sendPasswordReset(user.email, user.name, resetUrl);
     this.logger.log(`Password reset requested for ${user.email}`);
   }
 
   async resetPassword(token: string, newPassword: string) {
-    const record = await this.prisma.passwordResetToken.findUnique({
-      where: { token },
+    const recordId = token.split('.')[0];
+    const hashedRecord = recordId ? await this.prisma.passwordResetToken.findUnique({
+      where: { id: recordId },
       include: { user: true },
-    });
+    }) : null;
+    const record = hashedRecord?.tokenHash && this.tokenService.matches(token, hashedRecord.tokenHash)
+      ? hashedRecord
+      : await this.prisma.passwordResetToken.findFirst({ where: { token }, include: { user: true } });
 
     if (!record || record.usedAt || record.expiresAt < new Date()) {
       throw new BadRequestException('Link inválido ou expirado');
@@ -336,6 +348,12 @@ export class AuthService {
     const days = parseInt(refreshExpiresIn);
     return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
   }
+
+  private cooldownElapsed(lastSentAt?: Date | null) {
+    return !lastSentAt || Date.now() - lastSentAt.getTime() >= 60_000;
+  }
+
+  private get tokenService() { return this.emailTokens ?? new EmailTokenService(this.config); }
 
   private async auditLog(
     userId: string | null,

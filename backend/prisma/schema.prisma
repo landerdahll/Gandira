@@ -70,9 +70,18 @@ enum TicketStatus {
 
 enum TicketTransferStatus {
   PENDING_REGISTRATION
+  PENDING_EMAIL_VERIFICATION
   COMPLETED
   CANCELLED
   EXPIRED
+}
+
+enum EmailOutboxStatus {
+  PENDING
+  PROCESSING
+  SENT
+  RETRY
+  FAILED
 }
 
 enum CheckInMethod {
@@ -113,6 +122,8 @@ model User {
   ownedTickets            Ticket[]                 @relation("TicketOwner")
   sentTicketTransfers     TicketTransfer[]         @relation("TransferSender")
   receivedTicketTransfers TicketTransfer[]         @relation("TransferRecipient")
+  verificationEmailLastSentAt DateTime?
+  passwordResetLastSentAt     DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -406,12 +417,15 @@ model EmailVerificationToken {
   id        String    @id @default(cuid())
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String    @unique
+  // Transição expand/contract: novos registros usam apenas tokenHash.
+  // token existe temporariamente para compatibilidade com o backend anterior.
+  token     String?   @unique
+  tokenHash String?   @unique
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
 
-  @@index([token])
+  @@index([tokenHash])
   @@index([userId])
 }
 
@@ -419,13 +433,43 @@ model PasswordResetToken {
   id        String    @id @default(cuid())
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String    @unique
+  // Transição expand/contract: remover token apenas na fase de limpeza adiada.
+  token     String?   @unique
+  tokenHash String?   @unique
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
 
-  @@index([token])
+  @@index([tokenHash])
   @@index([userId])
+}
+
+model EmailOutbox {
+  id                String            @id @default(cuid())
+  type              String
+  recipient         String
+  subject           String
+  template          String
+  payload           Json
+  relatedEntityType String?
+  relatedEntityId   String?
+  idempotencyKey    String            @unique
+  status            EmailOutboxStatus @default(PENDING)
+  attempts          Int               @default(0)
+  maxAttempts       Int               @default(5)
+  nextAttemptAt     DateTime          @default(now())
+  providerMessageId String?
+  lastError         String?
+  processingAt      DateTime?
+  sentAt            DateTime?
+  failedAt          DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@index([processingAt])
+  @@index([relatedEntityType, relatedEntityId])
+  @@index([createdAt])
 }
 
 model Coupon {

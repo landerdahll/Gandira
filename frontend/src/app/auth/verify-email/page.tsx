@@ -27,12 +27,16 @@ function VerifyEmailContent() {
   const [state, setState] = useState<State>(token ? 'loading' : 'no-token');
   const [errorMsg, setErrorMsg] = useState('');
   const [resending, setResending] = useState(false);
+  const [ticketReleased, setTicketReleased] = useState(false);
 
   useEffect(() => {
     if (!token) return;
     authApi
       .verifyEmail(token)
-      .then(() => setState('success'))
+      .then(({ data }) => {
+        setTicketReleased(Number(data?.ticketTransfersCompleted ?? 0) > 0);
+        setState('success');
+      })
       .catch((e: any) => {
         setErrorMsg(e.response?.data?.message ?? 'Não foi possível verificar o e-mail.');
         setState('error');
@@ -89,9 +93,9 @@ function VerifyEmailContent() {
             <CheckCircle2 size={48} color="#4ade80" style={{ margin: '0 auto 20px', display: 'block' }} />
             <p style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 700, color: '#fff' }}>E-mail verificado!</p>
             <p style={{ margin: '0 0 28px', fontSize: 14, color: '#666', lineHeight: 1.6 }}>
-              Sua conta está confirmada. Agora você pode comprar ingressos.
+              {ticketReleased ? 'Sua conta está confirmada e o ingresso recebido já está em Meus ingressos.' : 'Sua conta está confirmada. Agora você pode comprar ingressos.'}
             </p>
-            <Link href="/" style={{
+            <Link href={ticketReleased ? '/my-tickets' : '/'} style={{
               display: 'block',
               padding: '13px',
               borderRadius: 12,
@@ -101,7 +105,7 @@ function VerifyEmailContent() {
               fontSize: 15,
               textDecoration: 'none',
             }}>
-              Ver eventos
+              {ticketReleased ? 'Ver meu ingresso' : 'Ver eventos'}
             </Link>
           </>
         )}

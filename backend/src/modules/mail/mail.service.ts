@@ -1,295 +1,77 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
+import { getPublicFrontendUrl } from '../../common/utils/public-url.util';
+import { MailTemplateName, renderMail } from './mail.templates';
+
+export interface MailDelivery { providerMessageId?: string }
 
 @Injectable()
-export class MailService {
+export class MailService implements OnModuleInit {
   private readonly logger = new Logger(MailService.name);
-  private resend: Resend | null = null;
-  private fromAddress: string;
-  private devMode: boolean;
-  private logoUrl: string;
+  private readonly resend: Resend | null;
+  private readonly from: string;
+  private readonly logoUrl: string;
 
-  constructor(private config: ConfigService) {
-    const apiKey = config.get<string>('RESEND_API_KEY');
-    this.fromAddress = config.get<string>('RESEND_FROM', 'onboarding@resend.dev');
-    this.devMode = !apiKey;
-    this.logoUrl = `${config.get<string>('FRONTEND_URL', 'http://localhost:3000').replace(/\/$/, '')}/logo-full-white.svg`;
-
-    if (apiKey) {
-      this.resend = new Resend(apiKey);
+  constructor(private readonly config: ConfigService) {
+    const apiKey = config.get<string>('RESEND_API_KEY')?.trim();
+    const legacyFrom = config.get<string>('RESEND_FROM')?.trim();
+    const fromName = config.get<string>('RESEND_FROM_NAME')?.trim() || 'Pago by OutraHora';
+    const configuredEmail = config.get<string>('RESEND_FROM_EMAIL')?.trim();
+    const fromEmail = configuredEmail || legacyFrom || 'onboarding@resend.dev';
+    this.from = !configuredEmail && legacyFrom?.includes('<') ? legacyFrom : `${fromName} <${fromEmail}>`;
+    this.resend = apiKey ? new Resend(apiKey) : null;
+    this.logoUrl = `${getPublicFrontendUrl(config)}/logo-full-white.svg`;
+    if (legacyFrom && !config.get<string>('RESEND_FROM_EMAIL')) {
+      this.logger.warn('RESEND_FROM é legado; migre para RESEND_FROM_EMAIL.');
     }
+  }
+
+  onModuleInit() {
+    if (this.config.get<string>('NODE_ENV') === 'production' &&
+        this.config.get<string>('DEMO_EMAIL_MODE', 'false').trim().toLowerCase() === 'true') {
+      throw new Error('DEMO_EMAIL_MODE não pode estar habilitado em produção.');
+    }
+  }
+
+  render(template: MailTemplateName, payload: Record<string, any>) {
+    return renderMail(template, payload, this.logoUrl);
+  }
+
+  async deliver(to: string, template: MailTemplateName, payload: Record<string, any>): Promise<MailDelivery> {
+    const rendered = this.render(template, payload);
+    if (!this.resend) {
+      this.logger.warn(`E-mail não enviado: RESEND_API_KEY ausente; tipo=${template}`);
+      throw new Error('Provedor de e-mail não configurado');
+    }
+    const { data, error } = await this.resend.emails.send({
+      from: this.from,
+      to,
+      subject: rendered.subject,
+      html: rendered.html,
+      text: rendered.text,
+    });
+    if (error) throw new Error(error.message);
+    return { providerMessageId: data?.id };
   }
 
   async sendTicketTransferEmail(to: string, subject: string, message: string, actionUrl?: string) {
-    const button = actionUrl ? `<p style="margin:28px 0"><a href="${actionUrl}" style="background:#67bed9;color:#fff;padding:14px 24px;border-radius:12px;text-decoration:none;font-weight:700">Abrir no Pago</a></p>` : '';
-    const html = `<!doctype html><html><body style="margin:0;background:#0a0a0a;font-family:Arial,sans-serif;color:#fff"><div style="max-width:480px;margin:40px auto;background:#111;border:1px solid #1e1e1e;border-radius:16px;padding:32px"><img src="${this.logoUrl}" alt="Pago" style="height:36px"><h1 style="font-size:20px;margin:28px 0 12px">${subject}</h1><p style="color:#999;line-height:1.6">${message}</p>${button}<p style="color:#444;font-size:12px;margin-top:32px">© ${new Date().getFullYear()} Pago</p></div></body></html>`;
-    if (this.devMode) { this.logger.warn(`E-mail de transferência (dev) — ${to}: ${subject}${actionUrl ? ` | ${actionUrl}` : ''}`); return; }
-    const { error } = await this.resend!.emails.send({ from: `Pago <${this.fromAddress}>`, to, subject, html });
-    if (error) throw new Error(error.message);
+    return this.deliver(to, 'TRANSFER', { subject, message, actionUrl });
   }
 
   async sendVerificationEmail(to: string, name: string, verifyUrl: string) {
-    const html = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 0;">
-    <tr><td align="center">
-      <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1e1e1e;border-radius:16px;overflow:hidden;max-width:480px;width:100%;">
-        <tr>
-          <td style="padding:28px 32px;border-bottom:1px solid #1a1a1a;">
-            <img src="${this.logoUrl}" alt="Pago" style="height:36px;display:block;" />
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:32px;">
-            <p style="margin:0 0 8px;font-size:20px;font-weight:700;color:#fff;">Confirme seu e-mail</p>
-            <p style="margin:0 0 24px;font-size:14px;color:#666;line-height:1.6;">
-              Olá, ${name}. Clique no botão abaixo para confirmar seu e-mail e liberar a compra de ingressos. O link é válido por <strong style="color:#aaa">24 horas</strong>.
-            </p>
-            <table cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="border-radius:12px;background:#67bed9;box-shadow:0 0 24px rgba(103,190,217,0.3);">
-                  <a href="${verifyUrl}" target="_blank"
-                     style="display:inline-block;padding:14px 32px;color:#fff;font-size:15px;font-weight:700;text-decoration:none;letter-spacing:-0.2px;">
-                    Verificar e-mail
-                  </a>
-                </td>
-              </tr>
-            </table>
-            <p style="margin:28px 0 0;font-size:12px;color:#444;line-height:1.6;">
-              Se você não criou uma conta no Pago, ignore este e-mail.
-            </p>
-            <p style="margin:12px 0 0;font-size:12px;color:#333;word-break:break-all;">
-              Link direto: <a href="${verifyUrl}" style="color:#67bed9;text-decoration:none;">${verifyUrl}</a>
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:20px 32px;border-top:1px solid #1a1a1a;">
-            <p style="margin:0;font-size:12px;color:#333;text-align:center;">
-              © ${new Date().getFullYear()} Pago — Todos os direitos reservados
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
-
-    if (this.devMode) {
-      this.logger.warn('⚠️  RESEND_API_KEY não configurado — link de verificação:');
-      this.logger.warn(`📧  Para: ${to}`);
-      this.logger.warn(`🔗  ${verifyUrl}`);
-      return;
-    }
-
-    const { error } = await this.resend!.emails.send({
-      from: `Pago <${this.fromAddress}>`,
-      to,
-      subject: 'Confirme seu e-mail — Pago',
-      html,
-    });
-
-    if (error) {
-      this.logger.error(`Falha ao enviar e-mail de verificação para ${to}: ${error.message}`);
-    } else {
-      this.logger.log(`E-mail de verificação enviado para ${to}`);
-    }
-  }
-
-  async sendOrderConfirmation(to: string, name: string, data: {
-    eventTitle: string;
-    eventDate: Date;
-    venue: string;
-    items: { batchName: string; ticketType: string; quantity: number }[];
-    total: number;
-    ticketCount: number;
-    myTicketsUrl: string;
-  }) {
-    const fmtDate = (d: Date) => new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit', month: 'long', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo',
-    }).format(d);
-
-    const fmtCurrency = (v: number) =>
-      v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-    const itemsHtml = data.items.map(i => `
-      <tr>
-        <td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:#ccc;font-size:14px;">${i.batchName}</td>
-        <td style="padding:10px 0;border-bottom:1px solid #1a1a1a;color:#888;font-size:14px;text-align:center;">${i.quantity}</td>
-      </tr>`).join('');
-
-    const html = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 0;">
-    <tr><td align="center">
-      <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1e1e1e;border-radius:16px;overflow:hidden;max-width:480px;width:100%;">
-        <tr>
-          <td style="padding:28px 32px;border-bottom:1px solid #1a1a1a;">
-            <img src="${this.logoUrl}" alt="Pago" style="height:36px;display:block;" />
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:32px;">
-            <p style="margin:0 0 4px;font-size:20px;font-weight:700;color:#fff;">Pedido confirmado! 🎉</p>
-            <p style="margin:0 0 24px;font-size:14px;color:#666;line-height:1.6;">
-              Olá, ${name}. Seu pagamento foi aprovado e seus ingressos estão garantidos.
-            </p>
-
-            <div style="background:#0d1e28;border:1px solid #67bed922;border-radius:12px;padding:20px;margin-bottom:24px;">
-              <p style="margin:0 0 4px;font-size:17px;font-weight:700;color:#fff;">${data.eventTitle}</p>
-              <p style="margin:0 0 4px;font-size:13px;color:#67bed9;">${fmtDate(data.eventDate)}</p>
-              <p style="margin:0;font-size:13px;color:#666;">${data.venue}</p>
-            </div>
-
-            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
-              <thead>
-                <tr>
-                  <th style="text-align:left;font-size:12px;color:#555;padding-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Ingresso</th>
-                  <th style="text-align:center;font-size:12px;color:#555;padding-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Qtd</th>
-                </tr>
-              </thead>
-              <tbody>${itemsHtml}</tbody>
-            </table>
-
-            <div style="display:flex;justify-content:space-between;padding:14px 0;border-top:1px solid #252525;margin-bottom:28px;">
-              <span style="font-size:14px;font-weight:700;color:#fff;">Total pago</span>
-              <span style="font-size:14px;font-weight:700;color:#67bed9;">${fmtCurrency(data.total)}</span>
-            </div>
-
-            <table cellpadding="0" cellspacing="0" width="100%">
-              <tr>
-                <td style="border-radius:12px;background:#67bed9;box-shadow:0 0 24px rgba(103,190,217,0.3);text-align:center;">
-                  <a href="${data.myTicketsUrl}" target="_blank"
-                     style="display:block;padding:14px 32px;color:#fff;font-size:15px;font-weight:700;text-decoration:none;">
-                    Ver meus ingressos
-                  </a>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:20px 32px;border-top:1px solid #1a1a1a;">
-            <p style="margin:0;font-size:12px;color:#333;text-align:center;">
-              © ${new Date().getFullYear()} Pago — Todos os direitos reservados
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
-
-    if (this.devMode) {
-      this.logger.warn(`⚠️  Confirmação de pedido (dev) — Para: ${to} | Evento: ${data.eventTitle}`);
-      return;
-    }
-
-    const { error } = await this.resend!.emails.send({
-      from: `Pago <${this.fromAddress}>`,
-      to,
-      subject: `Ingresso confirmado — ${data.eventTitle}`,
-      html,
-    });
-
-    if (error) {
-      this.logger.error(`Falha ao enviar confirmação de pedido para ${to}: ${error.message}`);
-    } else {
-      this.logger.log(`Confirmação de pedido enviada para ${to}`);
-    }
+    return this.deliver(to, 'EMAIL_VERIFICATION', { name, url: verifyUrl });
   }
 
   async sendPasswordReset(to: string, name: string, resetUrl: string) {
-    const html = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 0;">
-    <tr><td align="center">
-      <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #1e1e1e;border-radius:16px;overflow:hidden;max-width:480px;width:100%;">
-        <tr>
-          <td style="padding:28px 32px;border-bottom:1px solid #1a1a1a;">
-            <img src="${this.logoUrl}" alt="Pago" style="height:36px;display:block;" />
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:32px;">
-            <p style="margin:0 0 8px;font-size:20px;font-weight:700;color:#fff;">Redefinição de senha</p>
-            <p style="margin:0 0 24px;font-size:14px;color:#666;line-height:1.6;">
-              Olá, ${name}. Recebemos uma solicitação para redefinir a senha da sua conta Pago.
-            </p>
-            <p style="margin:0 0 24px;font-size:14px;color:#666;line-height:1.6;">
-              Clique no botão abaixo para criar uma nova senha. O link é válido por <strong style="color:#aaa">1 hora</strong>.
-            </p>
-            <table cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="border-radius:12px;background:#67bed9;box-shadow:0 0 24px rgba(103,190,217,0.3);">
-                  <a href="${resetUrl}" target="_blank"
-                     style="display:inline-block;padding:14px 32px;color:#fff;font-size:15px;font-weight:700;text-decoration:none;letter-spacing:-0.2px;">
-                    Redefinir senha
-                  </a>
-                </td>
-              </tr>
-            </table>
-            <p style="margin:28px 0 0;font-size:12px;color:#444;line-height:1.6;">
-              Se você não solicitou a redefinição de senha, ignore este e-mail. Sua senha permanece a mesma.
-            </p>
-            <p style="margin:12px 0 0;font-size:12px;color:#333;word-break:break-all;">
-              Link direto: <a href="${resetUrl}" style="color:#67bed9;text-decoration:none;">${resetUrl}</a>
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:20px 32px;border-top:1px solid #1a1a1a;">
-            <p style="margin:0;font-size:12px;color:#333;text-align:center;">
-              © ${new Date().getFullYear()} Pago — Todos os direitos reservados
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
-
-    if (this.devMode) {
-      this.logger.warn('⚠️  RESEND_API_KEY não configurado — link de redefinição:');
-      this.logger.warn(`📧  Para: ${to}`);
-      this.logger.warn(`🔗  ${resetUrl}`);
-      return;
-    }
-
-    const { error } = await this.resend!.emails.send({
-      from: `Pago <${this.fromAddress}>`,
-      to,
-      subject: 'Redefinição de senha — Pago',
-      html,
-    });
-
-    if (error) {
-      this.logger.error(`Falha ao enviar e-mail de redefinição para ${to}: ${error.message}`);
-    } else {
-      this.logger.log(`E-mail de redefinição enviado para ${to}`);
-    }
+    return this.deliver(to, 'PASSWORD_RESET', { name, url: resetUrl });
   }
 
-  async sendRefundConfirmation(to: string, name: string, data: { orderId: string; eventTitle: string; eventDate: Date; total: number; refundId: string }) {
-    const date = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'America/Sao_Paulo' }).format(data.eventDate);
-    const total = data.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const html = `<!doctype html><html><body style="background:#0a0a0a;color:#fff;font-family:Arial;padding:32px"><div style="max-width:520px;margin:auto;background:#111;border:1px solid #222;border-radius:16px;padding:32px"><h1>Cancelamento confirmado</h1><p>Olá, ${name}. O pedido <strong>${data.orderId}</strong> para <strong>${data.eventTitle}</strong> foi cancelado.</p><p>O reembolso de <strong>${total}</strong> foi solicitado automaticamente para o mesmo meio de pagamento.</p><p>Evento: ${date}<br>Referência do reembolso: ${data.refundId}</p><p style="color:#777">O prazo de crédito depende da instituição financeira, operadora do cartão ou provedor de pagamento.</p></div></body></html>`;
-    if (this.devMode) { this.logger.warn(`Confirmação de reembolso (dev) — ${to} | Pedido: ${data.orderId}`); return; }
-    const { error } = await this.resend!.emails.send({ from: `Pago <${this.fromAddress}>`, to, subject: `Cancelamento confirmado — ${data.eventTitle}`, html });
-    if (error) this.logger.error(`Falha ao enviar confirmação de reembolso: ${error.message}`);
+  async sendOrderConfirmation(to: string, name: string, data: Record<string, any>) {
+    return this.deliver(to, 'ORDER_CONFIRMATION', { ...data, name });
+  }
+
+  async sendRefundConfirmation(to: string, name: string, data: Record<string, any>) {
+    return this.deliver(to, 'REFUND_CONFIRMATION', { ...data, name });
   }
 }
