@@ -41,7 +41,8 @@ describeIntegration('Ticket transfers with real PostgreSQL Serializable transact
   };
   const transferA = new TicketTransfersService(prismaA as never, mail as never, config as never);
   const transferB = new TicketTransfersService(prismaB as never, mail as never, config as never);
-  const ticketsA = new TicketsService(prismaA as never);
+  const organizationAccess = { forEvent: jest.fn().mockResolvedValue({ organizationId: 'org-test' }) };
+  const ticketsA = new TicketsService(prismaA as never, organizationAccess as never);
   let fixtureSequence = 0;
 
   beforeAll(async () => {
@@ -96,7 +97,7 @@ describeIntegration('Ticket transfers with real PostgreSQL Serializable transact
     });
     const event = await prismaA.event.create({
       data: {
-        producerId: owner.id,
+        organizationId: 'org_outrahora', producerId: owner.id,
         title: `${label} Event`, description: 'integration', slug: key,
         venue: 'Test', address: 'Test', city: 'Test', state: 'TS',
         startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
@@ -174,7 +175,7 @@ describeIntegration('Ticket transfers with real PostgreSQL Serializable transact
   it('2. never commits both check-in and an active transfer', async () => {
     const fixture = await createFixture('checkin-transfer');
     const start = barrier(2);
-    const checkIn = async () => { await start(); return ticketsA.validateAndCheckIn(fixture.ticket.token, fixture.event.id, fixture.staff.id); };
+    const checkIn = async () => { await start(); return ticketsA.validateAndCheckIn(fixture.ticket.token, fixture.event.id, { id: fixture.staff.id, platformRole: 'MEMBER' }); };
     const request = async () => { await start(); return transferB.request(fixture.ticket.id, fixture.owner.id, `${fixture.key}-recipient@example.test`); };
 
     const [checkInResult, transferResult] = await Promise.allSettled([checkIn(), request()]);

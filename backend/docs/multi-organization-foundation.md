@@ -64,3 +64,19 @@ Fase 1.
 O isolamento de consultas e a autorização organizacional centralizada pertencem
 à Fase 2. A infraestrutura de e-mail e a migration deferred de limpeza de tokens
 não fazem parte desta fundação e não devem ser alteradas.
+
+## Isolamento administrativo do backend
+
+`OrganizationAccessService` é a fronteira única de autorização organizacional.
+A seleção recebida pelo serviço é abstrata e não depende de header, rota ou
+interface específica. Quando houver `eventId`, qualquer seleção externa é
+ignorada: a organização é sempre derivada de `Event.organizationId`.
+
+O contexto validado contém `organizationMemberId` para permitir auditoria e
+evoluções futuras sem nova resolução da membership. `SUPER_ADMIN` não precisa de
+membership e recebe esse campo como `null`.
+
+Entidades como pedidos, ingressos, cupons, transferências, lotes, check-ins e
+reembolsos não duplicam ownership. Consultas administrativas chegam à organização
+através da relação com `Event`. Catálogo, compra e recursos pessoais do comprador
+continuam globais.

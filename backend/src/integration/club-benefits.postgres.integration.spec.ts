@@ -51,7 +51,7 @@ describeIntegration('Clube Outrahora checkout with real PostgreSQL', () => {
       email: user.email, name: user.name, discountPercentage: new Prisma.Decimal('12.50'),
     } });
     const event = await prismaA.event.create({ data: {
-      producerId: user.id, title: 'Club integration', description: 'integration', slug: `${prefix}-event`,
+      organizationId: 'org_outrahora', producerId: user.id, title: 'Club integration', description: 'integration', slug: `${prefix}-event`,
       venue: 'Test', address: 'Test', city: 'Test', state: 'TS', status: 'PUBLISHED',
       startDate: new Date(Date.now() + 86_400_000), endDate: new Date(Date.now() + 172_800_000),
     } });

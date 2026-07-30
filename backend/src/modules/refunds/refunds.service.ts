@@ -1,11 +1,15 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Prisma, Role } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { StripeRefundProvider } from './stripe-refund.provider';
 import { AbacateRefundProvider } from './abacate-refund.provider';
 import { RefundProvider } from './refund-provider';
 import { EmailOutboxService } from '../mail/email-outbox.service';
+import { OrganizationAccessService } from '../organizations/organization-access.service';
+import { OrganizationActor } from '../organizations/organization-access.types';
+
+const SALES_ADMIN_ROLES = ['ORG_ADMIN', 'PRODUCER'] as const;
 
 export const CANCELLATION_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 export const EVENT_CUTOFF_MS = 48 * 60 * 60 * 1000;
@@ -13,7 +17,7 @@ export const EVENT_CUTOFF_MS = 48 * 60 * 60 * 1000;
 @Injectable()
 export class RefundsService {
   private readonly logger = new Logger(RefundsService.name);
-  constructor(private prisma: PrismaService, private stripe: StripeRefundProvider, private abacate: AbacateRefundProvider, private mail: MailService, private outbox?: EmailOutboxService) {}
+  constructor(private prisma: PrismaService, private stripe: StripeRefundProvider, private abacate: AbacateRefundProvider, private mail: MailService, private outbox?: EmailOutboxService, private organizationAccess?: OrganizationAccessService) {}
 
   eligibility(order: { status: string; createdAt: Date; event: { startDate: Date }; tickets?: Array<{ status: string; checkIn?: unknown }> }, now = new Date()) {
     if (order.status === 'REFUNDED') return { eligible: false, code: 'ALREADY_REFUNDED', message: 'Este pedido já foi reembolsado.' };
@@ -77,10 +81,14 @@ export class RefundsService {
     });
   }
 
-  async adminList(page = 1, limit = 20) {
+  async adminList(actor: OrganizationActor, page = 1, limit = 20) {
+    if (!this.organizationAccess) throw new Error('OrganizationAccessService não configurado');
+    const access = await this.organizationAccess.forCollection(actor, SALES_ADMIN_ROLES);
+    const eventWhere = this.organizationAccess.eventOrganizationWhere(access);
     const take = Math.min(limit, 50), skip = (page - 1) * take;
     const db = this.prisma as any;
-    const [data, total] = await Promise.all([db.refund.findMany({ skip, take, orderBy: { requestedAt: 'desc' }, include: { order: { include: { user: { select: { name: true, email: true } }, event: { select: { title: true } } } } } }), db.refund.count()]);
+    const where = { order: { event: eventWhere } };
+    const [data, total] = await Promise.all([db.refund.findMany({ where, skip, take, orderBy: { requestedAt: 'desc' }, include: { order: { include: { user: { select: { name: true, email: true } }, event: { select: { title: true } } } } } }), db.refund.count({ where })]);
     return { data, meta: { total, page, lastPage: Math.ceil(total / take) } };
   }
 

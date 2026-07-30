@@ -52,7 +52,7 @@ describeIntegration('Order fulfillment with real PostgreSQL', () => {
     const key = `${prefix}-${label}`;
     const user = await prismaA.user.create({ data: { email: `${key}@example.test`, password: 'hash', name: 'Buyer' } });
     const event = await prismaA.event.create({ data: {
-      producerId: user.id, title: label, description: 'integration', slug: key,
+      organizationId: 'org_outrahora', producerId: user.id, title: label, description: 'integration', slug: key,
       venue: 'Test', address: 'Test', city: 'Test', state: 'TS',
       startDate: new Date(Date.now() + 86_400_000), endDate: new Date(Date.now() + 172_800_000), status: 'PUBLISHED',
     } });

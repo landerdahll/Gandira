@@ -10,15 +10,21 @@ describe('EventsService featured events', () => {
       findUnique: jest.fn(),
       update: jest.fn(),
       create: jest.fn(),
+      findMany: jest.fn(),
+      count: jest.fn(),
     },
   };
-  const organizations = { resolveForEventCreation: jest.fn() };
-  const service = new EventsService(prisma as any, organizations as any);
+  const organizationAccess = {
+    forCollection: jest.fn(),
+    forEvent: jest.fn(),
+    eventOrganizationWhere: jest.fn(),
+  };
+  const service = new EventsService(prisma as any, organizationAccess as any);
 
   beforeEach(() => jest.clearAllMocks());
 
   it('assigns a newly created event to the resolved organization', async () => {
-    organizations.resolveForEventCreation.mockResolvedValue({ organizationId: 'org-1' });
+    organizationAccess.forCollection.mockResolvedValue({ organizationId: 'org-1' });
     prisma.event.findUnique.mockResolvedValue(null);
     prisma.event.create.mockImplementation(({ data }) => Promise.resolve(data));
 
@@ -33,12 +39,29 @@ describe('EventsService featured events', () => {
       endDate: '2027-01-02T02:00:00.000Z',
     };
 
-    await service.create(dto as any, 'producer-1');
+    await service.create(dto as any, { id: 'producer-1', platformRole: 'MEMBER' });
 
-    expect(organizations.resolveForEventCreation).toHaveBeenCalledWith('producer-1');
+    expect(organizationAccess.forCollection).toHaveBeenCalledWith(
+      { id: 'producer-1', platformRole: 'MEMBER' },
+      ['ORG_ADMIN', 'PRODUCER'],
+    );
     expect(prisma.event.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ organizationId: 'org-1', producerId: 'producer-1' }),
     }));
+  });
+
+  it('lists administrative events using organizationId instead of producerId', async () => {
+    organizationAccess.forCollection.mockResolvedValue({ organizationId: 'org-a', isSuperAdmin: false });
+    organizationAccess.eventOrganizationWhere.mockReturnValue({ organizationId: 'org-a' });
+    prisma.event.findMany.mockResolvedValue([]);
+    prisma.event.count.mockResolvedValue(0);
+
+    await service.findProducerEvents({ id: 'producer-a', platformRole: 'MEMBER' });
+
+    expect(prisma.event.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { organizationId: 'org-a' },
+    }));
+    expect(prisma.event.count).toHaveBeenCalledWith({ where: { organizationId: 'org-a' } });
   });
 
   it('clears ended flags and returns the nearest configured featured event', async () => {

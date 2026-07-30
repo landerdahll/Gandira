@@ -7,12 +7,17 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateBatchDto } from './dto/create-batch.dto';
 import { UpdateBatchDto } from './dto/update-batch.dto';
+import { OrganizationAccessService } from '../organizations/organization-access.service';
+import { OrganizationActor } from '../organizations/organization-access.types';
+
+const EVENT_MANAGEMENT_ROLES = ['ORG_ADMIN', 'PRODUCER'] as const;
 
 @Injectable()
 export class BatchesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private organizationAccess: OrganizationAccessService) {}
 
-  async create(eventId: string, dto: CreateBatchDto, _producerId: string) {
+  async create(eventId: string, dto: CreateBatchDto, actor: OrganizationActor) {
+    await this.organizationAccess.forEvent(actor, eventId, EVENT_MANAGEMENT_ROLES);
     const event = await this.prisma.event.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Evento não encontrado');
     if (event.status === 'CANCELLED' || event.status === 'FINISHED') {
@@ -42,7 +47,8 @@ export class BatchesService {
     });
   }
 
-  async update(eventId: string, batchId: string, dto: UpdateBatchDto, _producerId: string) {
+  async update(eventId: string, batchId: string, dto: UpdateBatchDto, actor: OrganizationActor) {
+    await this.organizationAccess.forEvent(actor, eventId, EVENT_MANAGEMENT_ROLES);
     const event = await this.prisma.event.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Evento não encontrado');
 

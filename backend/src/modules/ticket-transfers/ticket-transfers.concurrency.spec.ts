@@ -119,10 +119,11 @@ describe('ticket transfer concurrency claims', () => {
     const { state, tx } = activeTicketState();
     const prisma: any = { $transaction: jest.fn((callback: any) => callback(tx)) };
     const transfers = new TicketTransfersService(prisma, { sendTicketTransferEmail: jest.fn().mockResolvedValue(undefined) } as any, { get: jest.fn((_key: string, fallback: string) => fallback) } as any);
-    const tickets = new TicketsService(prisma);
+    const access = { forEvent: jest.fn().mockResolvedValue({ organizationId: 'org-1' }) };
+    const tickets = new TicketsService(prisma, access as any);
 
     const results = await Promise.allSettled([
-      tickets.validateAndCheckIn('qr-token', 'event-1', 'staff-1'),
+      tickets.validateAndCheckIn('qr-token', 'event-1', { id: 'staff-1', platformRole: 'MEMBER' }),
       transfers.request('ticket-1', 'sender-1', 'new@example.com'),
     ]);
 

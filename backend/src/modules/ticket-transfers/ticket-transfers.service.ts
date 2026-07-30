@@ -12,16 +12,19 @@ import { EmailOutboxService } from '../mail/email-outbox.service';
 import { EmailTokenService } from '../mail/email-token.service';
 import { randomUUID } from 'crypto';
 import { getPublicFrontendUrl } from '../../common/utils/public-url.util';
+import { OrganizationAccessService } from '../organizations/organization-access.service';
+import { OrganizationActor } from '../organizations/organization-access.types';
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
 const normalizeEmail = (value: string) => value.trim().toLowerCase();
+const TRANSFER_ADMIN_ROLES = ['ORG_ADMIN', 'PRODUCER'] as const;
 type InviteRecipient = Pick<User, 'id' | 'email' | 'name'>;
 
 @Injectable()
 export class TicketTransfersService {
   private readonly logger = new Logger(TicketTransfersService.name);
-  constructor(private prismaService: PrismaService, private mail: MailService, private config: ConfigService, private outbox?: EmailOutboxService, private emailTokens?: EmailTokenService) {}
+  constructor(private prismaService: PrismaService, private mail: MailService, private config: ConfigService, private outbox?: EmailOutboxService, private emailTokens?: EmailTokenService, private organizationAccess?: OrganizationAccessService) {}
   private get prisma() { return this.prismaService; }
   private get tokenService() { return this.emailTokens ?? new EmailTokenService(this.config); }
   private get queue(): Pick<EmailOutboxService, 'enqueue'> {
@@ -223,9 +226,14 @@ export class TicketTransfersService {
   }
   mine(userId: string) { return this.prisma.ticketTransfer.findMany({ where: { OR: [{ senderUserId: userId }, { recipientUserId: userId }] }, orderBy: { requestedAt: 'desc' }, include: { event: { select: { title: true } }, ticket: { select: { id: true } }, sender: { select: { name: true } }, recipient: { select: { name: true } } } }); }
 
-  async adminList(query: any) {
+  async adminList(query: any, actor: OrganizationActor) {
+    const access = query.eventId
+      ? await this.access.forEvent(actor, query.eventId, TRANSFER_ADMIN_ROLES)
+      : await this.access.forCollection(actor, TRANSFER_ADMIN_ROLES);
+    const eventOrganizationWhere = this.access.eventOrganizationWhere(access);
     const take = Math.min(Math.max(query.limit || 20, 1), 100), page = Math.max(query.page || 1, 1);
     const where: any = {
+      event: eventOrganizationWhere,
       ...(query.eventId && { eventId: query.eventId }), ...(query.status && { status: query.status }),
       ...(query.email && { recipientEmail: { contains: query.email, mode: 'insensitive' } }),
       ...(query.sender && { sender: { name: { contains: query.sender, mode: 'insensitive' } } }),
@@ -237,10 +245,18 @@ export class TicketTransfersService {
     const [data, total] = await Promise.all([this.prisma.ticketTransfer.findMany({ where, include, orderBy: { requestedAt: 'desc' }, skip: (page - 1) * take, take }), this.prisma.ticketTransfer.count({ where })]);
     return { data, meta: { total, page, lastPage: Math.ceil(total / take) } };
   }
-  async adminDetail(id: string) {
+  async adminDetail(id: string, actor: OrganizationActor) {
+    const reference = await this.prisma.ticketTransfer.findUnique({ where: { id }, select: { eventId: true } });
+    if (!reference) throw new NotFoundException('Transferência não encontrada');
+    await this.access.forEvent(actor, reference.eventId, TRANSFER_ADMIN_ROLES);
     const transfer = await this.prisma.ticketTransfer.findUnique({ where: { id }, include: { event: true, sender: { select: { name: true, email: true } }, recipient: { select: { name: true, email: true } }, ticket: { include: { batch: true, order: { include: { user: { select: { name: true, email: true } } } }, owner: { select: { name: true, email: true } }, checkIn: true } }, history: { orderBy: { createdAt: 'asc' } } } });
     if (!transfer) throw new NotFoundException('Transferência não encontrada');
     return transfer;
+  }
+
+  private get access() {
+    if (!this.organizationAccess) throw new Error('OrganizationAccessService não configurado');
+    return this.organizationAccess;
   }
 
   private async enqueueRequestedEmails(tx: Prisma.TransactionClient, transfer: any, n: any) {

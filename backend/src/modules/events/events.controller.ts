@@ -92,15 +92,13 @@ export class EventsController {
   // ── Producer ───────────────────────────────────────────────────────────────
 
   @Post()
-  @Roles(Role.PRODUCER, Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Criar evento' })
   create(@Body() dto: CreateEventDto, @CurrentUser() user: any) {
-    return this.events.create(dto, user.id);
+    return this.events.create(dto, user);
   }
 
   @Post('upload-image')
-  @Roles(Role.PRODUCER, Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Upload de imagem para evento (máx. 5 MB)' })
   @UseInterceptors(
@@ -115,30 +113,28 @@ export class EventsController {
       },
     }),
   )
-  async uploadImage(@UploadedFile() file: Express.Multer.File) {
+  async uploadImage(@UploadedFile() file: Express.Multer.File, @CurrentUser() user: any) {
     if (!file) throw new BadRequestException('Nenhum arquivo enviado');
+    await this.events.authorizeUpload(user);
     const result = await this.cloudinary.uploadBuffer(file.buffer, file.mimetype, 'outrahora/events');
     return { url: result.secure_url };
   }
 
   @Get(':id/manage')
-  @Roles(Role.PRODUCER, Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Buscar evento por ID (edição)' })
   findForEdit(@Param('id') id: string, @CurrentUser() user: any) {
-    return this.events.findByIdForProducer(id, user.id);
+    return this.events.findByIdForProducer(id, user);
   }
 
   @Patch(':id')
-  @Roles(Role.PRODUCER, Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Editar evento' })
   update(@Param('id') id: string, @Body() dto: UpdateEventDto, @CurrentUser() user: any) {
-    return this.events.update(id, user.id, dto);
+    return this.events.update(id, user, dto);
   }
 
   @Get('producer/my-events')
-  @Roles(Role.PRODUCER, Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Meus eventos (produtor)' })
   myEvents(
@@ -146,22 +142,20 @@ export class EventsController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
   ) {
-    return this.events.findProducerEvents(user.id, page, limit);
+    return this.events.findProducerEvents(user, page, limit);
   }
 
   @Patch(':id/publish')
-  @Roles(Role.PRODUCER, Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Publicar evento' })
   publish(@Param('id') id: string, @CurrentUser() user: any) {
-    return this.events.publish(id, user.id);
+    return this.events.publish(id, user);
   }
 
   @Patch(':id/cancel')
-  @Roles(Role.PRODUCER, Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancelar evento (cancela ingressos e triggers reembolso)' })
   cancel(@Param('id') id: string, @CurrentUser() user: any) {
-    return this.events.cancel(id, user.id);
+    return this.events.cancel(id, user);
   }
 }

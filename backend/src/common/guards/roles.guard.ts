@@ -16,7 +16,8 @@ export class RolesGuard implements CanActivate {
 
     const { user } = context.switchToHttp().getRequest();
     if (user?.platformRole === 'SUPER_ADMIN') return true;
-    if (!user || !required.includes(user.role)) {
+    const legacyOrganizationRoles = required.filter(role => role !== Role.ADMIN);
+    if (!user || !legacyOrganizationRoles.includes(user.role)) {
       throw new ForbiddenException('Acesso negado');
     }
     return true;

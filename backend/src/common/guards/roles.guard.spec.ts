@@ -24,4 +24,9 @@ describe('RolesGuard platform roles', () => {
     expect(() => guard.canActivate(context({ role: Role.CUSTOMER, platformRole: 'MEMBER' })))
       .toThrow(ForbiddenException);
   });
+
+  it('does not grant global access from the legacy ADMIN value alone', () => {
+    expect(() => guard.canActivate(context({ role: Role.ADMIN, platformRole: 'MEMBER' })))
+      .toThrow(ForbiddenException);
+  });
 });

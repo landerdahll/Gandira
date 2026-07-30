@@ -2,10 +2,8 @@ import { Controller, Get, Post, Delete, Body, Param, HttpCode, HttpStatus } from
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
 import { CouponsService } from './coupons.service';
 import { CreateCouponDto } from './dto/create-coupon.dto';
-import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 
@@ -20,7 +18,6 @@ export class CouponsController {
   constructor(private coupons: CouponsService) {}
 
   @Post()
-  @Roles(Role.PRODUCER, Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Criar cupom de desconto' })
   create(
@@ -28,19 +25,17 @@ export class CouponsController {
     @Body() dto: CreateCouponDto,
     @CurrentUser() user: any,
   ) {
-    return this.coupons.create(eventId, user.id, dto);
+    return this.coupons.create(eventId, user, dto);
   }
 
   @Get()
-  @Roles(Role.PRODUCER, Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Listar cupons do evento' })
   list(@Param('eventId') eventId: string, @CurrentUser() user: any) {
-    return this.coupons.list(eventId, user.id);
+    return this.coupons.list(eventId, user);
   }
 
   @Delete(':couponId')
-  @Roles(Role.PRODUCER, Role.ADMIN)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remover cupom' })
@@ -49,7 +44,7 @@ export class CouponsController {
     @Param('couponId') couponId: string,
     @CurrentUser() user: any,
   ) {
-    return this.coupons.remove(eventId, couponId, user.id);
+    return this.coupons.remove(eventId, couponId, user);
   }
 }
 

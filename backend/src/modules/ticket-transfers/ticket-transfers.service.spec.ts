@@ -114,3 +114,45 @@ describe('TicketTransfersService Clube Outrahora', () => {
       .rejects.toThrow('Este ingresso recebeu o benefício do Clube Outrahora e não pode ser transferido');
   });
 });
+
+describe('TicketTransfersService organization isolation', () => {
+  const access = {
+    forCollection: jest.fn(),
+    forEvent: jest.fn(),
+    eventOrganizationWhere: jest.fn().mockReturnValue({ organizationId: 'org-a' }),
+  };
+  const prisma = {
+    ticketTransfer: {
+      findMany: jest.fn().mockResolvedValue([]),
+      count: jest.fn().mockResolvedValue(0),
+      findUnique: jest.fn(),
+    },
+  };
+  const service = new TicketTransfersService(prisma as any, {} as any, {} as any, undefined, undefined, access as any);
+  const actor = { id: 'admin-a', platformRole: 'MEMBER' };
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it('derives organization from eventId and keeps the organization filter mandatory', async () => {
+    access.forEvent.mockResolvedValue({ organizationId: 'org-a', isSuperAdmin: false });
+    await service.adminList({ eventId: 'event-a', page: 1, limit: 20 }, actor);
+
+    expect(access.forEvent).toHaveBeenCalledWith(actor, 'event-a', ['ORG_ADMIN', 'PRODUCER']);
+    expect(prisma.ticketTransfer.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ eventId: 'event-a', event: { organizationId: 'org-a' } }),
+    }));
+    expect(prisma.ticketTransfer.count).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ event: { organizationId: 'org-a' } }),
+    }));
+  });
+
+  it('authorizes transfer detail through its event', async () => {
+    prisma.ticketTransfer.findUnique
+      .mockResolvedValueOnce({ eventId: 'event-a' })
+      .mockResolvedValueOnce({ id: 'transfer-a', eventId: 'event-a' });
+    access.forEvent.mockResolvedValue({ organizationId: 'org-a' });
+
+    await service.adminDetail('transfer-a', actor);
+    expect(access.forEvent).toHaveBeenCalledWith(actor, 'event-a', ['ORG_ADMIN', 'PRODUCER']);
+  });
+});

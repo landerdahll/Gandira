@@ -4,6 +4,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { generateSecureToken } from '../../common/utils/crypto.util';
 import { Prisma } from '@prisma/client';
 import { withSerializableRetry } from '../../common/utils/serializable-retry.util';
+import { OrganizationAccessService } from '../organizations/organization-access.service';
+import { OrganizationActor } from '../organizations/organization-access.types';
+
+const CHECK_IN_ROLES = ['ORG_ADMIN', 'PRODUCER', 'STAFF'] as const;
 
 interface GenerateTicketInput {
   orderId: string;
@@ -15,7 +19,7 @@ interface GenerateTicketInput {
 export class TicketsService {
   private readonly logger = new Logger(TicketsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private organizationAccess?: OrganizationAccessService) {}
 
   /**
    * Gera um ingresso com token criptograficamente aleatório.
@@ -138,8 +142,10 @@ export class TicketsService {
    * Verifica: existência, status, evento correto.
    * Marca como usado em uma transação atômica para evitar dupla entrada.
    */
-  async validateAndCheckIn(token: string, eventId: string, staffId: string) {
+  async validateAndCheckIn(token: string, eventId: string, actor: OrganizationActor) {
     const result = await withSerializableRetry(() => this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      if (!this.organizationAccess) throw new Error('OrganizationAccessService não configurado');
+      await this.organizationAccess.forEvent(actor, eventId, CHECK_IN_ROLES, tx);
       const ticket = await tx.ticket.findUnique({
         where: { token },
         include: {
@@ -178,12 +184,12 @@ export class TicketsService {
         data: { status: 'USED' },
       });
       if (claimed.count !== 1) return { valid: false, reason: 'Ingresso indisponível ou alterado durante a leitura', holder };
-      await tx.checkIn.create({ data: { ticketId: ticket.id, eventId, staffId, method: 'QR_CODE' } });
+      await tx.checkIn.create({ data: { ticketId: ticket.id, eventId, staffId: actor.id, method: 'QR_CODE' } });
 
       return { valid: true, reason: 'Entrada autorizada', holder, ticketId: ticket.id };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }));
     if (result.valid) {
-      this.logger.log(`Ticket ${result.ticketId} checked in at event ${eventId} by staff ${staffId}`);
+      this.logger.log(`Ticket ${result.ticketId} checked in at event ${eventId} by staff ${actor.id}`);
       const { ticketId: _ticketId, ...response } = result;
       return response;
     }

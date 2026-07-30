@@ -1,10 +1,8 @@
 import { Controller, Get, Post, Patch, Body, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
 import { BatchesService } from './batches.service';
 import { CreateBatchDto } from './dto/create-batch.dto';
 import { UpdateBatchDto } from './dto/update-batch.dto';
-import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 
@@ -21,7 +19,6 @@ export class BatchesController {
   }
 
   @Post()
-  @Roles(Role.PRODUCER, Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Criar lote' })
   create(
@@ -29,11 +26,10 @@ export class BatchesController {
     @Body() dto: CreateBatchDto,
     @CurrentUser() user: any,
   ) {
-    return this.batches.create(eventId, dto, user.id);
+    return this.batches.create(eventId, dto, user);
   }
 
   @Patch(':batchId')
-  @Roles(Role.PRODUCER, Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Editar quantidade/preço do lote' })
   update(
@@ -42,6 +38,6 @@ export class BatchesController {
     @Body() dto: UpdateBatchDto,
     @CurrentUser() user: any,
   ) {
-    return this.batches.update(eventId, batchId, dto, user.id);
+    return this.batches.update(eventId, batchId, dto, user);
   }
 }

@@ -1,15 +1,19 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCouponDto } from './dto/create-coupon.dto';
+import { OrganizationAccessService } from '../organizations/organization-access.service';
+import { OrganizationActor } from '../organizations/organization-access.types';
+
+const EVENT_MANAGEMENT_ROLES = ['ORG_ADMIN', 'PRODUCER'] as const;
 
 @Injectable()
 export class CouponsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private organizationAccess: OrganizationAccessService) {}
 
-  async create(eventId: string, producerId: string, dto: CreateCouponDto) {
+  async create(eventId: string, actor: OrganizationActor, dto: CreateCouponDto) {
+    await this.organizationAccess.forEvent(actor, eventId, EVENT_MANAGEMENT_ROLES);
     const event = await this.prisma.event.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Evento não encontrado');
-    if (event.producerId !== producerId) throw new ForbiddenException('Acesso negado');
 
     const code = dto.code.toUpperCase().trim();
 
@@ -30,10 +34,10 @@ export class CouponsService {
     });
   }
 
-  async list(eventId: string, producerId: string) {
+  async list(eventId: string, actor: OrganizationActor) {
+    await this.organizationAccess.forEvent(actor, eventId, EVENT_MANAGEMENT_ROLES);
     const event = await this.prisma.event.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Evento não encontrado');
-    if (event.producerId !== producerId) throw new ForbiddenException('Acesso negado');
 
     return this.prisma.coupon.findMany({
       where: { eventId },
@@ -41,13 +45,13 @@ export class CouponsService {
     });
   }
 
-  async remove(eventId: string, couponId: string, producerId: string) {
-    const coupon = await this.prisma.coupon.findUnique({
+  async remove(eventId: string, couponId: string, actor: OrganizationActor) {
+    await this.organizationAccess.forEvent(actor, eventId, EVENT_MANAGEMENT_ROLES);
+    const coupon = await (this.prisma.coupon.findUnique as any)({
       where: { id: couponId },
-      include: { event: { select: { producerId: true } } },
+      include: { event: { select: { organizationId: true } } },
     });
     if (!coupon || coupon.eventId !== eventId) throw new NotFoundException('Cupom não encontrado');
-    if (coupon.event.producerId !== producerId) throw new ForbiddenException('Acesso negado');
 
     await this.prisma.coupon.delete({ where: { id: couponId } });
   }

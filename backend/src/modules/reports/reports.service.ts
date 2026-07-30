@@ -1,11 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { OrganizationAccessService } from '../organizations/organization-access.service';
+import { OrganizationActor } from '../organizations/organization-access.types';
+
+const REPORT_ROLES = ['ORG_ADMIN', 'PRODUCER'] as const;
 
 @Injectable()
 export class ReportsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private organizationAccess: OrganizationAccessService) {}
 
-  async getEventReport(eventId: string, _producerId: string) {
+  async getEventReport(eventId: string, actor: OrganizationActor) {
+    await this.organizationAccess.forEvent(actor, eventId, REPORT_ROLES);
     const event = await this.prisma.event.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Evento não encontrado');
 
@@ -141,22 +146,24 @@ export class ReportsService {
     };
   }
 
-  async getProducerDashboard(producerId: string) {
+  async getProducerDashboard(actor: OrganizationActor) {
+    const access = await this.organizationAccess.forCollection(actor, REPORT_ROLES);
+    const eventWhere = this.organizationAccess.eventOrganizationWhere(access);
     const [eventCount, totalRevenue, totalTickets, recentOrders, revenueByEvent, couponStats] =
       await Promise.all([
-        this.prisma.event.count({ where: { producerId } }),
+        this.prisma.event.count({ where: eventWhere }),
 
         this.prisma.order.aggregate({
-          where: { status: 'PAID', event: { producerId } },
+          where: { status: 'PAID', event: eventWhere },
           _sum: { total: true },
         }),
 
         this.prisma.ticket.count({
-          where: { status: { in: ['ACTIVE', 'USED'] }, event: { producerId } },
+          where: { status: { in: ['ACTIVE', 'USED'] }, event: eventWhere },
         }),
 
         this.prisma.order.findMany({
-          where: { status: 'PAID', event: { producerId } },
+          where: { status: 'PAID', event: eventWhere },
           take: 10,
           orderBy: { createdAt: 'desc' },
           include: {
@@ -169,13 +176,13 @@ export class ReportsService {
         // Receita real por evento (já com descontos deduzidos)
         this.prisma.order.groupBy({
           by: ['eventId'],
-          where: { status: 'PAID', event: { producerId } },
+          where: { status: 'PAID', event: eventWhere },
           _sum: { total: true, discountAmount: true },
         }),
 
         // Cupons que tiveram uso em pedidos pagos
         this.prisma.coupon.findMany({
-          where: { event: { producerId }, usedCount: { gt: 0 } },
+          where: { event: eventWhere, usedCount: { gt: 0 } },
           select: {
             id: true,
             code: true,

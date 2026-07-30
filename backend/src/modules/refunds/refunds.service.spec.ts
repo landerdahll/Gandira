@@ -15,3 +15,19 @@ describe('RefundsService eligibility', () => {
   it('rejects any checked-in ticket in the order', () => expect(service.eligibility(order({ tickets: [{ status: 'USED', checkIn: {} }] }), now).code).toBe('TICKET_USED'));
   it.each(['REFUND_PENDING', 'REFUNDED', 'REFUND_FAILED'])('rejects status %s', status => expect(service.eligibility(order({ status }), now).eligible).toBe(false));
 });
+
+describe('RefundsService organization isolation', () => {
+  it('filters both administrative rows and count through Order -> Event', async () => {
+    const prisma = { refund: { findMany: jest.fn().mockResolvedValue([]), count: jest.fn().mockResolvedValue(0) } };
+    const access = {
+      forCollection: jest.fn().mockResolvedValue({ organizationId: 'org-a', isSuperAdmin: false }),
+      eventOrganizationWhere: jest.fn().mockReturnValue({ organizationId: 'org-a' }),
+    };
+    const service = new RefundsService(prisma as any, {} as any, {} as any, {} as any, undefined, access as any);
+
+    await service.adminList({ id: 'producer-a', platformRole: 'MEMBER' });
+    const where = { order: { event: { organizationId: 'org-a' } } };
+    expect(prisma.refund.findMany).toHaveBeenCalledWith(expect.objectContaining({ where }));
+    expect(prisma.refund.count).toHaveBeenCalledWith({ where });
+  });
+});

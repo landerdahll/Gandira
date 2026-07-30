@@ -11,17 +11,20 @@ import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { slugify } from '../../common/utils/crypto.util';
 import { randomBytes } from 'crypto';
-import { OrganizationsService } from '../organizations/organizations.service';
+import { OrganizationAccessService } from '../organizations/organization-access.service';
+import { OrganizationActor } from '../organizations/organization-access.types';
+
+const EVENT_MANAGEMENT_ROLES = ['ORG_ADMIN', 'PRODUCER'] as const;
 
 @Injectable()
 export class EventsService {
   constructor(
     private prisma: PrismaService,
-    private organizations: OrganizationsService,
+    private organizationAccess: OrganizationAccessService,
   ) {}
 
-  async create(dto: CreateEventDto, producerId: string) {
-    const membership = await this.organizations.resolveForEventCreation(producerId);
+  async create(dto: CreateEventDto, actor: OrganizationActor) {
+    const access = await this.organizationAccess.forCollection(actor, EVENT_MANAGEMENT_ROLES);
     let slug = slugify(dto.title);
     const existing = await this.prisma.event.findUnique({ where: { slug } });
     if (existing) slug = `${slug}-${randomBytes(3).toString('hex')}`;
@@ -30,8 +33,8 @@ export class EventsService {
       data: {
         ...dto,
         slug,
-        producerId,
-        organizationId: membership.organizationId,
+        producerId: actor.id,
+        organizationId: access.organizationId,
         startDate: new Date(dto.startDate),
         endDate: new Date(dto.endDate),
         doorsOpen: dto.doorsOpen ? new Date(dto.doorsOpen) : undefined,
@@ -244,12 +247,15 @@ export class EventsService {
     return event;
   }
 
-  async findProducerEvents(_producerId: string, page = 1, limit = 20) {
+  async findProducerEvents(actor: OrganizationActor, page = 1, limit = 20) {
+    const access = await this.organizationAccess.forCollection(actor, EVENT_MANAGEMENT_ROLES);
+    const organizationWhere = this.organizationAccess.eventOrganizationWhere(access);
     const take = Math.min(limit, 50);
     const skip = (page - 1) * take;
 
     const [data, total] = await Promise.all([
       this.prisma.event.findMany({
+        where: organizationWhere,
         skip,
         take,
         orderBy: { createdAt: 'desc' },
@@ -258,7 +264,7 @@ export class EventsService {
           batches: { select: { price: true, sold: true } },
         },
       }),
-      this.prisma.event.count(),
+      this.prisma.event.count({ where: organizationWhere }),
     ]);
 
     return {
@@ -267,7 +273,8 @@ export class EventsService {
     };
   }
 
-  async findByIdForProducer(eventId: string, _producerId: string) {
+  async findByIdForProducer(eventId: string, actor: OrganizationActor) {
+    await this.organizationAccess.forEvent(actor, eventId, EVENT_MANAGEMENT_ROLES);
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
       include: {
@@ -278,8 +285,8 @@ export class EventsService {
     return event;
   }
 
-  async update(eventId: string, producerId: string, dto: UpdateEventDto) {
-    await this.getOwnedEvent(eventId, producerId);
+  async update(eventId: string, actor: OrganizationActor, dto: UpdateEventDto) {
+    await this.getOwnedEvent(eventId, actor);
     const { startDate, endDate, doorsOpen, ...rest } = dto;
     return this.prisma.event.update({
       where: { id: eventId },
@@ -292,8 +299,8 @@ export class EventsService {
     });
   }
 
-  async publish(eventId: string, producerId: string) {
-    const event = await this.getOwnedEvent(eventId, producerId);
+  async publish(eventId: string, actor: OrganizationActor) {
+    const event = await this.getOwnedEvent(eventId, actor);
 
     const hasBatches = await this.prisma.batch.count({ where: { eventId, status: 'ACTIVE' } });
     if (!hasBatches) {
@@ -306,8 +313,8 @@ export class EventsService {
     });
   }
 
-  async cancel(eventId: string, producerId: string) {
-    const event = await this.getOwnedEvent(eventId, producerId);
+  async cancel(eventId: string, actor: OrganizationActor) {
+    const event = await this.getOwnedEvent(eventId, actor);
 
     if (event.status === EventStatus.FINISHED) {
       throw new ForbiddenException('Evento já finalizado');
@@ -324,7 +331,12 @@ export class EventsService {
     });
   }
 
-  private async getOwnedEvent(eventId: string, _producerId: string) {
+  async authorizeUpload(actor: OrganizationActor) {
+    return this.organizationAccess.forCollection(actor, EVENT_MANAGEMENT_ROLES);
+  }
+
+  private async getOwnedEvent(eventId: string, actor: OrganizationActor) {
+    await this.organizationAccess.forEvent(actor, eventId, EVENT_MANAGEMENT_ROLES);
     const event = await this.prisma.event.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Evento não encontrado');
     return event;

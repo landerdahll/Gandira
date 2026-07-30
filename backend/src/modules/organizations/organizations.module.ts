@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
+import { OrganizationAccessService } from './organization-access.service';
 
 @Module({
-  providers: [OrganizationsService],
-  exports: [OrganizationsService],
+  providers: [OrganizationsService, OrganizationAccessService],
+  exports: [OrganizationsService, OrganizationAccessService],
 })
 export class OrganizationsModule {}
