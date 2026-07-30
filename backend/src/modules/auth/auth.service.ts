@@ -25,6 +25,15 @@ import { getPublicFrontendUrl } from '../../common/utils/public-url.util';
 
 const BCRYPT_ROUNDS = 12;
 
+type AuthenticatedUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  platformRole: 'MEMBER' | 'SUPER_ADMIN';
+  isVerified: boolean;
+};
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -83,7 +92,7 @@ export class AuthService {
     } : null;
     let invitedTokens: { accessToken: string; refreshToken: string } | null = null;
 
-    const createUser = async (db: Prisma.TransactionClient | PrismaService) => db.user.create({
+    const createUser = async (db: Prisma.TransactionClient | PrismaService): Promise<AuthenticatedUser> => (db.user.create as any)({
         data: {
           name: dto.name,
           email: normalizedEmail,
@@ -94,7 +103,7 @@ export class AuthService {
           birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
           ...(demoEmailMode ? { isVerified: true } : {}),
         },
-        select: { id: true, email: true, name: true, role: true, isVerified: true },
+        select: { id: true, email: true, name: true, role: true, platformRole: true, isVerified: true },
       });
 
     let user: Awaited<ReturnType<typeof createUser>>;
@@ -231,7 +240,7 @@ export class AuthService {
 
     const tokens = await this.generateTokenPair(user.id, user.email, user.role);
     return {
-      user: { id: user.id, email: user.email, name: user.name, role: user.role, isVerified: user.isVerified },
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, platformRole: (user as any).platformRole, isVerified: user.isVerified },
       ...tokens,
     };
   }

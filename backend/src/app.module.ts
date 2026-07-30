@@ -20,6 +20,7 @@ import { CouponsModule } from './modules/coupons/coupons.module';
 import { AbacatepayModule } from './modules/abacatepay/abacatepay.module';
 import { ClubMembersModule } from './modules/club-members/club-members.module';
 import { RefundsModule } from './modules/refunds/refunds.module';
+import { OrganizationsModule } from './modules/organizations/organizations.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { RefundsModule } from './modules/refunds/refunds.module';
     AbacatepayModule,
     ClubMembersModule,
     RefundsModule,
+    OrganizationsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

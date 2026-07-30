@@ -9,11 +9,37 @@ describe('EventsService featured events', () => {
       findFirst: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+      create: jest.fn(),
     },
   };
-  const service = new EventsService(prisma as any);
+  const organizations = { resolveForEventCreation: jest.fn() };
+  const service = new EventsService(prisma as any, organizations as any);
 
   beforeEach(() => jest.clearAllMocks());
+
+  it('assigns a newly created event to the resolved organization', async () => {
+    organizations.resolveForEventCreation.mockResolvedValue({ organizationId: 'org-1' });
+    prisma.event.findUnique.mockResolvedValue(null);
+    prisma.event.create.mockImplementation(({ data }) => Promise.resolve(data));
+
+    const dto = {
+      title: 'Evento da organização',
+      description: 'Descrição',
+      venue: 'Local',
+      address: 'Rua 1',
+      city: 'Porto Alegre',
+      state: 'RS',
+      startDate: '2027-01-01T20:00:00.000Z',
+      endDate: '2027-01-02T02:00:00.000Z',
+    };
+
+    await service.create(dto as any, 'producer-1');
+
+    expect(organizations.resolveForEventCreation).toHaveBeenCalledWith('producer-1');
+    expect(prisma.event.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ organizationId: 'org-1', producerId: 'producer-1' }),
+    }));
+  });
 
   it('clears ended flags and returns the nearest configured featured event', async () => {
     const selected = { id: 'featured-1', featured: true };

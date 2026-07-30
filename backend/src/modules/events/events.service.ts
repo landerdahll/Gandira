@@ -11,12 +11,17 @@ import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { slugify } from '../../common/utils/crypto.util';
 import { randomBytes } from 'crypto';
+import { OrganizationsService } from '../organizations/organizations.service';
 
 @Injectable()
 export class EventsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private organizations: OrganizationsService,
+  ) {}
 
   async create(dto: CreateEventDto, producerId: string) {
+    const membership = await this.organizations.resolveForEventCreation(producerId);
     let slug = slugify(dto.title);
     const existing = await this.prisma.event.findUnique({ where: { slug } });
     if (existing) slug = `${slug}-${randomBytes(3).toString('hex')}`;
@@ -26,10 +31,11 @@ export class EventsService {
         ...dto,
         slug,
         producerId,
+        organizationId: membership.organizationId,
         startDate: new Date(dto.startDate),
         endDate: new Date(dto.endDate),
         doorsOpen: dto.doorsOpen ? new Date(dto.doorsOpen) : undefined,
-      },
+      } as any,
     });
   }
 

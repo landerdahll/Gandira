@@ -8,11 +8,17 @@ async function main() {
 
   const password = await bcrypt.hash('Admin@123', 12);
 
+  const organization = await prisma.organization.upsert({
+    where: { slug: 'outrahora' },
+    update: { name: 'OutraHora', isActive: true },
+    create: { id: 'org_outrahora', name: 'OutraHora', slug: 'outrahora' },
+  });
+
   // Admin
   const admin = await prisma.user.upsert({
     where: { email: 'admin@gandira.com' },
-    update: {},
-    create: { email: 'admin@gandira.com', password, name: 'Admin', role: 'ADMIN', isVerified: true },
+    update: { platformRole: 'SUPER_ADMIN' },
+    create: { email: 'admin@gandira.com', password, name: 'Admin', role: 'ADMIN', platformRole: 'SUPER_ADMIN', isVerified: true },
   });
 
   // Producer
@@ -36,11 +42,29 @@ async function main() {
     create: { email: 'cliente@gandira.com', password, name: 'Pedro Cliente', role: 'CUSTOMER' },
   });
 
+  for (const membership of [
+    { userId: admin.id, role: 'ORG_ADMIN' as const },
+    { userId: producer.id, role: 'PRODUCER' as const },
+    { userId: staff.id, role: 'STAFF' as const },
+  ]) {
+    await prisma.organizationMember.upsert({
+      where: {
+        organizationId_userId: {
+          organizationId: organization.id,
+          userId: membership.userId,
+        },
+      },
+      update: { role: membership.role, status: 'ACTIVE' },
+      create: { organizationId: organization.id, ...membership },
+    });
+  }
+
   // Event
   const event = await prisma.event.upsert({
     where: { slug: 'gandira-fest-2025' },
-    update: {},
+    update: { organizationId: organization.id },
     create: {
+      organizationId: organization.id,
       producerId: producer.id,
       title: 'Gandira Fest 2025',
       description: 'O maior festival de música eletrônica do ano. 3 palcos, 20 artistas nacionais e internacionais, food trucks e muito mais.',
@@ -106,12 +130,13 @@ async function main() {
     const sampleEvent = await prisma.event.upsert({
       where: { slug: sample.slug },
       update: {
+        organizationId: organization.id,
         title: sample.title, description: sample.description, venue: sample.venue, address: sample.address,
         city: 'Porto Alegre', state: 'RS', zipCode: sample.zipCode, startDate: sample.startDate,
         endDate: sample.endDate, doorsOpen: sample.doorsOpen, coverImage: sample.image, status: 'PUBLISHED', featured: false,
       },
       create: {
-        producerId: producer.id, title: sample.title, description: sample.description, slug: sample.slug,
+        organizationId: organization.id, producerId: producer.id, title: sample.title, description: sample.description, slug: sample.slug,
         coverImage: sample.image, venue: sample.venue, address: sample.address, city: 'Porto Alegre', state: 'RS',
         zipCode: sample.zipCode, startDate: sample.startDate, endDate: sample.endDate, doorsOpen: sample.doorsOpen,
         ageRating: 16, category: 'Shows', tags: ['música', 'porto alegre', 'ao vivo'], status: 'PUBLISHED', featured: false,

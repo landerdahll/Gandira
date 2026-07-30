@@ -16,6 +16,22 @@ enum Role {
   ADMIN
 }
 
+enum PlatformRole {
+  MEMBER
+  SUPER_ADMIN
+}
+
+enum OrganizationRole {
+  ORG_ADMIN
+  PRODUCER
+  STAFF
+}
+
+enum OrganizationMemberStatus {
+  ACTIVE
+  INACTIVE
+}
+
 enum Gender {
   MALE
   FEMALE
@@ -99,29 +115,31 @@ enum ClubBenefitUsageStatus {
 // ─── Models ──────────────────────────────────────────────────────────────────
 
 model User {
-  id         String    @id @default(cuid())
-  email      String    @unique
-  password   String
-  name       String
-  phone      String?
-  cpf        String?   @unique
-  role       Role      @default(CUSTOMER)
-  gender     Gender?
-  birthDate  DateTime?
-  avatarUrl  String?
-  isVerified Boolean   @default(false)
-  isActive   Boolean   @default(true)
+  id           String       @id @default(cuid())
+  email        String       @unique
+  password     String
+  name         String
+  phone        String?
+  cpf          String?      @unique
+  role         Role         @default(CUSTOMER)
+  platformRole PlatformRole @default(MEMBER)
+  gender       Gender?
+  birthDate    DateTime?
+  avatarUrl    String?
+  isVerified   Boolean      @default(false)
+  isActive     Boolean      @default(true)
 
-  events                  Event[]
-  orders                  Order[]
-  checkIns                CheckIn[]                @relation("StaffCheckIns")
-  refreshTokens           RefreshToken[]
-  auditLogs               AuditLog[]
-  passwordResetTokens     PasswordResetToken[]
-  emailVerificationTokens EmailVerificationToken[]
-  ownedTickets            Ticket[]                 @relation("TicketOwner")
-  sentTicketTransfers     TicketTransfer[]         @relation("TransferSender")
-  receivedTicketTransfers TicketTransfer[]         @relation("TransferRecipient")
+  events                      Event[]
+  orders                      Order[]
+  checkIns                    CheckIn[]                @relation("StaffCheckIns")
+  refreshTokens               RefreshToken[]
+  auditLogs                   AuditLog[]
+  passwordResetTokens         PasswordResetToken[]
+  emailVerificationTokens     EmailVerificationToken[]
+  ownedTickets                Ticket[]                 @relation("TicketOwner")
+  sentTicketTransfers         TicketTransfer[]         @relation("TransferSender")
+  receivedTicketTransfers     TicketTransfer[]         @relation("TransferRecipient")
+  organizationMemberships     OrganizationMember[]
   verificationEmailLastSentAt DateTime?
   passwordResetLastSentAt     DateTime?
 
@@ -130,6 +148,43 @@ model User {
 
   @@index([email])
   @@index([cpf])
+}
+
+model Organization {
+  id             String  @id @default(cuid())
+  name           String
+  slug           String  @unique
+  isActive       Boolean @default(true)
+  logoUrl        String?
+  primaryColor   String?
+  secondaryColor String?
+  website        String?
+  instagram      String?
+
+  members OrganizationMember[]
+  events  Event[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model OrganizationMember {
+  id             String                   @id @default(cuid())
+  organizationId String
+  organization   Organization             @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  userId         String
+  user           User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           OrganizationRole
+  status         OrganizationMemberStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, userId])
+  @@index([userId, status])
+  @@index([organizationId, role, status])
 }
 
 model RefreshToken {
@@ -146,16 +201,18 @@ model RefreshToken {
 }
 
 model Event {
-  id         String @id @default(cuid())
-  producerId String
-  producer   User   @relation(fields: [producerId], references: [id])
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  producerId     String
+  producer       User         @relation(fields: [producerId], references: [id])
 
-  title       String
-  description String  @db.Text
-  slug        String  @unique
-  coverImage  String?
-  bannerImage String?
-  spotifyUrl  String?
+  title        String
+  description  String  @db.Text
+  slug         String  @unique
+  coverImage   String?
+  bannerImage  String?
+  spotifyUrl   String?
   instagramUrl String?
 
   venue     String
@@ -190,6 +247,8 @@ model Event {
   updatedAt DateTime @updatedAt
 
   @@index([slug])
+  @@index([organizationId])
+  @@index([organizationId, status, startDate])
   @@index([producerId])
   @@index([status, startDate])
   @@index([featured, endDate])

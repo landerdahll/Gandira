@@ -28,11 +28,19 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async getProfile(userId: string) {
-    const user = await this.prisma.user.findUnique({
+    const user = await (this.prisma.user.findUnique as any)({
       where: { id: userId },
       select: {
         id: true, email: true, name: true, phone: true,
-        role: true, gender: true, birthDate: true, avatarUrl: true, isVerified: true, createdAt: true,
+        role: true, platformRole: true, gender: true, birthDate: true, avatarUrl: true, isVerified: true, createdAt: true,
+        organizationMemberships: {
+          where: { status: 'ACTIVE', organization: { isActive: true } },
+          select: {
+            role: true,
+            organization: { select: { id: true, name: true, slug: true, logoUrl: true } },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
       },
     });
     if (!user) throw new NotFoundException('Usuário não encontrado');
