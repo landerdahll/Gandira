@@ -25,9 +25,10 @@ describe('AuthService registration with transfer invite', () => {
       user: {
         findUnique: jest.fn().mockResolvedValue(null),
         create: jest.fn(async ({ data }: any) => ({ id: 'user-new', ...data, role: 'CUSTOMER', isVerified: data.isVerified ?? false })),
+        update: jest.fn().mockResolvedValue({}),
       },
       auditLog: { create: jest.fn().mockResolvedValue({}) },
-      emailVerificationToken: { create: jest.fn().mockResolvedValue({}) },
+      emailVerificationToken: { create: jest.fn().mockResolvedValue({}), deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
       refreshToken: { create: jest.fn().mockResolvedValue({}) },
     };
     const prisma: any = {
@@ -39,7 +40,7 @@ describe('AuthService registration with transfer invite', () => {
         const snapshot = [...committedUsers];
         try {
           const result = await callback(tx);
-          committedUsers.push(result.user);
+          if (result?.user) committedUsers.push(result.user);
           return result;
         } catch (error) {
           committedUsers.splice(0, committedUsers.length, ...snapshot);
@@ -52,34 +53,30 @@ describe('AuthService registration with transfer invite', () => {
       prepareInviteCompletion: jest.fn().mockResolvedValue({ nextToken: 'new-ticket-token', qrCodeUrl: 'data:image/png' }),
       hashInviteToken: jest.fn().mockReturnValue('invite-hash'),
       completeInviteInTransaction: completeInvite,
+      linkInviteToUnverifiedUserInTransaction: completeInvite,
+      completePendingVerificationForUserInTransaction: jest.fn(),
       notifyInviteCompleted: jest.fn(),
     };
     const jwt: any = { signAsync: jest.fn().mockResolvedValue('access-token') };
     const config: any = { get: jest.fn((key: string, fallback: string) => configValues[key] ?? fallback) };
-    const service = new AuthService(prisma, jwt, config, mail, transfers);
-    return { service, prisma, tx, mail, transfers, jwt, committedUsers };
+    const outbox: any = { enqueue: jest.fn().mockResolvedValue({}) };
+    const emailTokens: any = { hashForRecord: jest.fn().mockReturnValue('token-hash'), matches: jest.fn().mockReturnValue(true), reconstruct: jest.fn().mockReturnValue('public-token') };
+    const service = new AuthService(prisma, jwt, config, mail, transfers, outbox, emailTokens);
+    return { service, prisma, tx, mail, transfers, jwt, committedUsers, outbox };
   }
 
   beforeEach(() => (bcrypt.hash as jest.Mock).mockResolvedValue('password-hash'));
   afterEach(() => jest.restoreAllMocks());
 
   it('marca cadastro comum como verificado e registra o link quando DEMO_EMAIL_MODE=true', async () => {
-    const context = setup(jest.fn(), { DEMO_EMAIL_MODE: 'true', FRONTEND_URL: 'https://demo.gandira.test' });
-    const logger = jest.spyOn((context.service as any).logger, 'log');
-
+    const context = setup(jest.fn(), { DEMO_EMAIL_MODE: 'true', FRONTEND_URL: 'https://pago.test' });
     const result = await context.service.register({ ...dto, invitationToken: undefined });
 
     expect(result.user.isVerified).toBe(true);
     expect(context.prisma.user.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ isVerified: true }),
     }));
-    expect(context.mail.sendVerificationEmail).toHaveBeenCalledWith(
-      dto.email,
-      dto.name,
-      expect.stringMatching(/^https:\/\/demo\.gandira\.test\/auth\/verify-email\?token=/),
-    );
-    expect(logger).toHaveBeenCalledWith(expect.stringContaining('[DEMO EMAIL MODE] Confirmação de e-mail'));
-    expect(logger).toHaveBeenCalledWith(expect.stringContaining('Destinatário: r***@e***.com'));
+    expect(context.outbox.enqueue).toHaveBeenCalledWith(expect.objectContaining({ recipient: dto.email, template: 'EMAIL_VERIFICATION' }), expect.anything());
   });
 
   it('preserva cadastro não verificado quando DEMO_EMAIL_MODE=false', async () => {
@@ -99,8 +96,7 @@ describe('AuthService registration with transfer invite', () => {
     const result = await context.service.register(dto);
 
     expect(result.user.isVerified).toBe(true);
-    expect(completeInvite).toHaveBeenCalled();
-    expect(context.transfers.notifyInviteCompleted).toHaveBeenCalledWith(completion.transfer, completion.user);
+    expect(context.transfers.linkInviteToUnverifiedUserInTransaction).toHaveBeenCalled();
   });
 
   it('reverte usuário, audit log e token de verificação quando completeInvite falha', async () => {
@@ -122,7 +118,7 @@ describe('AuthService registration with transfer invite', () => {
 
     await expect(context.service.register(dto)).resolves.toMatchObject({ user: { id: 'user-new' } });
     expect(context.committedUsers).toHaveLength(1);
-    expect(context.transfers.notifyInviteCompleted).toHaveBeenCalledWith(completion.transfer, completion.user);
+    expect(context.outbox.enqueue).toHaveBeenCalled();
     expect(context.tx.refreshToken.create).toHaveBeenCalledTimes(1);
     expect(context.prisma.refreshToken.create).not.toHaveBeenCalled();
   });
@@ -143,7 +139,7 @@ describe('AuthService registration with transfer invite', () => {
 
     await expect(context.service.register(dto)).rejects.toThrow('refresh unavailable');
     expect(context.committedUsers).toHaveLength(0);
-    expect(context.transfers.completeInviteInTransaction).not.toHaveBeenCalled();
+    expect(context.transfers.linkInviteToUnverifiedUserInTransaction).not.toHaveBeenCalled();
     expect(context.mail.sendVerificationEmail).not.toHaveBeenCalled();
   });
 });

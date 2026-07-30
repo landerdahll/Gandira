@@ -7,7 +7,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 const BCRYPT_ROUNDS = 12;
 export const TEST_MEMBER_EMAILS = [
   'will3@gmail.com', 'will2@gmail.com', 'leozinvasquez@gmail.com',
-  'cliente@gandira.com', 'camila.teste@outrahora.com', 'cliente@outrahora.com',
+  'cliente@pago.test', 'camila.teste@outrahora.com', 'cliente@outrahora.com',
 ] as const;
 
 export class UpdateProfileDto {

@@ -7,6 +7,8 @@ import { MailService } from '../mail/mail.service';
 import { TicketsService } from '../tickets/tickets.service';
 import { OrderExpirationService } from './order-expiration.service';
 import { ClubBenefitsService } from '../club-benefits/club-benefits.service';
+import { EmailOutboxService } from '../mail/email-outbox.service';
+import { getPublicFrontendUrl } from '../../common/utils/public-url.util';
 
 export type PaymentGateway = 'STRIPE' | 'ABACATEPAY';
 export type OrderFulfillmentStatus =
@@ -40,6 +42,7 @@ export class OrderFulfillmentService {
     private readonly config: ConfigService,
     private readonly expiration: OrderExpirationService,
     private readonly clubBenefits: ClubBenefitsService,
+    private readonly outbox?: EmailOutboxService,
   ) {}
 
   async confirmPaidOrder(input: ConfirmPaidOrderInput): Promise<OrderFulfillmentResult> {
@@ -48,8 +51,10 @@ export class OrderFulfillmentService {
       const order = await tx.order.findUnique({
         where: { id: input.orderId },
         include: {
-          items: { include: { batch: { select: { sortOrder: true } } } },
+          items: { include: { batch: { select: { sortOrder: true, name: true, ticketType: true } } } },
           reservedClubBenefits: true,
+          user: { select: { email: true, name: true } },
+          event: { select: { title: true, startDate: true, venue: true, city: true } },
         },
       });
       if (!order) return { status: 'ORDER_NOT_FOUND' as const };
@@ -107,6 +112,12 @@ export class OrderFulfillmentService {
         if (!benefitedTicketId) throw new Error('Ingresso beneficiado não foi gerado para o lote reservado');
         await this.clubBenefits.confirmInTransaction(tx, clubUsage.id, order.id, benefitedTicketId, now);
       }
+      if (this.outbox) await this.outbox.enqueue({
+        type: 'ORDER_CONFIRMATION', recipient: order.user.email, template: 'ORDER_CONFIRMATION',
+        payload: { name: order.user.name, eventTitle: order.event.title, eventDate: order.event.startDate.toISOString(), venue: order.event.venue, city: order.event.city,
+          items: order.items.map(item => ({ batchName: item.batch.name, quantity: item.quantity, ticketType: item.batch.ticketType })), total: Number(order.total), orderId: order.id, myTicketsUrl: `${getPublicFrontendUrl(this.config)}/my-tickets` },
+        idempotencyKey: `ORDER_CONFIRMATION:${order.id}`, relatedEntityType: 'Order', relatedEntityId: order.id,
+      }, tx);
       return { status: 'FULFILLED' as const, orderStatus: 'PAID' };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }));
 
@@ -126,42 +137,6 @@ export class OrderFulfillmentService {
         externalPaymentId: input.externalPaymentId ?? null,
       }));
     }
-    if (result.status === 'FULFILLED') {
-      await this.sendConfirmationEmail(input.orderId).catch((error) => {
-        this.logger.error(`Falha ao enviar e-mail de confirmação do pedido ${input.orderId}: ${error.message}`);
-      });
-    }
     return result;
-  }
-
-  /**
-   * Best effort: uma queda entre o commit e este envio pode perder o e-mail.
-   * Garantia de entrega exige outbox ou job persistente em uma etapa futura.
-   */
-  private async sendConfirmationEmail(orderId: string) {
-    const order = await this.prisma.order.findUnique({
-      where: { id: orderId },
-      include: {
-        user: { select: { email: true, name: true } },
-        event: { select: { title: true, startDate: true, venue: true, city: true } },
-        items: { include: { batch: { select: { name: true, ticketType: true } } } },
-        tickets: { select: { id: true } },
-      },
-    });
-    if (!order) return;
-    const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000').split(',')[0].trim();
-    await this.mail.sendOrderConfirmation(order.user.email, order.user.name, {
-      eventTitle: order.event.title,
-      eventDate: order.event.startDate,
-      venue: `${order.event.venue}, ${order.event.city}`,
-      items: order.items.map((item) => ({
-        batchName: item.batch.name,
-        ticketType: item.batch.ticketType,
-        quantity: item.quantity,
-      })),
-      total: Number(order.total),
-      ticketCount: order.tickets.length,
-      myTicketsUrl: `${frontendUrl}/my-tickets`,
-    });
   }
 }

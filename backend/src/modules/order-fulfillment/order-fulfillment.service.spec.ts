@@ -5,8 +5,10 @@ describe('OrderFulfillmentService', () => {
   const future = new Date(Date.now() + 60_000);
   const baseOrder = {
     id: 'order-1', eventId: 'event-1', status: 'PENDING', expiresAt: future,
-    items: [{ batchId: 'batch-1', quantity: 2, unitPrice: new Prisma.Decimal(10), batch: { sortOrder: 0 } }],
+    items: [{ batchId: 'batch-1', quantity: 2, unitPrice: new Prisma.Decimal(10), batch: { sortOrder: 0, name: 'Lote', ticketType: 'GENERAL' } }],
     reservedClubBenefits: [],
+    total: new Prisma.Decimal(100), user: { email: 'buyer@example.com', name: 'Buyer' },
+    event: { title: 'Evento', startDate: new Date(), venue: 'Local', city: 'Cidade' },
   };
 
   function setup(order: any = baseOrder) {
@@ -32,14 +34,15 @@ describe('OrderFulfillmentService', () => {
     const config = { get: jest.fn((_key: string, fallback: string) => fallback) };
     const expiration = { expirePendingOrderInTransaction: jest.fn().mockResolvedValue('EXPIRED') };
     const clubBenefits = { confirmInTransaction: jest.fn().mockResolvedValue(undefined) };
+    const outbox = { enqueue: jest.fn().mockResolvedValue({}) };
     return {
-      service: new OrderFulfillmentService(prisma as never, tickets as never, mail as never, config as never, expiration as never, clubBenefits as never),
-      tx, prisma, tickets, mail, expiration, clubBenefits,
+      service: new OrderFulfillmentService(prisma as never, tickets as never, mail as never, config as never, expiration as never, clubBenefits as never, outbox as never),
+      tx, prisma, tickets, mail, expiration, clubBenefits, outbox,
     };
   }
 
   it('faz claim, gera todos os tickets e envia e-mail após o commit', async () => {
-    const { service, tx, prisma, tickets, mail } = setup();
+    const { service, tx, tickets, outbox } = setup();
     const result = await service.confirmPaidOrder({
       orderId: 'order-1', gateway: 'STRIPE', externalPaymentId: 'pi_1', stripeChargeId: 'ch_1',
     });
@@ -48,7 +51,7 @@ describe('OrderFulfillmentService', () => {
       data: { status: 'PAID', stripeChargeId: 'ch_1' },
     }));
     expect(tickets.generateTicket).toHaveBeenCalledTimes(2);
-    expect(prisma.$transaction.mock.invocationCallOrder[0]).toBeLessThan(mail.sendOrderConfirmation.mock.invocationCallOrder[0]);
+    expect(outbox.enqueue).toHaveBeenCalledWith(expect.objectContaining({ idempotencyKey: 'ORDER_CONFIRMATION:order-1' }), tx);
   });
 
   it('não grava identificador AbacatePay em campo Stripe', async () => {

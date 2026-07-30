@@ -5,6 +5,7 @@ import { MailService } from '../mail/mail.service';
 import { StripeRefundProvider } from './stripe-refund.provider';
 import { AbacateRefundProvider } from './abacate-refund.provider';
 import { RefundProvider } from './refund-provider';
+import { EmailOutboxService } from '../mail/email-outbox.service';
 
 export const CANCELLATION_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 export const EVENT_CUTOFF_MS = 48 * 60 * 60 * 1000;
@@ -12,7 +13,7 @@ export const EVENT_CUTOFF_MS = 48 * 60 * 60 * 1000;
 @Injectable()
 export class RefundsService {
   private readonly logger = new Logger(RefundsService.name);
-  constructor(private prisma: PrismaService, private stripe: StripeRefundProvider, private abacate: AbacateRefundProvider, private mail: MailService) {}
+  constructor(private prisma: PrismaService, private stripe: StripeRefundProvider, private abacate: AbacateRefundProvider, private mail: MailService, private outbox?: EmailOutboxService) {}
 
   eligibility(order: { status: string; createdAt: Date; event: { startDate: Date }; tickets?: Array<{ status: string; checkIn?: unknown }> }, now = new Date()) {
     if (order.status === 'REFUNDED') return { eligible: false, code: 'ALREADY_REFUNDED', message: 'Este pedido já foi reembolsado.' };
@@ -47,7 +48,6 @@ export class RefundsService {
       if (!paymentId) throw new Error('Identificador do pagamento não encontrado');
       const result = await provider.refund({ orderId, paymentId, amountCents: new Prisma.Decimal(claimed.order.total).mul(100).round().toNumber() });
       await this.complete(claimed.order, userId, result.refundId, provider.gateway, ipAddress);
-      this.sendNotification(claimed.order, result.refundId).catch(e => this.logger.error(`Falha ao notificar reembolso ${orderId}: ${e.message}`));
       return { status: 'REFUNDED', refundId: result.refundId };
     } catch (error: any) {
       const reason = String(error?.message ?? 'Falha desconhecida').slice(0, 500);
@@ -73,6 +73,7 @@ export class RefundsService {
       for (const item of order.items) await tx.batch.update({ where: { id: item.batchId }, data: { sold: { decrement: item.quantity } } });
       if (order.couponId) await tx.coupon.update({ where: { id: order.couponId }, data: { usedCount: { decrement: order.tickets.length } } });
       await tx.auditLog.create({ data: { userId, action: 'REFUND_COMPLETED', entity: 'Order', entityId: orderId, ipAddress, metadata: { gateway, refundId: gatewayRefundId, amount: refund.amount.toString(), result: 'REFUNDED' } } });
+      if (this.outbox) await this.outbox.enqueue({ type: 'REFUND_CONFIRMATION', recipient: order.user.email, template: 'REFUND_CONFIRMATION', payload: { name: order.user.name, orderId, eventTitle: order.event.title, eventDate: order.event.startDate.toISOString(), total: Number(order.total), refundId: gatewayRefundId }, idempotencyKey: `REFUND_CONFIRMATION:${gatewayRefundId}`, relatedEntityType: 'Refund', relatedEntityId: refund.id }, tx);
     });
   }
 
@@ -84,5 +85,4 @@ export class RefundsService {
   }
 
   private provider(gateway: string): RefundProvider { return gateway === 'ABACATEPAY' ? this.abacate : this.stripe; }
-  private async sendNotification(order: any, refundId: string) { await this.mail.sendRefundConfirmation(order.user.email, order.user.name, { orderId: order.id, eventTitle: order.event.title, eventDate: order.event.startDate, total: Number(order.total), refundId }); }
 }

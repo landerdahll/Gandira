@@ -70,9 +70,18 @@ enum TicketStatus {
 
 enum TicketTransferStatus {
   PENDING_REGISTRATION
+  PENDING_EMAIL_VERIFICATION
   COMPLETED
   CANCELLED
   EXPIRED
+}
+
+enum EmailOutboxStatus {
+  PENDING
+  PROCESSING
+  SENT
+  RETRY
+  FAILED
 }
 
 enum CheckInMethod {
@@ -103,16 +112,18 @@ model User {
   isVerified Boolean   @default(false)
   isActive   Boolean   @default(true)
 
-  events                  Event[]
-  orders                  Order[]
-  checkIns                CheckIn[]                @relation("StaffCheckIns")
-  refreshTokens           RefreshToken[]
-  auditLogs               AuditLog[]
-  passwordResetTokens     PasswordResetToken[]
-  emailVerificationTokens EmailVerificationToken[]
-  ownedTickets            Ticket[]                 @relation("TicketOwner")
-  sentTicketTransfers     TicketTransfer[]         @relation("TransferSender")
-  receivedTicketTransfers TicketTransfer[]         @relation("TransferRecipient")
+  events                      Event[]
+  orders                      Order[]
+  checkIns                    CheckIn[]                @relation("StaffCheckIns")
+  refreshTokens               RefreshToken[]
+  auditLogs                   AuditLog[]
+  passwordResetTokens         PasswordResetToken[]
+  emailVerificationTokens     EmailVerificationToken[]
+  ownedTickets                Ticket[]                 @relation("TicketOwner")
+  sentTicketTransfers         TicketTransfer[]         @relation("TransferSender")
+  receivedTicketTransfers     TicketTransfer[]         @relation("TransferRecipient")
+  verificationEmailLastSentAt DateTime?
+  passwordResetLastSentAt     DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -139,12 +150,12 @@ model Event {
   producerId String
   producer   User   @relation(fields: [producerId], references: [id])
 
-  title       String
-  description String  @db.Text
-  slug        String  @unique
-  coverImage  String?
-  bannerImage String?
-  spotifyUrl  String?
+  title        String
+  description  String  @db.Text
+  slug         String  @unique
+  coverImage   String?
+  bannerImage  String?
+  spotifyUrl   String?
   instagramUrl String?
 
   venue     String
@@ -227,21 +238,21 @@ model Order {
   platformFee Decimal @db.Decimal(10, 2)
   total       Decimal @db.Decimal(10, 2)
 
-  stripePaymentIntentId String? @unique
+  stripePaymentIntentId String?         @unique
   stripeChargeId        String?
   paymentProvider       PaymentProvider @default(STRIPE)
   externalPaymentId     String?
 
-  couponId       String?
-  coupon         Coupon? @relation(fields: [couponId], references: [id])
-  discountAmount Decimal @default(0) @db.Decimal(10, 2)
+  couponId          String?
+  coupon            Coupon? @relation(fields: [couponId], references: [id])
+  discountAmount    Decimal @default(0) @db.Decimal(10, 2)
   clubBenefitReason String?
 
-  cancelledAt    DateTime?
-  cancelReason   String?
-  refundedAt     DateTime?
-  stripeRefundId String?
-  refundId       String?
+  cancelledAt         DateTime?
+  cancelReason        String?
+  refundedAt          DateTime?
+  stripeRefundId      String?
+  refundId            String?
   refundFailureReason String?
 
   expiresAt DateTime
@@ -263,19 +274,19 @@ model Order {
 }
 
 model Refund {
-  id                String          @id @default(cuid())
-  orderId           String          @unique
-  order             Order           @relation(fields: [orderId], references: [id])
-  userId            String
-  gateway            PaymentProvider
-  gatewayRefundId    String?
-  amount             Decimal         @db.Decimal(10, 2)
-  status             OrderStatus
-  failureReason      String?
-  ipAddress          String?
-  requestedAt        DateTime         @default(now())
-  completedAt        DateTime?
-  updatedAt          DateTime         @updatedAt
+  id              String          @id @default(cuid())
+  orderId         String          @unique
+  order           Order           @relation(fields: [orderId], references: [id])
+  userId          String
+  gateway         PaymentProvider
+  gatewayRefundId String?
+  amount          Decimal         @db.Decimal(10, 2)
+  status          OrderStatus
+  failureReason   String?
+  ipAddress       String?
+  requestedAt     DateTime        @default(now())
+  completedAt     DateTime?
+  updatedAt       DateTime        @updatedAt
 
   @@index([status, requestedAt])
   @@index([gateway, requestedAt])
@@ -319,9 +330,9 @@ model Ticket {
 
   qrCodeUrl String?
 
-  checkIn   CheckIn?
-  transfers TicketTransfer[]
-  history   TicketHistory[]
+  checkIn          CheckIn?
+  transfers        TicketTransfer[]
+  history          TicketHistory[]
   clubBenefitUsage ClubBenefitUsage?
 
   cancelledAt DateTime?
@@ -406,12 +417,12 @@ model EmailVerificationToken {
   id        String    @id @default(cuid())
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String    @unique
+  tokenHash String    @unique
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
 
-  @@index([token])
+  @@index([tokenHash])
   @@index([userId])
 }
 
@@ -419,13 +430,41 @@ model PasswordResetToken {
   id        String    @id @default(cuid())
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String    @unique
+  tokenHash String    @unique
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
 
-  @@index([token])
+  @@index([tokenHash])
   @@index([userId])
+}
+
+model EmailOutbox {
+  id                String            @id @default(cuid())
+  type              String
+  recipient         String
+  subject           String
+  template          String
+  payload           Json
+  relatedEntityType String?
+  relatedEntityId   String?
+  idempotencyKey    String            @unique
+  status            EmailOutboxStatus @default(PENDING)
+  attempts          Int               @default(0)
+  maxAttempts       Int               @default(5)
+  nextAttemptAt     DateTime          @default(now())
+  providerMessageId String?
+  lastError         String?
+  processingAt      DateTime?
+  sentAt            DateTime?
+  failedAt          DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@index([processingAt])
+  @@index([relatedEntityType, relatedEntityId])
+  @@index([createdAt])
 }
 
 model Coupon {
@@ -466,13 +505,13 @@ model AuditLog {
 }
 
 model ClubMember {
-  id                 String   @id @default(cuid())
-  email              String   @unique
+  id                 String    @id @default(cuid())
+  email              String    @unique
   name               String?
   phone              String?
-  discountPercentage Decimal  @default(10.00) @db.Decimal(5, 2)
-  isActive           Boolean  @default(true)
-  activatedAt        DateTime @default(now())
+  discountPercentage Decimal   @default(10.00) @db.Decimal(5, 2)
+  isActive           Boolean   @default(true)
+  activatedAt        DateTime  @default(now())
   deactivatedAt      DateTime?
 
   usages ClubBenefitUsage[]
@@ -486,14 +525,14 @@ model ClubMember {
 }
 
 model ClubBenefitUsage {
-  id           String                 @id @default(cuid())
-  clubMemberId String
-  clubMember   ClubMember             @relation(fields: [clubMemberId], references: [id], onDelete: Restrict)
-  eventId      String
-  event        Event                  @relation(fields: [eventId], references: [id], onDelete: Restrict)
-  status       ClubBenefitUsageStatus @default(RESERVED)
-  activeMarker Boolean?               @default(true)
-  discountPercentage Decimal          @db.Decimal(5, 2)
+  id                 String                 @id @default(cuid())
+  clubMemberId       String
+  clubMember         ClubMember             @relation(fields: [clubMemberId], references: [id], onDelete: Restrict)
+  eventId            String
+  event              Event                  @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  status             ClubBenefitUsageStatus @default(RESERVED)
+  activeMarker       Boolean?               @default(true)
+  discountPercentage Decimal                @db.Decimal(5, 2)
 
   reservedOrderId  String? @unique
   reservedOrder    Order?  @relation("ClubBenefitReservedOrder", fields: [reservedOrderId], references: [id], onDelete: SetNull)
