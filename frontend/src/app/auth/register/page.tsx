@@ -113,8 +113,8 @@ function RegisterForm() {
         ...(invitationToken && { invitationToken }),
       });
       await login({ email: data.email, password: data.password });
-      toast.success(invitationToken ? 'Conta criada e ingresso recebido!' : 'Conta criada! Verifique seu e-mail para liberar a compra de ingressos.');
-      router.push(invitationToken ? '/my-tickets' : '/auth/verify-email');
+      toast.success(invitationToken ? 'Conta criada! Confirme seu e-mail para liberar o ingresso.' : 'Conta criada! Verifique seu e-mail para liberar a compra de ingressos.');
+      router.push('/auth/verify-email');
     } catch (e: any) {
       const msg = e.response?.data?.message;
       toast.error(Array.isArray(msg) ? msg[0] : (msg ?? 'Erro ao criar conta'));
