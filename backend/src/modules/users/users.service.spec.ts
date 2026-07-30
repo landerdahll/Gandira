@@ -88,7 +88,7 @@ describe('UsersService test-member purge', () => {
   it('uses an exact allowlist that cannot include Teste Usuario', () => {
     expect(TEST_MEMBER_EMAILS).toEqual([
       'will3@gmail.com', 'will2@gmail.com', 'leozinvasquez@gmail.com',
-      'cliente@pago.test', 'camila.teste@outrahora.com', 'cliente@outrahora.com',
+      'cliente@gandira.com', 'camila.teste@outrahora.com', 'cliente@outrahora.com',
     ]);
     expect(TEST_MEMBER_EMAILS).not.toContain('teste@teste.com');
   });

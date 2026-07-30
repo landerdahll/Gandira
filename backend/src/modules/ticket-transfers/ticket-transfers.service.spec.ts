@@ -37,6 +37,67 @@ describe('TicketTransfersService invitation security', () => {
   });
 });
 
+describe('TicketTransfersService queued invitation email', () => {
+  const transfer = { id: 'tr1', recipientEmail: 'guest@example.com' };
+  const notification = {
+    recipient: null,
+    ticket: {
+      owner: { email: 'owner@example.com', name: 'Owner' },
+      event: { title: 'Demo Event' },
+    },
+  };
+
+  function setup(demoMode: string) {
+    const enqueue = jest.fn().mockResolvedValue({ id: 'outbox-1' });
+    const config = {
+      get: jest.fn((key: string, fallback: string) => ({
+        DEMO_EMAIL_MODE: demoMode,
+        FRONTEND_URL: 'https://demo.gandira.test',
+      }[key] ?? fallback)),
+    };
+    const service = new TicketTransfersService({} as any, {} as any, config as any, { enqueue } as any);
+    return { service, enqueue };
+  }
+
+  it('enfileira o convite sem persistir ou registrar o token puro', async () => {
+    const { service, enqueue } = setup('true');
+    const logger = jest.spyOn((service as any).logger, 'log');
+
+    await (service as any).enqueueRequestedEmails({} as any, transfer, notification);
+
+    expect(enqueue).toHaveBeenCalledTimes(2);
+    expect(enqueue).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'TRANSFER_INVITE',
+      recipient: transfer.recipientEmail,
+      payload: expect.objectContaining({
+        tokenRecordId: transfer.id,
+        tokenPurpose: 'transfer-invite',
+        tokenPath: '/auth/register',
+      }),
+    }), expect.anything());
+    expect(JSON.stringify(enqueue.mock.calls)).not.toContain('temporary-invite-token');
+    expect(logger).not.toHaveBeenCalled();
+  });
+
+  it('mantém o mesmo envio seguro quando DEMO_EMAIL_MODE=false', async () => {
+    const { service, enqueue } = setup('false');
+    const logger = jest.spyOn((service as any).logger, 'log');
+
+    await (service as any).enqueueRequestedEmails({} as any, transfer, notification);
+
+    expect(enqueue).toHaveBeenCalledTimes(2);
+    expect(enqueue).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'TRANSFER_PENDING_SENDER',
+      recipient: notification.ticket.owner.email,
+    }), expect.anything());
+    expect(enqueue).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'TRANSFER_INVITE',
+      recipient: transfer.recipientEmail,
+    }), expect.anything());
+    expect(logger).not.toHaveBeenCalled();
+  });
+});
+
 describe('TicketTransfersService Clube Outrahora', () => {
   it('bloqueia a transferência do ingresso que recebeu o benefício', async () => {
     const ticket = {

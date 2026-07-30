@@ -10,41 +10,41 @@ async function main() {
 
   // Admin
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@pago.test' },
+    where: { email: 'admin@gandira.com' },
     update: {},
-    create: { email: 'admin@pago.test', password, name: 'Admin', role: 'ADMIN', isVerified: true },
+    create: { email: 'admin@gandira.com', password, name: 'Admin', role: 'ADMIN', isVerified: true },
   });
 
   // Producer
   const producer = await prisma.user.upsert({
-    where: { email: 'produtor@pago.test' },
+    where: { email: 'produtor@gandira.com' },
     update: {},
-    create: { email: 'produtor@pago.test', password, name: 'João Produtor', role: 'PRODUCER', isVerified: true },
+    create: { email: 'produtor@gandira.com', password, name: 'João Produtor', role: 'PRODUCER', isVerified: true },
   });
 
   // Staff
   const staff = await prisma.user.upsert({
-    where: { email: 'staff@pago.test' },
+    where: { email: 'staff@gandira.com' },
     update: {},
-    create: { email: 'staff@pago.test', password, name: 'Maria Portaria', role: 'STAFF', isVerified: true },
+    create: { email: 'staff@gandira.com', password, name: 'Maria Portaria', role: 'STAFF', isVerified: true },
   });
 
   // Customer
   const customer = await prisma.user.upsert({
-    where: { email: 'cliente@pago.test' },
+    where: { email: 'cliente@gandira.com' },
     update: {},
-    create: { email: 'cliente@pago.test', password, name: 'Pedro Cliente', role: 'CUSTOMER' },
+    create: { email: 'cliente@gandira.com', password, name: 'Pedro Cliente', role: 'CUSTOMER' },
   });
 
   // Event
   const event = await prisma.event.upsert({
-    where: { slug: 'pago-fest-2026' },
+    where: { slug: 'gandira-fest-2025' },
     update: {},
     create: {
       producerId: producer.id,
-      title: 'Pago Fest 2026',
+      title: 'Gandira Fest 2025',
       description: 'O maior festival de música eletrônica do ano. 3 palcos, 20 artistas nacionais e internacionais, food trucks e muito mais.',
-      slug: 'pago-fest-2026',
+      slug: 'gandira-fest-2025',
       venue: 'Espaço das Américas',
       address: 'Rua Tagipuru, 795',
       city: 'São Paulo',
@@ -129,8 +129,11 @@ async function main() {
 
   console.log('✅ Seed complete!');
   console.log('\n👥 Users created:');
-  console.log('Usuários de demonstração do Pago criados.');
-  console.log('\n🎉 Evento criado: Pago Fest 2026 (slug: pago-fest-2026)');
+  console.log('  admin@gandira.com       → ADMIN    (senha: Admin@123)');
+  console.log('  produtor@gandira.com    → PRODUCER (senha: Admin@123)');
+  console.log('  staff@gandira.com       → STAFF    (senha: Admin@123)');
+  console.log('  cliente@gandira.com     → CUSTOMER (senha: Admin@123)');
+  console.log('\n🎉 Event created: Gandira Fest 2025 (slug: gandira-fest-2025)');
   console.log('🎶 Sample events ready: Noite Urbana, Festival da Cidade, Sons do Guaíba');
 }
 
