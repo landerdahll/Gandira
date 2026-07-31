@@ -293,19 +293,21 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
           </div>
         )}
 
-        <button
-          onClick={handleCheckout}
-          disabled={loading || qty === 0}
-          style={{
-            width: '100%', padding: '14px', borderRadius: '12px', border: 'none',
-            background: qty === 0 ? '#1a1a1a' : '#67bed9',
-            color: qty === 0 ? '#444' : '#fff',
-            fontSize: '15px', fontWeight: 700,
-            cursor: qty === 0 ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
-          }}
-        >
-          {loading ? 'Aguarde...' : qty === 0 ? 'Selecione um ingresso' : 'Comprar agora'}
-        </button>
+        <div style={{ padding: '0 16px' }}>
+          <button
+            onClick={handleCheckout}
+            disabled={loading || qty === 0}
+            style={{
+              width: '100%', padding: '14px', borderRadius: '12px', border: 'none',
+              background: qty === 0 ? '#1a1a1a' : '#67bed9',
+              color: qty === 0 ? '#444' : '#fff',
+              fontSize: '15px', fontWeight: 700,
+              cursor: qty === 0 ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
+            }}
+          >
+            {loading ? 'Aguarde...' : qty === 0 ? 'Selecione um ingresso' : 'Comprar agora'}
+          </button>
+        </div>
       </div>
     </div>
   );
