@@ -81,7 +81,7 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
       </Link>
 
       {/* Details */}
-      <div className="featured-card-body" style={{ padding: '32px 32px 32px', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <div className="featured-card-body" style={{ padding: '8px 24px 12px 24px', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <div>
           <Link href={`/events/${event.slug}`} style={{ textDecoration: 'none' }}>
             <h2
@@ -136,7 +136,7 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
               textDecoration: 'none',
             }}
           >
-            Comprar agora
+            COMPRAR AGORA
           </Link>
         </div>
       </div>

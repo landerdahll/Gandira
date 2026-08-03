@@ -225,7 +225,7 @@ body {
     scroll-snap-align: start;
     border: 1px solid var(--theme-border);
     background: var(--theme-surface-raised);
-    box-shadow: var(--theme-shadow);
+    box-shadow: 0 2px 12px rgba(65,91,117,.08);
   }
   .compact-event-card__media { aspect-ratio: 4 / 5; border-radius: 11px 11px 0 0; }
   .compact-event-card__body { padding: 10px 10px 12px; }
@@ -1052,7 +1052,7 @@ body {
     width: 100% !important;
   }
   .featured-card-body {
-    padding: 24px !important;
+    padding: 8px 24px 12px 24px !important;
   }
 
   /* Page padding */
