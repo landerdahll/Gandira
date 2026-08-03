@@ -50,7 +50,7 @@ export default async function EventPage({ params }: { params: { slug: string } }
     : null;
 
   return (
-    <div className="page-container" style={{ maxWidth: '1100px', margin: '0 auto', padding: '32px 24px 80px' }}>
+    <div className="page-container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px 80px' }}>
 
       {/* Cover image */}
       {event.coverImage && (
