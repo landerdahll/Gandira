@@ -118,7 +118,7 @@ body {
 .compact-event-card__media {
   position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
   border-radius: 12px;
   background: var(--theme-surface);
