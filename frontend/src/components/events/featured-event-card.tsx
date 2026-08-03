@@ -49,7 +49,7 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
       <Link
         href={`/events/${event.slug}`}
         className="featured-card-img"
-        style={{ display: 'block', width: '100%', aspectRatio: '21 / 6', overflow: 'hidden', borderRadius: '17px 17px 0 0', background: 'var(--theme-surface)' }}
+        style={{ display: 'block', width: '100%', aspectRatio: '7 / 3', overflow: 'hidden', borderRadius: '17px 17px 0 0', background: 'var(--theme-surface)' }}
       >
         {image ? (
           <img

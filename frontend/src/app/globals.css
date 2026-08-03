@@ -233,7 +233,7 @@ body {
   .compact-event-card__date,
   .compact-event-card__venue,
   .compact-event-card__price { font-size: 12px; }
-  .featured-card-img { aspect-ratio: 175 / 66 !important; }
+  .featured-card-img { aspect-ratio: 7 / 3 !important; }
   .featured-card-description {
     display: -webkit-box;
     margin: 0;
