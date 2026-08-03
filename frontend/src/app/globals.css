@@ -1028,7 +1028,7 @@ body {
     top: auto !important;
   }
   .event-cover {
-    height: 220px !important;
+    height: 100% !important;
     border-radius: 14px !important;
     margin-bottom: 24px !important;
   }

@@ -60,18 +60,13 @@ export default async function EventPage({ params }: { params: { slug: string } }
             alt={event.title}
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
           />
-          {/* bottom gradient */}
-          <div style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%',
-            background: 'linear-gradient(to top, rgba(10,10,10,0.85) 0%, transparent 100%)',
-          }} />
           {/* Age rating */}
           {event.ageRating > 0 && (
             <div style={{
               position: 'absolute', bottom: '20px', left: '24px',
               padding: '4px 10px', borderRadius: '6px',
               background: 'rgba(220,38,38,0.85)', backdropFilter: 'blur(4px)',
-              color: '#fff', fontSize: '12px', fontWeight: 700,
+              color: '#fff !important', fontSize: '12px', fontWeight: 700,
             }}>
               {event.ageRating}+
             </div>
