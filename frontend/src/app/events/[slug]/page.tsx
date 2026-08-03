@@ -54,7 +54,7 @@ export default async function EventPage({ params }: { params: { slug: string } }
 
       {/* Cover image */}
       {event.coverImage && (
-        <div className="event-cover" style={{ width: '100%', height: '420px', borderRadius: '20px', overflow: 'hidden', marginBottom: '36px', position: 'relative' }}>
+        <div className="event-cover" style={{ width: '100%', height: '100%', borderRadius: '20px', overflow: 'hidden', marginBottom: '36px', position: 'relative', aspectRatio: '7 / 3' }}>
           <img
             src={event.coverImage}
             alt={event.title}
