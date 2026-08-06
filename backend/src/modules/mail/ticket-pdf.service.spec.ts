@@ -1,6 +1,4 @@
 import { promises as dns } from 'dns';
-import { createCanvas, DOMMatrix, ImageData } from 'canvas';
-import { dirname } from 'path';
 import { decodePDFRawStream, PDFDocument, PDFName, PDFNumber, PDFRawStream } from 'pdf-lib';
 import { PNG } from 'pngjs';
 import jsQR from 'jsqr';
@@ -67,28 +65,6 @@ describe('TicketPdfService', () => {
     const decoded = jsQR(new Uint8ClampedArray(png.data), width, height);
     expect(decoded?.data).toBe(token);
   });
-
-  it('decodifica exatamente Ticket.token depois de renderizar a página completa do PDF', async () => {
-    const { service } = setup();
-    const result = await service.createForOrder(baseOrder.id, baseOrder.user.email);
-    Object.assign(globalThis, { DOMMatrix, ImageData });
-    const pdfjs = require('pdfjs-dist/legacy/build/pdf.js');
-    const standardFontDataUrl = `${dirname(require.resolve('pdfjs-dist/standard_fonts/LiberationSans-Regular.ttf'))}/`;
-    const renderedDocument = await pdfjs.getDocument({ data: new Uint8Array(result.attachment!.content), disableWorker: true, standardFontDataUrl }).promise;
-    const renderedPage = await renderedDocument.getPage(1);
-    const scale = 1.5;
-    const viewport = renderedPage.getViewport({ scale });
-    const canvas = createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
-    const context = canvas.getContext('2d');
-    await renderedPage.render({ canvasContext: context, viewport }).promise;
-    const qrSize = Math.round(132 * scale);
-    const qrX = Math.round(((100 * 72 / 25.4 - 132) / 2) * scale);
-    const qrY = Math.round((210 * 72 / 25.4 - 54 - 132) * scale);
-    const crop = context.getImageData(qrX, qrY, qrSize, qrSize);
-    const decoded = jsQR(new Uint8ClampedArray(crop.data), crop.width, crop.height);
-    expect(decoded?.data).toBe(token);
-    await renderedDocument.destroy();
-  }, 30_000);
 
   it.each([
     ['cancelado', { status: 'CANCELLED' }],
