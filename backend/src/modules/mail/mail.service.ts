@@ -5,6 +5,8 @@ import { getPublicFrontendUrl } from '../../common/utils/public-url.util';
 import { MailTemplateName, renderMail } from './mail.templates';
 
 export interface MailDelivery { providerMessageId?: string }
+export interface MailAttachment { filename: string; content: Buffer; contentType: string }
+export interface MailDeliveryOptions { attachments?: MailAttachment[]; idempotencyKey?: string }
 
 @Injectable()
 export class MailService implements OnModuleInit {
@@ -21,7 +23,7 @@ export class MailService implements OnModuleInit {
     const fromEmail = configuredEmail || legacyFrom || 'onboarding@resend.dev';
     this.from = !configuredEmail && legacyFrom?.includes('<') ? legacyFrom : `${fromName} <${fromEmail}>`;
     this.resend = apiKey ? new Resend(apiKey) : null;
-    this.logoUrl = `${getPublicFrontendUrl(config)}/logo-full-white.svg`;
+    this.logoUrl = `${getPublicFrontendUrl(config)}/logo-full-blue.svg`;
     if (legacyFrom && !config.get<string>('RESEND_FROM_EMAIL')) {
       this.logger.warn('RESEND_FROM é legado; migre para RESEND_FROM_EMAIL.');
     }
@@ -38,20 +40,28 @@ export class MailService implements OnModuleInit {
     return renderMail(template, payload, this.logoUrl);
   }
 
-  async deliver(to: string, template: MailTemplateName, payload: Record<string, any>): Promise<MailDelivery> {
+  async deliver(to: string, template: MailTemplateName, payload: Record<string, any>, options: MailDeliveryOptions = {}): Promise<MailDelivery> {
     const rendered = this.render(template, payload);
     if (!this.resend) {
       this.logger.warn(`E-mail não enviado: RESEND_API_KEY ausente; tipo=${template}`);
       throw new Error('Provedor de e-mail não configurado');
     }
-    const { data, error } = await this.resend.emails.send({
-      from: this.from,
-      to,
-      subject: rendered.subject,
-      html: rendered.html,
-      text: rendered.text,
-    });
-    if (error) throw new Error(error.message);
+    let response;
+    try {
+      response = await this.resend.emails.send({
+        from: this.from,
+        to,
+        subject: rendered.subject,
+        html: rendered.html,
+        text: rendered.text,
+        ...(options.attachments?.length ? { attachments: options.attachments } : {}),
+      }, options.idempotencyKey ? { idempotencyKey: options.idempotencyKey } : undefined);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'falha desconhecida';
+      throw new Error(`[RESEND] ${message}`);
+    }
+    const { data, error } = response;
+    if (error) throw new Error(`[RESEND] ${error.message}`);
     return { providerMessageId: data?.id };
   }
 
