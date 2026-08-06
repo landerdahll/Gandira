@@ -14,7 +14,7 @@ const MAX_BANNER_BYTES = 8 * 1024 * 1024;
 const MAX_REDIRECTS = 2;
 const BANNER_TIMEOUT_MS = 5_000;
 const PAGE_WIDTH = 100 * 72 / 25.4;
-const PAGE_HEIGHT = 210 * 72 / 25.4;
+const PAGE_HEIGHT = 195 * 72 / 25.4;
 const BLUE = rgb(0x67 / 255, 0xbe / 255, 0xd9 / 255);
 const BLUE_DARK = rgb(0x28 / 255, 0x7f / 255, 0x9a / 255);
 const DARK = rgb(0x17 / 255, 0x20 / 255, 0x27 / 255);
@@ -101,7 +101,7 @@ export class TicketPdfService {
       const regular = await document.embedFont(StandardFonts.Helvetica);
       const bold = await document.embedFont(StandardFonts.HelveticaBold);
       const logo = await document.embedPng(await sharp(OFFICIAL_LOGO_SVG).resize({ width: 320 }).png().toBuffer());
-      const banner = await this.loadBanner(document, order.event.bannerImage ?? order.event.coverImage);
+      const banner = await this.loadBanner(document, order.event.coverImage ?? order.event.bannerImage);
 
       for (const ticket of tickets) {
         const qr = await QRCode.toBuffer(ticket.token, {
@@ -148,7 +148,7 @@ export class TicketPdfService {
       const source = await this.downloadTrustedImage(imageUrl);
       const normalized = await sharp(source, { limitInputPixels: 40_000_000 })
         .rotate()
-        .resize(900, 480, { fit: 'cover', position: 'centre', withoutEnlargement: false })
+        .resize(900, 420, { fit: 'cover', position: 'centre', withoutEnlargement: false })
         .jpeg({ quality: 82, progressive: true, mozjpeg: true })
         .toBuffer();
       return await document.embedJpg(normalized);
@@ -253,8 +253,8 @@ export class TicketPdfService {
     page.drawRectangle({ x: 8, y: 8, width: PAGE_WIDTH - 16, height: PAGE_HEIGHT - 16, color: rgb(1, 1, 1), borderColor: BORDER, borderWidth: 0.8 });
     this.drawBanner(page, logo, banner);
 
-    let y = 428;
-    y = this.drawFittedWrapped(page, data.eventTitle, 22, y, PAGE_WIDTH - 44, bold, DARK, { maxSize: 18, minSize: 13, maxLines: 3, lineHeightRatio: 1.14 }) - 9;
+    let y = 397;
+    y = this.drawFittedWrapped(page, data.eventTitle, 22, y, PAGE_WIDTH - 44, bold, DARK, { maxSize: 14.5, minSize: 10.5, maxLines: 3, lineHeightRatio: 1.14 }) - 3;
     y = this.drawLabelValue(page, regular, bold, 'DATA E HORARIO', data.eventDate, y, 2);
     y = this.drawLabelValue(page, regular, bold, 'LOCAL', data.venue, y, 2);
 
@@ -264,37 +264,36 @@ export class TicketPdfService {
     this.drawCompactField(page, regular, bold, 'LOTE', data.batch || 'Nao informado', 30 + columnWidth, detailY, columnWidth, 2);
     this.drawCompactField(page, regular, bold, 'INGRESSO', data.ticketId, 22, detailY - 40, PAGE_WIDTH - 44, 1);
 
-    const perforationY = 204;
+    const perforationY = 200;
     this.drawPerforation(page, perforationY);
     page.drawText('APRESENTE NA ENTRADA', { x: 22, y: perforationY + 10, size: 6.5, font: bold, color: MUTED });
 
     const qrSize = 132;
-    page.drawRectangle({ x: (PAGE_WIDTH - qrSize) / 2 - 5, y: 49, width: qrSize + 10, height: qrSize + 10, color: rgb(1, 1, 1) });
-    page.drawImage(qrImage, { x: (PAGE_WIDTH - qrSize) / 2, y: 54, width: qrSize, height: qrSize });
-    const instruction = 'Escaneie este QR Code no check-in';
-    page.drawText(instruction, { x: (PAGE_WIDTH - bold.widthOfTextAtSize(instruction, 8)) / 2, y: 39, size: 8, font: bold, color: DARK });
+    page.drawRectangle({ x: (PAGE_WIDTH - qrSize) / 2 - 5, y: 39, width: qrSize + 10, height: qrSize + 10, color: rgb(1, 1, 1) });
+    page.drawImage(qrImage, { x: (PAGE_WIDTH - qrSize) / 2, y: 44, width: qrSize, height: qrSize });
+    const instruction = 'Apresente este QR Code no check-in';
+    page.drawText(instruction, { x: (PAGE_WIDTH - bold.widthOfTextAtSize(instruction, 7.7)) / 2, y: 29, size: 7.7, font: bold, color: DARK });
     const footer = 'pago.outrahora.com';
-    page.drawText(footer, { x: (PAGE_WIDTH - regular.widthOfTextAtSize(footer, 7.5)) / 2, y: 20, size: 7.5, font: regular, color: MUTED });
+    page.drawText(footer, { x: (PAGE_WIDTH - regular.widthOfTextAtSize(footer, 7.3)) / 2, y: 14, size: 7.3, font: regular, color: MUTED });
   }
 
   private drawBanner(page: PDFPage, logo: PDFImage, banner: PDFImage | null) {
     const x = 9;
-    const y = 445;
+    const y = 420;
     const width = PAGE_WIDTH - 18;
     const height = PAGE_HEIGHT - y - 9;
     if (banner) {
       page.drawImage(banner, { x, y, width, height });
-      page.drawRectangle({ x, y, width, height: 30, color: rgb(1, 1, 1), opacity: 0.92 });
     } else {
       page.drawRectangle({ x, y, width, height, color: rgb(0xe8 / 255, 0xf6 / 255, 0xfb / 255) });
       for (let offset = 0; offset <= width - 60; offset += 28) {
         page.drawLine({ start: { x: x + offset, y }, end: { x: x + offset + 60, y: y + height }, thickness: 0.6, color: BLUE, opacity: 0.28 });
       }
+      page.drawRectangle({ x: 18, y: PAGE_HEIGHT - 45, width: 70, height: 27, color: rgb(1, 1, 1), opacity: 0.96, borderColor: BORDER, borderWidth: 0.5 });
+      const logoHeight = 22;
+      const logoWidth = logo.width / logo.height * logoHeight;
+      page.drawImage(logo, { x: 53 - logoWidth / 2, y: PAGE_HEIGHT - 42.5, width: logoWidth, height: logoHeight });
     }
-    page.drawRectangle({ x: 18, y: PAGE_HEIGHT - 45, width: 70, height: 27, color: rgb(1, 1, 1), opacity: 0.96, borderColor: BORDER, borderWidth: 0.5 });
-    const logoHeight = 22;
-    const logoWidth = logo.width / logo.height * logoHeight;
-    page.drawImage(logo, { x: 53 - logoWidth / 2, y: PAGE_HEIGHT - 42.5, width: logoWidth, height: logoHeight });
   }
 
   private drawPerforation(page: PDFPage, y: number) {
@@ -307,12 +306,12 @@ export class TicketPdfService {
 
   private drawLabelValue(page: PDFPage, regular: PDFFont, bold: PDFFont, label: string, value: string, y: number, maxLines: number) {
     page.drawText(label, { x: 22, y, size: 6.5, font: bold, color: BLUE_DARK });
-    return this.drawFittedWrapped(page, value, 22, y - 12, PAGE_WIDTH - 44, regular, DARK, { maxSize: 9.5, minSize: 8, maxLines, lineHeightRatio: 1.3 }) - 8;
+    return this.drawFittedWrapped(page, value, 22, y - 11, PAGE_WIDTH - 44, regular, DARK, { maxSize: 9.2, minSize: 7.8, maxLines, lineHeightRatio: 1.25 }) - 6;
   }
 
   private drawCompactField(page: PDFPage, regular: PDFFont, bold: PDFFont, label: string, value: string, x: number, y: number, width: number, maxLines: number) {
     page.drawText(label, { x, y, size: 6.5, font: bold, color: BLUE_DARK });
-    this.drawFittedWrapped(page, value, x, y - 12, width, regular, DARK, { maxSize: 8.5, minSize: 7, maxLines, lineHeightRatio: 1.25 });
+    this.drawFittedWrapped(page, value, x, y - 11, width, regular, DARK, { maxSize: 8.3, minSize: 6.9, maxLines, lineHeightRatio: 1.22 });
   }
 
   private drawFittedWrapped(page: PDFPage, text: string, x: number, y: number, maxWidth: number, font: PDFFont, color: ReturnType<typeof rgb>, options: { maxSize: number; minSize: number; maxLines: number; lineHeightRatio: number }) {

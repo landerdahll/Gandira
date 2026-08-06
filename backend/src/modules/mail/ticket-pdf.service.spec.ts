@@ -23,7 +23,7 @@ describe('TicketPdfService', () => {
 
   afterEach(() => jest.restoreAllMocks());
 
-  it('gera ticket de 100 x 210 mm, em memória, com uma página por ingresso elegível', async () => {
+  it('gera ticket de 100 x 195 mm, em memória, com uma página por ingresso elegível', async () => {
     const order = { ...baseOrder, tickets: [baseOrder.tickets[0], { ...baseOrder.tickets[0], id: 'ticket-IJKLMNOP', token: 'segundo-token' }] };
     const { service } = setup(order);
     const result = await service.createForOrder(order.id, order.user.email);
@@ -34,7 +34,7 @@ describe('TicketPdfService', () => {
     const document = await PDFDocument.load(result.attachment!.content);
     expect(document.getPageCount()).toBe(2);
     expect(document.getPage(0).getWidth()).toBeCloseTo(100 * 72 / 25.4, 2);
-    expect(document.getPage(0).getHeight()).toBeCloseTo(210 * 72 / 25.4, 2);
+    expect(document.getPage(0).getHeight()).toBeCloseTo(195 * 72 / 25.4, 2);
     expect(document.getAuthor()).toBe('Pago');
     expect(document.getCreator()).toBe('Pago');
   });
@@ -96,7 +96,7 @@ describe('TicketPdfService', () => {
     expect(document.getPageCount()).toBe(1);
   });
 
-  it('prioriza bannerImage e reutiliza a imagem processada em todas as páginas', async () => {
+  it('prioriza coverImage e reutiliza a imagem processada em todas as páginas', async () => {
     const jpeg = await sharp({ create: { width: 80, height: 40, channels: 3, background: '#67bed9' } }).jpeg().toBuffer();
     const order = {
       ...baseOrder,
@@ -107,17 +107,17 @@ describe('TicketPdfService', () => {
     const download = jest.spyOn(service as any, 'downloadTrustedImage').mockResolvedValue(jpeg);
     const result = await service.createForOrder(order.id, order.user.email);
     expect(download).toHaveBeenCalledTimes(1);
-    expect(download).toHaveBeenCalledWith(order.event.bannerImage);
+    expect(download).toHaveBeenCalledWith(order.event.coverImage);
     expect(result.eligibleCount).toBe(2);
   });
 
-  it('usa coverImage como fallback e gera sem imagem quando ambas estão ausentes', async () => {
+  it('usa bannerImage como fallback e gera sem imagem quando ambas estão ausentes', async () => {
     const jpeg = await sharp({ create: { width: 80, height: 40, channels: 3, background: '#ffffff' } }).jpeg().toBuffer();
-    const withCover = { ...baseOrder, event: { ...baseOrder.event, coverImage: 'https://res.cloudinary.com/demo/cover.jpg' } };
-    const first = setup(withCover);
+    const withBanner = { ...baseOrder, event: { ...baseOrder.event, bannerImage: 'https://res.cloudinary.com/demo/banner.jpg' } };
+    const first = setup(withBanner);
     const download = jest.spyOn(first.service as any, 'downloadTrustedImage').mockResolvedValue(jpeg);
-    await expect(first.service.createForOrder(withCover.id, withCover.user.email)).resolves.toMatchObject({ eligibleCount: 1 });
-    expect(download).toHaveBeenCalledWith(withCover.event.coverImage);
+    await expect(first.service.createForOrder(withBanner.id, withBanner.user.email)).resolves.toMatchObject({ eligibleCount: 1 });
+    expect(download).toHaveBeenCalledWith(withBanner.event.bannerImage);
 
     const second = setup();
     const noDownload = jest.spyOn(second.service as any, 'downloadTrustedImage');
@@ -202,6 +202,6 @@ describe('TicketPdfService', () => {
     const result = await service.createForOrder(order.id, order.user.email);
     expect(result.attachment!.content.byteLength).toBeLessThan(10 * 1024 * 1024);
     const document = await PDFDocument.load(result.attachment!.content);
-    expect(document.getPage(0).getHeight()).toBeCloseTo(210 * 72 / 25.4, 2);
+    expect(document.getPage(0).getHeight()).toBeCloseTo(195 * 72 / 25.4, 2);
   });
 });
