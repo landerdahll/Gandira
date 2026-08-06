@@ -6,7 +6,9 @@ describe('mail templates', () => {
       name: 'Cliente', eventTitle: 'Show', eventDate: '2026-08-01T22:00:00.000Z', venue: 'Casa', city: 'São Paulo',
       items: [{ batchName: 'Primeiro lote', quantity: 2 }], total: 100, orderId: 'order-1', myTicketsUrl: 'https://pago.outrahora.com/my-tickets',
     }, 'https://pago.outrahora.com/logo-full-white.svg');
-    expect(result.html).toContain('Pago by OutraHora');
+    expect(result.html).toContain('pago.outrahora.com');
+    expect(result.html).not.toContain('Pago by OutraHora');
+    expect(result.text).not.toContain('Pago by OutraHora');
     expect(result.html).toContain('order-1');
     expect(result.text).toContain('https://pago.outrahora.com/my-tickets');
     expect(result.html).toContain('Ver meus ingressos');
@@ -17,6 +19,7 @@ describe('mail templates', () => {
     expect(result.html).toContain('color-scheme:light');
     expect(result.html).not.toContain('background:#0a0a0a');
     expect(result.html).not.toContain('background:#111');
+    expect(result.html).not.toContain('Pago by OutraHora ·');
     expect(`${result.html}${result.text}`).not.toMatch(/Gandira/i);
   });
 

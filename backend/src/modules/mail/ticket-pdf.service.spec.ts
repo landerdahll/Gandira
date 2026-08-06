@@ -27,6 +27,8 @@ describe('TicketPdfService', () => {
     expect(result.attachment!.content.byteLength).toBeLessThan(10 * 1024 * 1024);
     const document = await PDFDocument.load(result.attachment!.content);
     expect(document.getPageCount()).toBe(2);
+    expect(document.getAuthor()).toBe('Pago');
+    expect(document.getCreator()).toBe('Pago');
   });
 
   it('gera QR que decodifica exatamente para Ticket.token', async () => {

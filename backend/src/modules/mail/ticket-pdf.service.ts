@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from 'pdf-lib';
+import { existsSync, readFileSync } from 'fs';
+import { resolve } from 'path';
 import * as QRCode from 'qrcode';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { MailAttachment } from './mail.service';
@@ -11,6 +13,22 @@ const BLUE = rgb(0x67 / 255, 0xbe / 255, 0xd9 / 255);
 const DARK = rgb(0x17 / 255, 0x20 / 255, 0x27 / 255);
 const MUTED = rgb(0x52 / 255, 0x60 / 255, 0x6a / 255);
 const LIGHT = rgb(0xf4 / 255, 0xf7 / 255, 0xf9 / 255);
+const OFFICIAL_LOGO_PATHS = loadOfficialLogoPaths();
+
+function loadOfficialLogoPaths() {
+  const candidates = [
+    resolve(process.cwd(), '../logo-full-blue.svg'),
+    resolve(process.cwd(), 'logo-full-blue.svg'),
+    resolve(__dirname, '../../../../../logo-full-blue.svg'),
+    resolve(__dirname, '../../../../logo-full-blue.svg'),
+  ];
+  const logoPath = candidates.find(candidate => existsSync(candidate));
+  if (!logoPath) throw new Error('Logotipo oficial do Pago não encontrado');
+  const svg = readFileSync(logoPath, 'utf8');
+  const paths = [...svg.matchAll(/<path[^>]+d="([^"]+)"/g)].map(match => match[1]);
+  if (paths.length === 0) throw new Error('Logotipo oficial do Pago não contém paths SVG');
+  return paths;
+}
 
 export interface TicketPdfResult {
   attachment: MailAttachment | null;
@@ -79,9 +97,9 @@ export class TicketPdfService {
       }
 
       document.setTitle(`Ingressos - ${order.event.title}`);
-      document.setAuthor('Pago by OutraHora');
-      document.setCreator('Pago by OutraHora');
-      document.setProducer('Pago by OutraHora');
+      document.setAuthor('Pago');
+      document.setCreator('Pago');
+      document.setProducer('Pago');
       const bytes = await document.save({ useObjectStreams: true });
       if (bytes.byteLength > MAX_PDF_BYTES) {
         throw new Error(`PDF excede o limite interno de 10 MB (${bytes.byteLength} bytes)`);
@@ -113,9 +131,10 @@ export class TicketPdfService {
   private drawPage(page: PDFPage, regular: PDFFont, bold: PDFFont, qrImage: Awaited<ReturnType<PDFDocument['embedPng']>>, data: Record<string, string | undefined>) {
     page.drawRectangle({ x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT, color: LIGHT });
     page.drawRectangle({ x: 32, y: 32, width: PAGE_WIDTH - 64, height: PAGE_HEIGHT - 64, color: rgb(1, 1, 1), borderColor: rgb(0xdc / 255, 0xe7 / 255, 0xec / 255), borderWidth: 1 });
-    page.drawRectangle({ x: 32, y: PAGE_HEIGHT - 145, width: PAGE_WIDTH - 64, height: 113, color: BLUE });
-    page.drawText('Pago', { x: 58, y: PAGE_HEIGHT - 91, size: 28, font: bold, color: DARK });
-    page.drawText('by OutraHora', { x: 58, y: PAGE_HEIGHT - 116, size: 12, font: regular, color: DARK });
+    page.drawRectangle({ x: 32, y: PAGE_HEIGHT - 145, width: PAGE_WIDTH - 64, height: 113, color: DARK });
+    for (const path of OFFICIAL_LOGO_PATHS) {
+      page.drawSvgPath(path, { x: 58, y: PAGE_HEIGHT - 49, scale: 0.025, color: BLUE });
+    }
 
     let y = PAGE_HEIGHT - 190;
     y = this.drawWrapped(page, data.eventTitle || '', 58, y, 479, 22, bold, DARK, 27) - 12;
@@ -129,7 +148,8 @@ export class TicketPdfService {
     page.drawImage(qrImage, { x: (PAGE_WIDTH - qrSize) / 2, y: 160, width: qrSize, height: qrSize });
     page.drawText('Apresente este QR Code na entrada.', { x: 180, y: 140, size: 11, font: bold, color: DARK });
     this.drawWrapped(page, 'Este ingresso tambem pode ser acessado pelo sistema Pago. A validade e o titular sao sempre confirmados no momento do check-in.', 70, 112, PAGE_WIDTH - 140, 10, regular, MUTED, 14);
-    page.drawText('Emitido por Pago by OutraHora', { x: 205, y: 59, size: 10, font: bold, color: MUTED });
+    const footer = 'Emitido por pago.outrahora.com';
+    page.drawText(footer, { x: (PAGE_WIDTH - bold.widthOfTextAtSize(footer, 10)) / 2, y: 59, size: 10, font: bold, color: MUTED });
   }
 
   private drawLabelValue(page: PDFPage, regular: PDFFont, bold: PDFFont, label: string, value: string, y: number) {
