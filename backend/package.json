@@ -6,8 +6,8 @@
     "node": "20.x"
   },
   "scripts": {
-    "build": "npm run prisma:generate && nest build",
-    "start": "node dist/src/main.js",
+    "build": "npm run prisma:generate && tsc -p tsconfig.json --incremental false",
+    "start": "npm run build && node dist/src/main.js",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
