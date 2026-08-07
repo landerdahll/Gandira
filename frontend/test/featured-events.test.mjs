@@ -19,7 +19,7 @@ test('home obtains its feature from the dedicated priority endpoint', () => {
 
 test('featured card prefers the ultrawide banner and falls back to the cover', () => {
   assert.match(card, /event\.bannerImage \|\| event\.coverImage/);
-  assert.match(card, /aspectRatio: '21 \/ 6'/);
+  assert.match(card, /aspectRatio: '7 \/ 3'/);
   assert.match(card, /objectFit: 'cover'/);
   assert.match(card, /objectPosition: 'center'/);
   assert.match(card, /className="featured-card-footer"/);

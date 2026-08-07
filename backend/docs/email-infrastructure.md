@@ -16,6 +16,10 @@ Trocar `EMAIL_TOKEN_SECRET` invalida todos os links novos ainda pendentes, inclu
 
 Mensagens idempotentes são inseridas na `EmailOutbox`, preferencialmente na transação da operação. Um job periódico faz claim condicional, envia pelo `MailService`, guarda o ID do Resend e aplica backoff exponencial. Itens presos em `PROCESSING` retornam a `RETRY` após o timeout. O payload não pode conter senhas, chaves, tokens puros, QR Codes ou dados de cartão.
 
+Na confirmação de compra, o worker consulta o estado atual do pedido e gera em memória um único PDF com uma página por ingresso ainda elegível. Cada QR contém o `Ticket.token` vigente, usado pelo check-in; PDFs, imagens base64 e tokens nunca são persistidos na outbox. Ingressos cancelados, usados, em transferência ou que já pertencem a outro usuário são omitidos. Se nenhum ingresso estiver elegível, a confirmação segue sem anexo e gera um aviso operacional. O PDF possui limite interno de 10 MB e é descartado depois da tentativa.
+
+O envio usa a chave idempotente `email-outbox-<id>` no Resend. Falhas de PDF são registradas com `[PDF_GENERATION]`; falhas do provedor, com `[RESEND]`.
+
 ## Variáveis do Render
 
 - `RESEND_API_KEY`: segredo do Resend.

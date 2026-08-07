@@ -10,9 +10,9 @@ test('mobile-only image ratios implement the requested height refinements', () =
   const start = styles.indexOf('@media (max-width: 768px)');
   const end = styles.indexOf('@media (min-width: 600px)', start);
   const mobile = styles.slice(start, end);
-  assert.match(mobile, /compact-event-card__media \{ aspect-ratio: 16 \/ 17/);
-  assert.match(mobile, /featured-card-img \{ aspect-ratio: 175 \/ 66 !important/);
-  assert.doesNotMatch(styles.slice(0, styles.indexOf('@media (max-width: 768px)')), /aspect-ratio: 16 \/ 17|aspect-ratio: 175 \/ 66/);
+  assert.match(mobile, /compact-event-card__media \{ aspect-ratio: 4 \/ 5/);
+  assert.match(mobile, /featured-card-img \{ aspect-ratio: 7 \/ 3 !important/);
+  assert.match(styles.slice(0, styles.indexOf('@media (max-width: 768px)')), /aspect-ratio: 4 \/ 5/);
 });
 
 test('featured description is clamped to two lines and footer spacing is halved on mobile', () => {

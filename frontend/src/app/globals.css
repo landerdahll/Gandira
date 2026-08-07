@@ -118,7 +118,7 @@ body {
 .compact-event-card__media {
   position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
   border-radius: 12px;
   background: var(--theme-surface);
@@ -225,15 +225,15 @@ body {
     scroll-snap-align: start;
     border: 1px solid var(--theme-border);
     background: var(--theme-surface-raised);
-    box-shadow: var(--theme-shadow);
+    box-shadow: 0 2px 12px rgba(65,91,117,.08);
   }
-  .compact-event-card__media { aspect-ratio: 16 / 17; border-radius: 11px 11px 0 0; }
+  .compact-event-card__media { aspect-ratio: 4 / 5; border-radius: 11px 11px 0 0; }
   .compact-event-card__body { padding: 10px 10px 12px; }
   .compact-event-card__title { min-height: 37px; margin-bottom: 5px; font-size: 14px; line-height: 1.3; }
   .compact-event-card__date,
   .compact-event-card__venue,
   .compact-event-card__price { font-size: 12px; }
-  .featured-card-img { aspect-ratio: 175 / 66 !important; }
+  .featured-card-img { aspect-ratio: 7 / 3 !important; }
   .featured-card-description {
     display: -webkit-box;
     margin: 0;
@@ -1028,9 +1028,10 @@ body {
     top: auto !important;
   }
   .event-cover {
-    height: 220px !important;
+    height: 100% !important;
     border-radius: 14px !important;
     margin-bottom: 24px !important;
+    box-shadow: var(--theme-shadow) !important;
   }
   .event-title {
     font-size: 24px !important;
@@ -1051,7 +1052,7 @@ body {
     width: 100% !important;
   }
   .featured-card-body {
-    padding: 24px !important;
+    padding: 8px 24px 12px 24px !important;
   }
 
   /* Page padding */

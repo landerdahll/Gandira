@@ -293,7 +293,7 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
           </div>
         )}
 
-        <div style={{ padding: '0 16px' }}>
+        <div style={{ padding: '0 16px', position: 'relative', top: '6px' }}>
           <button
             onClick={handleCheckout}
             disabled={loading || qty === 0}

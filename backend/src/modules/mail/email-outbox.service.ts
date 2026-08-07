@@ -8,6 +8,7 @@ import { MailService } from './mail.service';
 import { MailTemplateName } from './mail.templates';
 import { EmailTokenPurpose, EmailTokenService } from './email-token.service';
 import { getPublicFrontendUrl } from '../../common/utils/public-url.util';
+import { TicketPdfService } from './ticket-pdf.service';
 
 type Db = PrismaService | Prisma.TransactionClient;
 export interface EnqueueEmail {
@@ -30,6 +31,7 @@ export class EmailOutboxService {
     private readonly mail: MailService,
     private readonly config: ConfigService,
     private readonly tokens: EmailTokenService,
+    private readonly ticketPdf: TicketPdfService,
   ) {}
 
   async enqueue(input: EnqueueEmail, db: Db = this.prisma) {
@@ -71,7 +73,16 @@ export class EmailOutboxService {
     const item = await this.prisma.emailOutbox.findUniqueOrThrow({ where: { id } });
     try {
       const payload = this.hydratePayload(item.payload as Record<string, unknown>);
-      const delivered = await this.mail.deliver(item.recipient, item.template as MailTemplateName, payload);
+      let attachments;
+      if (item.type === 'ORDER_CONFIRMATION') {
+        const pdf = await this.ticketPdf.createForOrder(String(item.relatedEntityId || payload.orderId), item.recipient);
+        if (pdf.attachment) attachments = [pdf.attachment];
+        else this.logger.warn(`Confirmação enviada sem PDF: nenhum ingresso elegível; pedido=${item.relatedEntityId ?? payload.orderId}`);
+      }
+      const delivered = await this.mail.deliver(item.recipient, item.template as MailTemplateName, payload, {
+        attachments,
+        idempotencyKey: `email-outbox-${item.id}`,
+      });
       await this.prisma.emailOutbox.update({ where: { id }, data: {
         status: 'SENT', sentAt: new Date(), processingAt: null, providerMessageId: delivered.providerMessageId, lastError: null,
       } });
@@ -86,7 +97,8 @@ export class EmailOutboxService {
         failedAt: failed ? new Date() : null,
         nextAttemptAt: failed ? item.nextAttemptAt : new Date(Date.now() + delayMs),
       } });
-      this.logger.error(`Falha de e-mail tipo=${item.type} destinatário=${maskEmail(item.recipient)} tentativa=${item.attempts}`);
+      const category = message.startsWith('[PDF_GENERATION]') ? 'PDF_GENERATION' : message.startsWith('[RESEND]') ? 'RESEND' : 'EMAIL_PROCESSING';
+      this.logger.error(`Falha de e-mail categoria=${category} tipo=${item.type} destinatário=${maskEmail(item.recipient)} tentativa=${item.attempts}: ${message}`);
     }
   }
 

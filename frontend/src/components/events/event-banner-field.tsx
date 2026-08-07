@@ -43,10 +43,10 @@ export function EventBannerField({ value, onChange }: { value: string; onChange:
     <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: 16, overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '13px 20px', borderBottom: '1px solid #1a1a1a' }}>
         <ImageIcon size={15} color="#67bed9" />
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Banner ultrawide</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Banner</span>
       </div>
       <div style={{ padding: 20 }}>
-        <p style={{ color: '#555', fontSize: 12, marginBottom: 14 }}>Usado somente quando o evento aparecer em destaque na Home. Recomendado 21:9.</p>
+        <p style={{ color: '#555', fontSize: 12, marginBottom: 14 }}>Recomendado 7:3.</p>
         <div style={{ display: 'flex', gap: 6, marginBottom: 16, background: '#0a0a0a', padding: 4, borderRadius: 10 }}>
           {(['upload', 'url'] as ImageMode[]).map(option => (
             <button key={option} type="button" onClick={() => setMode(option)} style={{ flex: 1, padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: mode === option ? '#1a1a1a' : 'transparent', color: mode === option ? '#fff' : '#555', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
@@ -72,8 +72,8 @@ export function EventBannerField({ value, onChange }: { value: string; onChange:
         )}
 
         {value && (
-          <div style={{ position: 'relative', marginTop: 16, width: '100%', aspectRatio: '21 / 9' }}>
-            <img src={value} alt="Preview do banner ultrawide" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10, border: '1px solid #252525', display: 'block' }} />
+          <div style={{ position: 'relative', marginTop: 16, width: '100%', aspectRatio: '7 / 3' }}>
+            <img src={value} alt="Preview do banner" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10, border: '1px solid #252525', display: 'block' }} />
             <button type="button" onClick={() => onChange('')} aria-label="Remover banner" style={{ position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: '50%', background: '#0a0a0add', border: '1px solid #333', color: '#aaa', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><X size={13} /></button>
           </div>
         )}
