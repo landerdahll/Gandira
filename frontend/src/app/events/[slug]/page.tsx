@@ -87,7 +87,6 @@ export default async function EventPage({ params }: { params: { slug: string } }
         {heroImage && <img src={heroImage} alt={event.title} className="event-hero-light__image" />}
         <div className="event-hero-light__scrim" />
         <div className="event-hero-light__content">
-          <p className="event-hero-light__eyebrow">{event.category || 'Evento'}</p>
           <h1>{event.title}</h1>
           <div className="event-hero-light__facts">
             <span><Calendar size={18} /> <span style={{ textTransform: 'capitalize' }}>{fmtDate(startDate)}</span></span>
@@ -154,12 +153,11 @@ export default async function EventPage({ params }: { params: { slug: string } }
 
           <section className="event-premium-section event-important-section">
             <p className="event-section-kicker">Informações importantes</p>
-            <h2>Antes de ir</h2>
             <div className="event-important-grid">
               <ImportantItem icon={<ShieldCheck size={18} />} label="Classificação" value={event.ageRating > 0 ? `${event.ageRating} anos` : 'Livre'} />
               <ImportantItem icon={<DoorOpen size={18} />} label="Abertura de portas" value={doorsOpen ? fmtTime(doorsOpen) : 'No horário do evento'} />
-              <ImportantItem icon={<TicketCheck size={18} />} label="Ingresso" value="Apresente o QR Code pelo celular ou impresso" />
-              <ImportantItem icon={<Calendar size={18} />} label="Cancelamento" value="Gratuito em até 7 dias após a compra" />
+              <ImportantItem icon={<TicketCheck size={18} />} label="Ingresso" value="Apresente o QR Code na entrada." />
+              <ImportantItem icon={<Calendar size={18} />} label="Cancelamento" value="Gratuito em até 7 dias após a compra e até 48h antes do evento." />
             </div>
           </section>
 

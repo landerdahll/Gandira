@@ -14,6 +14,8 @@ test('keeps the original dark hero and scopes the premium redesign to light mode
   assert.match(styles, /:root\[data-theme='light'\] \.event-hero-dark \{ display: none; \}/);
   assert.match(styles, /:root\[data-theme='light'\] \.event-hero-light\s*\{/);
   assert.doesNotMatch(styles, /:root\[data-theme='dark'\] \.event-hero/);
+  assert.doesNotMatch(page, /event-hero-light__eyebrow/);
+  assert.doesNotMatch(page, />Antes de ir</);
 });
 
 test('renders venue routes, organization identity and same-organization related events', () => {
