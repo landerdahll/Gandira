@@ -124,6 +124,7 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
           )}
           <Link
             href={`/events/${event.slug}`}
+            className="featured-buy-button"
             style={{
               flexShrink: 0,
               marginLeft: 'auto',

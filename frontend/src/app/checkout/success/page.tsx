@@ -69,7 +69,7 @@ function SuccessContent() {
   const total = order ? Number(order.total) : 0;
 
   return (
-    <div style={{
+    <div className="checkout-success-page" style={{
       minHeight: '100vh',
       background: '#080808',
       display: 'flex',
@@ -87,7 +87,7 @@ function SuccessContent() {
         {ready ? (
           <>
             {/* Success icon */}
-            <div style={{
+            <div className="checkout-success-icon" style={{
               width: '88px', height: '88px', borderRadius: '50%',
               background: '#0d1e28', border: '2px solid #67bed933',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -106,7 +106,7 @@ function SuccessContent() {
 
             {/* Order summary card */}
             {order && (
-              <div style={{
+              <div className="checkout-success-card" style={{
                 background: '#111',
                 border: '1px solid #1e1e1e',
                 borderRadius: '18px',
@@ -150,7 +150,7 @@ function SuccessContent() {
                     )}
                   </div>
 
-                  <div style={{
+                  <div className="checkout-success-ticket-summary" style={{
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     padding: '12px 14px',
                     background: '#0d1e28',

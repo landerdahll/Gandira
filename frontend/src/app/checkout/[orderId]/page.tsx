@@ -10,6 +10,7 @@ import { ordersApi, pixApi } from '@/lib/api';
 import { formatClubDiscountPercentage } from '@/lib/club-membership';
 import { getDiscountLabel } from '@/lib/club-checkout';
 import { BrandMark } from '@/components/brand/brand-mark';
+import { useTheme } from '@/components/providers/theme-provider';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -143,8 +144,8 @@ function PixTab({ orderId, total }: { orderId: string; total: number }) {
 
   if (!pixData) {
     return (
-      <div style={{ textAlign: 'center', padding: '8px 0 4px' }}>
-        <div style={{
+      <div className="checkout-pix-content" style={{ textAlign: 'center', padding: '8px 0 4px' }}>
+        <div className="checkout-payment-icon" style={{
           width: '64px', height: '64px', borderRadius: '16px',
           background: '#0d1e28', border: '1px solid #67bed922',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -152,7 +153,7 @@ function PixTab({ orderId, total }: { orderId: string; total: number }) {
         }}>
           🏦
         </div>
-        <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>Pague com PIX</p>
+        <p className="checkout-payment-title" style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>Pague com PIX</p>
         <p style={{ fontSize: '13px', color: '#555', marginBottom: '28px', lineHeight: 1.5 }}>
           QR Code gerado na hora. Pague pelo app do seu banco em segundos.
         </p>
@@ -259,6 +260,7 @@ function CheckoutContent() {
   const [order, setOrder] = useState<any>(null);
   const [paymentTab, setPaymentTab] = useState<'card' | 'pix'>('pix');
   const [orderId, setOrderId] = useState('');
+  const { theme } = useTheme();
 
   useEffect(() => {
     const id = window.location.pathname.split('/').pop() ?? '';
@@ -281,7 +283,7 @@ function CheckoutContent() {
   const items: any[] = order?.items ?? [];
 
   return (
-    <div style={{
+    <div className="checkout-page" style={{
       minHeight: '100vh',
       background: '#080808',
       padding: '32px 16px 80px',
@@ -298,7 +300,7 @@ function CheckoutContent() {
           </div>
 
           {/* Event card */}
-          <div style={{
+          <div className="checkout-summary-card" style={{
             background: '#111',
             border: '1px solid #1e1e1e',
             borderRadius: '18px',
@@ -394,13 +396,13 @@ function CheckoutContent() {
 
         {/* Right — Payment form */}
         <div style={{ flex: '1 1 340px' }}>
-          <div style={{
+          <div className="checkout-payment-panel" style={{
             background: '#111', border: '1px solid #1e1e1e',
             borderRadius: '18px', padding: '28px',
             position: 'sticky', top: '40px',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
-              <div style={{
+              <div className="checkout-payment-icon" style={{
                 width: '36px', height: '36px', borderRadius: '10px',
                 background: '#0d1e28', border: '1px solid #67bed922',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -408,7 +410,7 @@ function CheckoutContent() {
                 <Lock size={16} color="#67bed9" />
               </div>
               <div>
-                <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>Pagamento seguro</p>
+                <p className="checkout-payment-title" style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>Pagamento seguro</p>
                 <p style={{ fontSize: '12px', color: '#555' }}>Seus dados são criptografados</p>
               </div>
             </div>
@@ -417,6 +419,7 @@ function CheckoutContent() {
             <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
               {/* PIX — destaque */}
               <button
+                className={`checkout-payment-option${paymentTab === 'pix' ? ' is-selected' : ''}`}
                 onClick={() => setPaymentTab('pix')}
                 style={{
                   flex: 3, padding: '12px 0', borderRadius: '12px', cursor: 'pointer',
@@ -439,6 +442,7 @@ function CheckoutContent() {
 
               {/* Cartão */}
               <button
+                className={`checkout-payment-option${paymentTab === 'card' ? ' is-selected' : ''}`}
                 onClick={() => setPaymentTab('card')}
                 style={{
                   flex: 2, padding: '12px 0', borderRadius: '12px', cursor: 'pointer',
@@ -461,27 +465,28 @@ function CheckoutContent() {
 
             {paymentTab === 'card' && clientSecret && (
               <Elements
+                key={theme}
                 stripe={stripePromise}
                 options={{
                   clientSecret,
                   appearance: {
-                    theme: 'night',
+                    theme: theme === 'dark' ? 'night' : 'stripe',
                     variables: {
                       colorPrimary: '#67bed9',
-                      colorBackground: '#1a1a1a',
-                      colorText: '#ffffff',
-                      colorTextSecondary: '#888888',
+                      colorBackground: theme === 'dark' ? '#1a1a1a' : '#ffffff',
+                      colorText: theme === 'dark' ? '#ffffff' : '#161616',
+                      colorTextSecondary: theme === 'dark' ? '#888888' : '#4f5d6b',
                       colorDanger: '#ff6b6b',
                       borderRadius: '12px',
                       fontFamily: 'system-ui, sans-serif',
                       spacingUnit: '5px',
                     },
                     rules: {
-                      '.Input': { border: '1px solid #252525', boxShadow: 'none' },
+                      '.Input': { border: `1px solid ${theme === 'dark' ? '#252525' : '#d8e3ee'}`, boxShadow: 'none' },
                       '.Input:focus': { border: '1px solid #67bed9', boxShadow: '0 0 0 2px #67bed915' },
-                      '.Label': { color: '#888', fontSize: '13px', fontWeight: '500' },
-                      '.Tab': { border: '1px solid #252525', background: '#141414' },
-                      '.Tab--selected': { border: '1px solid #67bed955', background: '#0d1e28' },
+                      '.Label': { color: theme === 'dark' ? '#888' : '#4f5d6b', fontSize: '13px', fontWeight: '500' },
+                      '.Tab': { border: `1px solid ${theme === 'dark' ? '#252525' : '#d8e3ee'}`, background: theme === 'dark' ? '#141414' : '#ffffff' },
+                      '.Tab--selected': { border: '1px solid #67bed955', background: theme === 'dark' ? '#0d1e28' : '#eef8fd' },
                     },
                   },
                 }}

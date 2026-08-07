@@ -58,9 +58,13 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
   const rest = featured
     ? upcomingEvents.filter((event: any) => event.id !== featured.id)
     : upcomingEvents;
-  const visiblePastEvents = featured
+  const visiblePastEvents = (featured
     ? pastEvents.filter((event: any) => event.id !== featured.id)
-    : pastEvents;
+    : pastEvents
+  ).sort((a: any, b: any) => {
+    const endedAt = (event: any) => new Date(event.endDate ?? event.startDate).getTime();
+    return endedAt(b) - endedAt(a);
+  });
 
   return (
     <div className="page-container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px 80px' }}>

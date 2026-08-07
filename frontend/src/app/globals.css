@@ -105,6 +105,23 @@ body {
   gap: 20px;
 }
 
+.event-carousel--past {
+  display: flex;
+  gap: 20px;
+  padding: 2px 0 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  scroll-behavior: smooth;
+  scroll-snap-type: inline proximity;
+  scrollbar-width: thin;
+}
+
+.event-carousel--past .compact-event-card {
+  flex: 0 0 clamp(180px, 18vw, 220px);
+  scroll-snap-align: start;
+}
+
 .compact-event-card {
   display: block;
   min-width: 0;
@@ -470,6 +487,40 @@ body {
 :root[data-theme='light'] [style*="color:#67bed9;"],
 :root[data-theme='light'] [style$="color:#67bed9"] { color: #62b6e8 !important; }
 :root[data-theme='light'] a:not([style*="background"]) { text-decoration-color: #62b6e8; }
+
+/* Targeted light-mode polish. Dark mode keeps the original inline palette. */
+:root[data-theme='light'] .featured-buy-button { color: #fff !important; }
+:root[data-theme='light'] .checkout-payment-panel,
+:root[data-theme='light'] .checkout-summary-card,
+:root[data-theme='light'] .checkout-success-card { background: var(--theme-surface) !important; border-color: var(--theme-border) !important; }
+:root[data-theme='light'] .checkout-payment-icon,
+:root[data-theme='light'] .checkout-success-icon,
+:root[data-theme='light'] .checkout-success-ticket-summary,
+:root[data-theme='light'] .checkout-applied-coupon {
+  background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface)) !important;
+  border-color: color-mix(in srgb, var(--theme-primary) 35%, var(--theme-border)) !important;
+}
+:root[data-theme='light'] .checkout-payment-title { color: var(--theme-text) !important; }
+:root[data-theme='light'] .checkout-payment-option {
+  color: var(--theme-text-secondary) !important;
+  background: var(--theme-surface) !important;
+  border-color: var(--theme-border) !important;
+}
+:root[data-theme='light'] .checkout-payment-option.is-selected {
+  background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface)) !important;
+  border-color: color-mix(in srgb, var(--theme-primary) 55%, var(--theme-border)) !important;
+}
+:root[data-theme='light'] .ticket-share-button { color: var(--theme-text-secondary) !important; }
+:root[data-theme='light'] .ticket-share-button:hover {
+  color: var(--theme-primary) !important;
+  background: color-mix(in srgb, var(--theme-primary) 10%, transparent) !important;
+}
+:root[data-theme='light'] .admin-refunds-table-head th {
+  color: var(--theme-text-secondary) !important;
+  background: color-mix(in srgb, var(--theme-primary) 7%, var(--theme-surface)) !important;
+}
+:root[data-theme='light'] .checkout-applied-coupon__remove { color: var(--theme-text-secondary) !important; }
+:root[data-theme='light'] .checkout-applied-coupon__remove:hover { color: var(--theme-text) !important; }
 
 /* Light header contrast. Kept after the legacy palette compatibility rules. */
 :root[data-theme='light'] .theme-navbar :is(.nav-events-link, .nav-login-link, .nav-menu-toggle) {

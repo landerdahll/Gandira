@@ -212,7 +212,7 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
           )}
 
           {couponData ? (
-            <div style={{
+            <div className="checkout-applied-coupon" style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               background: '#0d1e28', border: '1px solid #67bed933',
               borderRadius: '10px', padding: '10px 14px',
@@ -222,7 +222,7 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
                 <span style={{ fontSize: '13px', fontWeight: 700, color: '#67bed9' }}>{couponData.code}</span>
                 <span style={{ fontSize: '12px', color: '#555' }}>−{couponData.discount}%</span>
               </div>
-              <button onClick={removeCoupon} style={{
+              <button className="checkout-applied-coupon__remove" aria-label="Remover cupom" onClick={removeCoupon} style={{
                 background: 'none', border: 'none', cursor: 'pointer',
                 color: '#444', display: 'flex', padding: '2px',
               }}

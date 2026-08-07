@@ -22,7 +22,7 @@ export function EventCarousel({ title, events, kind = 'upcoming', allHref, loadi
   return <section className="event-discovery-section" aria-labelledby={`event-section-${kind}`}>
     <div id={`event-section-${kind}`}><EventSectionHeader title={title} allHref={allHref}/></div>
     <div
-      className="event-carousel"
+      className={`event-carousel${kind === 'past' ? ' event-carousel--past' : ''}`}
       role="region"
       aria-roledescription="carrossel"
       aria-label={title}

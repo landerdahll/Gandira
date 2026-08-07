@@ -262,6 +262,7 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
               display: 'flex',
             }}>
               <button
+                className="ticket-share-button"
                 onClick={handleShare}
                 style={{
                   flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
