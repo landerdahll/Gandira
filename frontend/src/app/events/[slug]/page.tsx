@@ -17,6 +17,7 @@ import { SpotifyEmbed } from '@/components/events/spotify-embed';
 import { getInstagramProfileUrl, InstagramLink } from '@/components/events/instagram-link';
 import { EventMapLinks } from '@/components/events/event-map-links';
 import { EventCarousel } from '@/components/events/event-carousel';
+import { MobilePurchaseCta } from '@/components/events/mobile-purchase-cta';
 
 async function getEvent(slug: string) {
   try {
@@ -58,7 +59,7 @@ export default async function EventPage({ params }: { params: { slug: string } }
   const organizationWebsite = getSafeWebsiteUrl(event.organization?.website);
 
   return (
-    <div className="page-container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px 80px' }}>
+    <div className="page-container event-detail-page" style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px 80px' }}>
 
       {/* Current dark hero: intentionally preserved for visual comparison. */}
       {event.coverImage && (
@@ -215,7 +216,7 @@ export default async function EventPage({ params }: { params: { slug: string } }
         </div>
 
         {/* ── RIGHT: purchase widget ──────────────────────────────────── */}
-        <div className="purchase-widget-sticky" style={{ position: 'sticky', top: '80px' }}>
+        <div id="event-purchase-checkout" className="purchase-widget-sticky" style={{ position: 'sticky', top: '80px' }}>
           <div style={{
             background: '#141414',
             border: '1px solid #1e1e1e',
@@ -266,6 +267,7 @@ export default async function EventPage({ params }: { params: { slug: string } }
           <EventCarousel title={`Outros eventos de ${event.organization.name}`} events={event.relatedEvents} />
         </section>
       )}
+      {lowestPrice !== null && <MobilePurchaseCta checkoutId="event-purchase-checkout" lowestPrice={lowestPrice} />}
     </div>
   );
 }

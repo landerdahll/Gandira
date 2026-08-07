@@ -5,6 +5,7 @@ import test from 'node:test';
 const root = new URL('../', import.meta.url);
 const page = await readFile(new URL('src/app/events/[slug]/page.tsx', root), 'utf8');
 const mapLinks = await readFile(new URL('src/components/events/event-map-links.tsx', root), 'utf8');
+const mobilePurchaseCta = await readFile(new URL('src/components/events/mobile-purchase-cta.tsx', root), 'utf8');
 const styles = await readFile(new URL('src/app/globals.css', root), 'utf8');
 
 test('keeps the original dark hero and scopes the premium redesign to light mode', () => {
@@ -23,7 +24,9 @@ test('renders venue routes, organization identity and same-organization related 
   assert.match(page, /Outros eventos de \$\{event\.organization\.name\}/);
   assert.match(page, /<EventMapLinks query={mapQuery}/);
   assert.match(mapLinks, /google\.com\/maps\/search\/\?api=1&query=/);
-  assert.match(mapLinks, /waze\.com\/ul\?q=/);
+  assert.match(mapLinks, /geo:0,0\?q=/);
+  assert.match(mapLinks, /maps\.apple\.com\/\?q=/);
+  assert.doesNotMatch(mapLinks, /waze/i);
   assert.match(mapLinks, /target="_blank" rel="noopener noreferrer"/);
 });
 
@@ -32,5 +35,8 @@ test('light mobile layout is single-column, exposes Waze and prevents oversized 
   assert.match(styles, /\.purchase-widget-sticky \{[\s\S]*?position: static !important;[\s\S]*?width: 100%;[\s\S]*?max-width: 100%;/);
   assert.match(styles, /\.event-detail-grid > \* \{ min-width: 0; \}/);
   assert.match(styles, /:root\[data-theme='light'\] \.event-important-grid \{ grid-template-columns: 1fr; \}/);
-  assert.match(styles, /:root\[data-theme='light'\] \.event-map-button--waze \{ display: inline-flex; \}/);
+  assert.match(mobilePurchaseCta, /IntersectionObserver/);
+  assert.match(mobilePurchaseCta, /scrollIntoView\(\{ behavior: 'smooth'/);
+  assert.match(styles, /\.event-mobile-purchase-cta \{[\s\S]*?position: fixed;[\s\S]*?env\(safe-area-inset-bottom\)/);
+  assert.match(styles, /\.featured-buy-button \{[\s\S]*?width: 100%;[\s\S]*?margin-left: 0 !important;/);
 });
