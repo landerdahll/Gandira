@@ -28,7 +28,9 @@ test('renders venue routes, organization identity and same-organization related 
 });
 
 test('light mobile layout is single-column, exposes Waze and prevents oversized content grids', () => {
-  assert.match(styles, /@media \(max-width: 768px\)[\s\S]*?:root\[data-theme='light'\] \.event-detail-grid \{ gap: 30px !important; \}/);
+  assert.match(styles, /@media \(max-width: 768px\)[\s\S]*?:root\[data-theme='light'\] \.event-detail-grid \{ grid-template-columns: minmax\(0, 1fr\) !important; gap: 30px !important; \}/);
+  assert.match(styles, /\.purchase-widget-sticky \{[\s\S]*?position: static !important;[\s\S]*?width: 100%;[\s\S]*?max-width: 100%;/);
+  assert.match(styles, /\.event-detail-grid > \* \{ min-width: 0; \}/);
   assert.match(styles, /:root\[data-theme='light'\] \.event-important-grid \{ grid-template-columns: 1fr; \}/);
   assert.match(styles, /:root\[data-theme='light'\] \.event-map-button--waze \{ display: inline-flex; \}/);
 });
