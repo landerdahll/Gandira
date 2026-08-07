@@ -23,6 +23,11 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') ?? '/';
+  const organizationInvite = searchParams.get('organizationInvite');
+  const invitedEmail = searchParams.get('email');
+  const registerHref = organizationInvite
+    ? `/auth/register?organizationInvite=${encodeURIComponent(organizationInvite)}&email=${encodeURIComponent(invitedEmail || '')}`
+    : '/auth/register';
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -209,7 +214,7 @@ function LoginForm() {
         <p style={{ textAlign: 'center', fontSize: 14, color: '#555', marginTop: 24 }}>
           Não tem conta?{' '}
           <Link
-            href="/auth/register"
+            href={registerHref}
             style={{ color: '#67bed9', fontWeight: 600, textDecoration: 'none' }}
             onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
             onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}

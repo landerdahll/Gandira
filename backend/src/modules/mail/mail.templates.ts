@@ -1,4 +1,4 @@
-export type MailTemplateName = 'EMAIL_VERIFICATION' | 'PASSWORD_RESET' | 'ORDER_CONFIRMATION' | 'TRANSFER' | 'REFUND_CONFIRMATION';
+export type MailTemplateName = 'EMAIL_VERIFICATION' | 'PASSWORD_RESET' | 'ORDER_CONFIRMATION' | 'TRANSFER' | 'REFUND_CONFIRMATION' | 'ORGANIZATION_INVITATION';
 
 export interface RenderedMail { subject: string; html: string; text: string }
 
@@ -20,7 +20,25 @@ function layout(title: string, content: string, text: string, logoUrl: string): 
   return { subject: title, html, text: `${title}\n\n${text}\n\nPago by OutraHora\nhttps://pago.outrahora.com` };
 }
 
+function invitationLayout(title: string, content: string, text: string, logoUrl: string): RenderedMail {
+  const lightLogoUrl = logoUrl.replace('logo-full-white.svg', 'logo-full-blue.svg');
+  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#f4f7f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#172126"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7f8;padding:24px 12px"><tr><td align="center"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fff;border:1px solid #dfe7ea;border-radius:16px"><tr><td style="padding:24px 28px;border-bottom:1px solid #dfe7ea"><img src="${escape(lightLogoUrl)}" alt="Pago" height="36" style="display:block;height:36px;max-width:180px"></td></tr><tr><td style="padding:28px"><h1 style="margin:0 0 18px;font-size:22px;line-height:1.3;color:#172126">${escape(title)}</h1>${content}</td></tr><tr><td style="padding:18px 28px;border-top:1px solid #dfe7ea;color:#66757c;font-size:12px;text-align:center"><a href="https://pago.outrahora.com" style="color:#247d99">pago.outrahora.com</a></td></tr></table></td></tr></table></body></html>`;
+  return { subject: title, html, text: `${title}\n\n${text}\n\npago.outrahora.com` };
+}
+
 export function renderMail(template: MailTemplateName, payload: Record<string, any>, logoUrl: string): RenderedMail {
+  if (template === 'ORGANIZATION_INVITATION') {
+    const role = payload.role === 'PRODUCER' ? 'Produtor' : 'Staff';
+    const inviter = String(payload.inviterName || payload.organizationName);
+    const subject = `Convite para a equipe da ${payload.organizationName}`;
+    const copy = `${inviter} convidou você para fazer parte da equipe da ${payload.organizationName} como ${role}.`;
+    const customMessage = payload.customMessage
+      ? `<div style="margin:18px 0;padding:14px 16px;border-left:3px solid #67bed9;background:#f4fbfd;color:#333;line-height:1.6">${escape(payload.customMessage)}</div>`
+      : '';
+    const content = `<p style="color:#555;line-height:1.6">${escape(copy)}</p>${customMessage}<p style="color:#555;line-height:1.6">O convite é válido por 30 dias. Se você ainda não possui uma conta, poderá criar uma usando este mesmo e-mail.</p>${button('Aceitar convite', payload.url)}<p style="color:#777;font-size:12px;word-break:break-all">Link alternativo: <a href="${escape(payload.url)}" style="color:#247d99">${escape(payload.url)}</a></p>`;
+    const customText = payload.customMessage ? `\n\nMensagem: ${payload.customMessage}` : '';
+    return invitationLayout(subject, content, `${copy}${customText}\n\nO convite é válido por 30 dias.\nAceitar convite: ${payload.url}`, logoUrl);
+  }
   if (template === 'EMAIL_VERIFICATION') {
     const subject = 'Confirme seu e-mail — Pago by OutraHora';
     const copy = `Olá, ${payload.name}. Confirme seu e-mail para liberar a compra de ingressos. O link é válido por 24 horas.`;

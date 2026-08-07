@@ -1,9 +1,11 @@
-import { Controller, DefaultValuePipe, Delete, Get, Param, ParseIntPipe, Patch, Query, Body } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Patch, Post, Query, Body } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { OrganizationMembersService } from './organization-members.service';
 import { OrganizationsService } from './organizations.service';
 import { ListOrganizationMembersDto, UpdateOrganizationMemberRoleDto, UpdateOrganizationMemberStatusDto } from './dto/organization-members.dto';
+import { CreateOrganizationInvitationDto, ListOrganizationInvitationsDto, UpdateOrganizationInvitationRoleDto } from './dto/organization-invitations.dto';
+import { OrganizationInvitationsService } from './organization-invitations.service';
 
 @ApiTags('Organizations')
 @ApiBearerAuth()
@@ -12,6 +14,7 @@ export class OrganizationsController {
   constructor(
     private readonly organizations: OrganizationsService,
     private readonly members: OrganizationMembersService,
+    private readonly invitations: OrganizationInvitationsService,
   ) {}
 
   @Get('context')
@@ -44,5 +47,30 @@ export class OrganizationsController {
   @ApiOperation({ summary: 'Remover logicamente membro da organização' })
   deactivate(@Param('organizationId') organizationId: string, @Param('memberId') memberId: string, @CurrentUser() user: any) {
     return this.members.deactivate(organizationId, memberId, user);
+  }
+
+  @Post(':organizationId/invitations')
+  createInvitation(@Param('organizationId') organizationId: string, @Body() dto: CreateOrganizationInvitationDto, @CurrentUser() user: any) {
+    return this.invitations.create(organizationId, user, dto);
+  }
+
+  @Get(':organizationId/invitations')
+  listInvitations(@Param('organizationId') organizationId: string, @Query() query: ListOrganizationInvitationsDto, @CurrentUser() user: any) {
+    return this.invitations.list(organizationId, user, query.status);
+  }
+
+  @Patch(':organizationId/invitations/:invitationId/role')
+  updateInvitationRole(@Param('organizationId') organizationId: string, @Param('invitationId') invitationId: string, @Body() dto: UpdateOrganizationInvitationRoleDto, @CurrentUser() user: any) {
+    return this.invitations.updateRole(organizationId, invitationId, dto.role, user);
+  }
+
+  @Post(':organizationId/invitations/:invitationId/resend')
+  resendInvitation(@Param('organizationId') organizationId: string, @Param('invitationId') invitationId: string, @CurrentUser() user: any) {
+    return this.invitations.resend(organizationId, invitationId, user);
+  }
+
+  @Post(':organizationId/invitations/:invitationId/cancel')
+  cancelInvitation(@Param('organizationId') organizationId: string, @Param('invitationId') invitationId: string, @CurrentUser() user: any) {
+    return this.invitations.cancel(organizationId, invitationId, user);
   }
 }

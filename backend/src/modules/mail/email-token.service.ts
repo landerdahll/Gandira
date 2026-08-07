@@ -2,7 +2,7 @@ import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-export type EmailTokenPurpose = 'email-verification' | 'password-reset' | 'transfer-invite';
+export type EmailTokenPurpose = 'email-verification' | 'password-reset' | 'transfer-invite' | 'organization-invite';
 
 /**
  * Tokens duráveis sem persistência do segredo:

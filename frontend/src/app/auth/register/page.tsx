@@ -78,6 +78,7 @@ function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const invitationToken = searchParams.get('transferInvite');
+  const organizationInvitationToken = searchParams.get('organizationInvite');
   const invitedEmail = searchParams.get('email');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -113,6 +114,11 @@ function RegisterForm() {
         ...(invitationToken && { invitationToken }),
       });
       await login({ email: data.email, password: data.password });
+      if (organizationInvitationToken) {
+        toast.success('Conta criada! Agora confirme o convite para entrar na equipe.');
+        router.push(`/organization-invitations/accept?token=${encodeURIComponent(organizationInvitationToken)}`);
+        return;
+      }
       toast.success(invitationToken ? 'Conta criada! Confirme seu e-mail para liberar o ingresso.' : 'Conta criada! Verifique seu e-mail para liberar a compra de ingressos.');
       router.push('/auth/verify-email');
     } catch (e: any) {
@@ -182,7 +188,7 @@ function RegisterForm() {
                 placeholder="seu@email.com"
                 style={baseInput}
                 onFocus={onFocus} onBlur={onBlur}
-                readOnly={Boolean(invitationToken)}
+                readOnly={Boolean(invitationToken || organizationInvitationToken)}
               />
             </Field>
 

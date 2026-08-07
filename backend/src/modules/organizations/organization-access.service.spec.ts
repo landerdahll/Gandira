@@ -85,6 +85,8 @@ describe('OrganizationAccessService', () => {
   it('keeps organizational permissions in one role matrix', () => {
     expect(service.rolesFor('MEMBERS_VIEW')).toEqual(['ORG_ADMIN', 'PRODUCER']);
     expect(service.rolesFor('MEMBERS_MANAGE')).toEqual(['ORG_ADMIN']);
+    expect(service.rolesFor('INVITATIONS_VIEW')).toEqual(['ORG_ADMIN']);
+    expect(service.rolesFor('INVITATIONS_MANAGE')).toEqual(['ORG_ADMIN']);
     expect(service.rolesFor('TRANSFERS_VIEW')).toEqual(['ORG_ADMIN', 'PRODUCER']);
   });
 });

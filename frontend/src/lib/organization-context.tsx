@@ -22,8 +22,10 @@ interface OrganizationContextValue {
   isSuperAdmin: boolean;
   canViewMembers: boolean;
   canManageMembers: boolean;
+  canManageInvitations: boolean;
   canViewTransfers: boolean;
   refresh: () => Promise<void>;
+  selectOrganization: (organizationId: string) => boolean;
 }
 
 const OrganizationContext = createContext<OrganizationContextValue | null>(null);
@@ -31,15 +33,19 @@ const OrganizationContext = createContext<OrganizationContextValue | null>(null)
 export function OrganizationProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const [active, setActive] = useState<ActiveOrganizationContext | null>(null);
+  const [options, setOptions] = useState<ActiveOrganizationContext[]>([]);
   const [selectionRequired, setSelectionRequired] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
-    if (!user) { setActive(null); setSelectionRequired(false); setLoading(false); return; }
+    if (!user) { setActive(null); setOptions([]); setSelectionRequired(false); setLoading(false); return; }
     setLoading(true);
     try {
       const { data } = await organizationsApi.context();
       setActive(data.active);
+      setOptions((data.organizations || []).map((item: any) => item.organization ? item : {
+        organizationMemberId: null, organizationRole: null, organization: item,
+      }));
       setSelectionRequired(data.selectionRequired);
     } catch {
       setActive(null);
@@ -53,12 +59,20 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
   const role = active?.organizationRole;
   const isSuperAdmin = user?.platformRole === 'SUPER_ADMIN';
+  const selectOrganization = (organizationId: string) => {
+    const selected = options.find(option => option.organization.id === organizationId);
+    if (!selected) return false;
+    setActive(selected);
+    setSelectionRequired(false);
+    return true;
+  };
   return <OrganizationContext.Provider value={{
     active, loading: authLoading || loading, selectionRequired, isSuperAdmin,
     canViewMembers: isSuperAdmin || role === 'ORG_ADMIN' || role === 'PRODUCER',
     canManageMembers: isSuperAdmin || role === 'ORG_ADMIN',
+    canManageInvitations: isSuperAdmin || role === 'ORG_ADMIN',
     canViewTransfers: isSuperAdmin || role === 'ORG_ADMIN' || role === 'PRODUCER',
-    refresh,
+    refresh, selectOrganization,
   }}>{children}</OrganizationContext.Provider>;
 }
 

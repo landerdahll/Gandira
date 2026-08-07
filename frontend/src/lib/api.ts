@@ -179,6 +179,17 @@ export const organizationsApi = {
     api.patch(`/organizations/${organizationId}/members/${memberId}/status`, { status }),
   removeMember: (organizationId: string, memberId: string) =>
     api.delete(`/organizations/${organizationId}/members/${memberId}`),
+  invitations: (organizationId: string, params?: any) => api.get(`/organizations/${organizationId}/invitations`, { params }),
+  createInvitation: (organizationId: string, data: { email: string; role: 'PRODUCER' | 'STAFF'; customMessage?: string }) =>
+    api.post(`/organizations/${organizationId}/invitations`, data),
+  changeInvitationRole: (organizationId: string, invitationId: string, role: 'PRODUCER' | 'STAFF') =>
+    api.patch(`/organizations/${organizationId}/invitations/${invitationId}/role`, { role }),
+  resendInvitation: (organizationId: string, invitationId: string) =>
+    api.post(`/organizations/${organizationId}/invitations/${invitationId}/resend`),
+  cancelInvitation: (organizationId: string, invitationId: string) =>
+    api.post(`/organizations/${organizationId}/invitations/${invitationId}/cancel`),
+  resolveInvitation: (token: string) => api.post('/organization-invitations/resolve', { token }),
+  acceptInvitation: (token: string) => api.post('/organization-invitations/accept', { token }),
   transfers: (organizationId: string, params?: any) =>
     api.get('/ticket-transfers/admin/list', { params: { ...params, organizationId } }),
   transfer: (id: string) => api.get(`/ticket-transfers/admin/${id}`),

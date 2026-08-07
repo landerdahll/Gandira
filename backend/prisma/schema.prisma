@@ -32,6 +32,18 @@ enum OrganizationMemberStatus {
   INACTIVE
 }
 
+enum OrganizationInvitationRole {
+  PRODUCER
+  STAFF
+}
+
+enum OrganizationInvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
+}
+
 enum Gender {
   MALE
   FEMALE
@@ -140,6 +152,8 @@ model User {
   sentTicketTransfers         TicketTransfer[]         @relation("TransferSender")
   receivedTicketTransfers     TicketTransfer[]         @relation("TransferRecipient")
   organizationMemberships     OrganizationMember[]
+  organizationInvitationsSent OrganizationInvitation[] @relation("OrganizationInvitationsSent")
+  organizationInvitationsAccepted OrganizationInvitation[] @relation("OrganizationInvitationsAccepted")
   verificationEmailLastSentAt DateTime?
   passwordResetLastSentAt     DateTime?
 
@@ -162,6 +176,7 @@ model Organization {
   instagram      String?
 
   members OrganizationMember[]
+  invitations OrganizationInvitation[]
   events  Event[]
 
   createdAt DateTime @default(now())
@@ -185,6 +200,35 @@ model OrganizationMember {
   @@unique([organizationId, userId])
   @@index([userId, status])
   @@index([organizationId, role, status])
+}
+
+model OrganizationInvitation {
+  id               String                       @id @default(cuid())
+  organizationId   String
+  organization     Organization                 @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  email            String
+  role             OrganizationInvitationRole
+  status           OrganizationInvitationStatus @default(PENDING)
+  tokenHash        String                       @unique
+  activeKey        String?                      @unique
+  customMessage    String?                      @db.VarChar(250)
+  invitedByUserId  String
+  invitedBy        User                         @relation("OrganizationInvitationsSent", fields: [invitedByUserId], references: [id], onDelete: Restrict)
+  acceptedByUserId String?
+  acceptedBy       User?                        @relation("OrganizationInvitationsAccepted", fields: [acceptedByUserId], references: [id], onDelete: SetNull)
+  expiresAt        DateTime
+  lastSentAt       DateTime
+  resendCount      Int                          @default(0)
+  acceptedAt       DateTime?
+  cancelledAt      DateTime?
+  expiredAt        DateTime?
+  createdAt        DateTime                     @default(now())
+  updatedAt        DateTime                     @updatedAt
+
+  @@index([organizationId, status])
+  @@index([email, status])
+  @@index([expiresAt])
+  @@index([invitedByUserId])
 }
 
 model RefreshToken {

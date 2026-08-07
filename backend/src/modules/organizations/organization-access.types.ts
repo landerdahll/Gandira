@@ -4,6 +4,8 @@ export type OrganizationPermission =
   | 'ORGANIZATION_VIEW'
   | 'MEMBERS_VIEW'
   | 'MEMBERS_MANAGE'
+  | 'INVITATIONS_VIEW'
+  | 'INVITATIONS_MANAGE'
   | 'TRANSFERS_VIEW'
   | 'EVENTS_MANAGE'
   | 'REPORTS_VIEW'
