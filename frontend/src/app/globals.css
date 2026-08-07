@@ -121,9 +121,9 @@ body {
   box-shadow: 0 24px 70px rgba(57, 92, 116, .18);
 }
 :root[data-theme='light'] .event-hero-light__image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
-:root[data-theme='light'] .event-hero-light__scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,20,27,.03) 22%, rgba(8,20,27,.32) 58%, rgba(8,20,27,.88) 100%); }
+:root[data-theme='light'] .event-hero-light__scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,20,27,.03) 22%, rgba(8,20,27,.32) 58%, rgba(4,29,38,.91) 100%); }
 :root[data-theme='light'] .event-hero-light__content { position: relative; z-index: 1; width: min(900px, 90%); padding: clamp(28px, 5vw, 58px); color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,.38); }
-:root[data-theme='light'] .event-hero-light h1 { max-width: 850px; margin: 0 0 22px; color: #fff !important; font-size: clamp(38px, 5.2vw, 68px); font-weight: 800; letter-spacing: -.035em; line-height: .98; text-shadow: 0 3px 18px rgba(0,0,0,.48); text-wrap: balance; }
+:root[data-theme='light'] .event-hero-light h1 { max-width: 850px; margin: 0 0 22px; color: #fff !important; font-size: clamp(33px, 4.5vw, 59px); font-weight: 800; letter-spacing: -.035em; line-height: .98; text-shadow: 0 3px 18px rgba(0,0,0,.48); text-wrap: balance; }
 :root[data-theme='light'] .event-hero-light__facts { display: flex; flex-wrap: wrap; gap: 10px 22px; }
 :root[data-theme='light'] .event-hero-light__facts > span { display: inline-flex; align-items: center; gap: 8px; color: #fff !important; font-size: 14px; font-weight: 650; }
 :root[data-theme='light'] .event-hero-light__facts svg { color: #8bd7f2; }
@@ -1187,7 +1187,7 @@ body {
     border-radius: 20px;
   }
   :root[data-theme='light'] .event-hero-light__content { width: 100%; padding: 28px 22px; }
-  :root[data-theme='light'] .event-hero-light h1 { margin-bottom: 18px; font-size: clamp(32px, 11vw, 48px); line-height: 1.02; }
+  :root[data-theme='light'] .event-hero-light h1 { margin-bottom: 18px; font-size: clamp(28px, 9.5vw, 42px); line-height: 1.02; }
   :root[data-theme='light'] .event-hero-light__facts { flex-direction: column; align-items: flex-start; gap: 9px; }
   :root[data-theme='light'] .event-hero-light__facts > span { font-size: 13px; }
   :root[data-theme='light'] .event-detail-grid { gap: 30px !important; }
