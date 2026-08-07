@@ -220,6 +220,16 @@ export class EventsService {
       where: { slug },
       include: {
         producer: { select: { id: true, name: true } },
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            logoUrl: true,
+            website: true,
+            instagram: true,
+          },
+        },
         batches: {
           where: { status: { in: ['ACTIVE', 'SOLD_OUT'] } },
           orderBy: { sortOrder: 'asc' },
@@ -243,7 +253,35 @@ export class EventsService {
       throw new NotFoundException('Evento não encontrado');
     }
 
-    return event;
+    const relatedEvents = await this.prisma.event.findMany({
+      where: {
+        organizationId: event.organizationId,
+        id: { not: event.id },
+        status: EventStatus.PUBLISHED,
+        startDate: { gte: new Date() },
+      },
+      orderBy: { startDate: 'asc' },
+      take: 4,
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        coverImage: true,
+        venue: true,
+        city: true,
+        state: true,
+        startDate: true,
+        category: true,
+        batches: {
+          where: { status: 'ACTIVE' },
+          orderBy: { price: 'asc' },
+          take: 1,
+          select: { price: true, name: true },
+        },
+      },
+    });
+
+    return { ...event, relatedEvents };
   }
 
   async findProducerEvents(actor: OrganizationActor, page = 1, limit = 20, organizationId?: string) {

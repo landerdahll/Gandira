@@ -68,6 +68,95 @@ body {
   font-family: var(--theme-font-family);
 }
 
+/* Event detail additions. The existing dark hero and purchase widget remain unchanged. */
+.event-hero-light { display: none; }
+.event-premium-section {
+  padding: 24px 0;
+  border-bottom: 1px solid #1e1e1e;
+}
+.event-premium-section h2 { margin: 0 0 8px; color: var(--theme-text); font-size: 18px; }
+.event-premium-section p { margin: 3px 0; color: var(--theme-text-secondary); font-size: 14px; line-height: 1.55; }
+.event-section-kicker { color: var(--theme-primary) !important; font-size: 11px !important; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.event-section-icon { display: none; }
+.event-map-actions { display: flex; gap: 10px; margin-top: 16px; }
+.event-map-button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  color: var(--theme-primary);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.event-map-button--waze { display: none; }
+.event-important-grid { display: grid; gap: 12px; margin-top: 14px; }
+.event-important-item { display: flex; align-items: flex-start; gap: 10px; }
+.event-important-item > span { flex-shrink: 0; color: var(--theme-primary); }
+.event-important-item strong { color: var(--theme-text); font-size: 13px; }
+.event-important-item p { margin-top: 2px; font-size: 13px; }
+.event-organization-card { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+.event-organization-card > img,
+.event-organization-fallback { width: 52px; height: 52px; border-radius: 12px; object-fit: contain; }
+.event-organization-fallback { display: grid; place-items: center; background: #1a1a1a; color: var(--theme-primary); font-size: 22px; font-weight: 800; }
+.event-organization-links { display: flex; flex-wrap: wrap; gap: 12px; }
+.event-organization-links a { display: inline-flex; align-items: center; gap: 5px; color: var(--theme-text-secondary); font-size: 13px; text-decoration: none; }
+.event-related-section { margin-top: 64px; padding-top: 32px; border-top: 1px solid var(--theme-border); }
+
+:root[data-theme='light'] .event-hero-dark { display: none; }
+:root[data-theme='light'] .event-hero-light {
+  position: relative;
+  display: flex;
+  min-height: clamp(430px, 54vw, 610px);
+  align-items: flex-end;
+  margin-bottom: 52px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 18%, var(--theme-border));
+  border-radius: 28px;
+  background: linear-gradient(145deg, #dceff8, #aacfe5);
+  box-shadow: 0 24px 70px rgba(57, 92, 116, .18);
+}
+:root[data-theme='light'] .event-hero-light__image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+:root[data-theme='light'] .event-hero-light__scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,20,27,.02) 30%, rgba(8,20,27,.82) 100%); }
+:root[data-theme='light'] .event-hero-light__content { position: relative; z-index: 1; width: min(900px, 90%); padding: clamp(28px, 5vw, 58px); color: #fff; }
+:root[data-theme='light'] .event-hero-light__eyebrow { margin: 0 0 12px; color: #bfeaff !important; font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+:root[data-theme='light'] .event-hero-light h1 { max-width: 850px; margin: 0 0 22px; color: #fff !important; font-size: clamp(38px, 5.2vw, 68px); font-weight: 800; letter-spacing: -.035em; line-height: .98; text-wrap: balance; }
+:root[data-theme='light'] .event-hero-light__facts { display: flex; flex-wrap: wrap; gap: 10px 22px; }
+:root[data-theme='light'] .event-hero-light__facts > span { display: inline-flex; align-items: center; gap: 8px; color: rgba(255,255,255,.92) !important; font-size: 14px; font-weight: 600; }
+:root[data-theme='light'] .event-hero-light__facts svg { color: #8bd7f2; }
+:root[data-theme='light'] .event-hero-light__rating { padding: 4px 9px; border: 1px solid rgba(255,255,255,.45); border-radius: 7px; background: rgba(255,255,255,.12); }
+:root[data-theme='light'] .event-dark-intro,
+:root[data-theme='light'] .event-dark-facts { display: none !important; }
+:root[data-theme='light'] .event-detail-grid { grid-template-columns: minmax(0, 1fr) 360px !important; gap: clamp(36px, 5vw, 72px) !important; }
+:root[data-theme='light'] .event-detail-content { min-width: 0; }
+:root[data-theme='light'] .event-description { max-width: 760px; margin-bottom: 22px; padding: 0 0 34px !important; border-bottom: 1px solid var(--theme-border); }
+:root[data-theme='light'] .event-description h2 { margin-bottom: 18px !important; font-size: 25px !important; letter-spacing: -.02em; }
+:root[data-theme='light'] .event-description__content { color: var(--theme-text-secondary) !important; font-size: 16px !important; line-height: 1.85 !important; }
+:root[data-theme='light'] .event-premium-section {
+  position: relative;
+  margin: 0 0 22px;
+  padding: 28px;
+  border: 1px solid var(--theme-border);
+  border-radius: 20px;
+  background: var(--theme-surface);
+  box-shadow: 0 10px 32px rgba(65,91,117,.06);
+}
+:root[data-theme='light'] .event-premium-section h2 { color: var(--theme-text) !important; font-size: 21px; letter-spacing: -.015em; }
+:root[data-theme='light'] .event-venue-section { display: grid; grid-template-columns: 46px 1fr; gap: 16px; }
+:root[data-theme='light'] .event-section-icon { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 14px; background: color-mix(in srgb, var(--theme-primary) 12%, white); color: var(--theme-primary); }
+:root[data-theme='light'] .event-map-button { border-color: color-mix(in srgb, var(--theme-primary) 38%, var(--theme-border)); background: color-mix(in srgb, var(--theme-primary) 8%, white); color: #28769a !important; }
+:root[data-theme='light'] .event-map-button:hover { background: color-mix(in srgb, var(--theme-primary) 15%, white); }
+:root[data-theme='light'] .event-important-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+:root[data-theme='light'] .event-important-item { padding: 15px; border: 1px solid color-mix(in srgb, var(--theme-border) 75%, transparent); border-radius: 14px; background: #f8fbfd; }
+:root[data-theme='light'] .event-organization-card > img { padding: 5px; border: 1px solid var(--theme-border); background: #fff; }
+:root[data-theme='light'] .event-organization-fallback { background: color-mix(in srgb, var(--theme-primary) 12%, white); }
+:root[data-theme='light'] .event-organization-links a { color: #28769a !important; }
+:root[data-theme='light'] .event-related-section { margin-top: 88px; padding-top: 42px; }
+
 /* Event discovery: desktop grid, touch-first compact rail on mobile. */
 .event-discovery-section {
   min-width: 0;
@@ -1093,6 +1182,25 @@ body {
   .event-title {
     font-size: 24px !important;
   }
+  :root[data-theme='light'] .event-hero-light {
+    min-height: min(128vw, 560px);
+    margin: -4px -4px 34px;
+    border-radius: 20px;
+  }
+  :root[data-theme='light'] .event-hero-light__content { width: 100%; padding: 28px 22px; }
+  :root[data-theme='light'] .event-hero-light h1 { margin-bottom: 18px; font-size: clamp(32px, 11vw, 48px); line-height: 1.02; }
+  :root[data-theme='light'] .event-hero-light__facts { flex-direction: column; align-items: flex-start; gap: 9px; }
+  :root[data-theme='light'] .event-hero-light__facts > span { font-size: 13px; }
+  :root[data-theme='light'] .event-detail-grid { gap: 30px !important; }
+  :root[data-theme='light'] .event-description h2 { font-size: 22px !important; }
+  :root[data-theme='light'] .event-description__content { font-size: 15px !important; line-height: 1.75 !important; }
+  :root[data-theme='light'] .event-premium-section { padding: 22px 18px; border-radius: 17px; }
+  :root[data-theme='light'] .event-venue-section { grid-template-columns: 1fr; }
+  :root[data-theme='light'] .event-important-grid { grid-template-columns: 1fr; }
+  .event-map-actions { flex-wrap: wrap; }
+  :root[data-theme='light'] .event-map-button { flex: 1 1 140px; }
+  :root[data-theme='light'] .event-map-button--waze { display: inline-flex; }
+  :root[data-theme='light'] .event-related-section { margin-top: 56px; padding-top: 30px; }
 
   /* Featured card: stack vertically */
   .featured-card {

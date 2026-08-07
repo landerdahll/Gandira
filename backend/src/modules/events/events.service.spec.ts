@@ -84,6 +84,38 @@ describe('EventsService featured events', () => {
     expect(organizationAccess.forCollectionPermission).not.toHaveBeenCalled();
   });
 
+  it('returns organization presentation data and only future related events from the same organization', async () => {
+    prisma.event.findUnique.mockResolvedValue({
+      id: 'event-a',
+      organizationId: 'org-a',
+      status: EventStatus.PUBLISHED,
+      organization: { id: 'org-a', name: 'Produtora A' },
+    });
+    prisma.event.findMany.mockResolvedValue([{ id: 'event-related' }]);
+
+    await expect(service.findBySlug('evento-a')).resolves.toMatchObject({
+      id: 'event-a',
+      organization: { id: 'org-a', name: 'Produtora A' },
+      relatedEvents: [{ id: 'event-related' }],
+    });
+    expect(prisma.event.findUnique).toHaveBeenCalledWith(expect.objectContaining({
+      where: { slug: 'evento-a' },
+      include: expect.objectContaining({
+        organization: expect.objectContaining({ select: expect.objectContaining({ logoUrl: true, website: true, instagram: true }) }),
+      }),
+    }));
+    expect(prisma.event.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        organizationId: 'org-a',
+        id: { not: 'event-a' },
+        status: EventStatus.PUBLISHED,
+        startDate: expect.any(Object),
+      }),
+      orderBy: { startDate: 'asc' },
+      take: 4,
+    }));
+  });
+
   it('clears ended flags and returns the nearest configured featured event', async () => {
     const selected = { id: 'featured-1', featured: true };
     prisma.event.updateMany.mockResolvedValue({ count: 1 });
