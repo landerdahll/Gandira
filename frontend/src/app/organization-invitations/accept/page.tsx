@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, Loader2 } from 'lucide-react';
-import { organizationsApi } from '@/lib/api';
+import { authApi, organizationsApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useOrganization } from '@/lib/organization-context';
 
-const ROLE_LABEL: Record<string, string> = { PRODUCER: 'Produtor', STAFF: 'Staff' };
+const ROLE_LABEL: Record<string, string> = { ORG_ADMIN: 'Administrador da organização', PRODUCER: 'Produtor', STAFF: 'Staff' };
 
 function AcceptInvitation() {
   const params = useSearchParams();
@@ -25,6 +25,7 @@ function AcceptInvitation() {
 
   useEffect(() => {
     if (!token) { setError('Link de convite inválido.'); setLoading(false); return; }
+    window.localStorage.setItem('pago-pending-organization-invite', token);
     organizationsApi.resolveInvitation(token).then(({ data }) => setInvitation(data)).catch((e) => setError(e.response?.data?.message || 'Este convite não está disponível.')).finally(() => setLoading(false));
   }, [token]);
 
@@ -33,6 +34,7 @@ function AcceptInvitation() {
     try {
       const { data } = await organizationsApi.acceptInvitation(token);
       setResult(data);
+      window.localStorage.removeItem('pago-pending-organization-invite');
       await refresh();
     } catch (e: any) { setError(e.response?.data?.message || 'Não foi possível aceitar o convite.'); }
     finally { setAccepting(false); }
@@ -47,6 +49,7 @@ function AcceptInvitation() {
     const loginUrl = `/auth/login?redirect=${encodeURIComponent(returnPath)}&organizationInvite=${encodeURIComponent(token)}&email=${encodeURIComponent(invitation.email)}`;
     return <Shell><h1 style={title}>Convite para a equipe</h1><p style={copy}>Você foi convidado para entrar na equipe da <strong>{invitation.organizationName}</strong> como {ROLE_LABEL[invitation.role]}.</p><Link href={invitation.hasAccount ? loginUrl : registerUrl} style={primary}>{invitation.hasAccount ? 'Entrar para aceitar' : 'Criar conta para aceitar'}</Link>{invitation.hasAccount ? <Link href={registerUrl} style={secondary}>Ainda não tenho conta</Link> : <Link href={loginUrl} style={secondary}>Já tenho conta</Link>}</Shell>;
   }
+  if (!user.isVerified) return <Shell><h1 style={title}>Confirme seu e-mail</h1><p style={copy}>O convite para a <strong>{invitation.organizationName}</strong> está preservado, mas nenhum cargo pode ser concedido antes da confirmação do e-mail <strong>{invitation.email}</strong>.</p><button onClick={async () => { try { await authApi.resendVerification(user.email); setError('E-mail de confirmação reenviado.'); } catch (e: any) { setError(e.response?.data?.message || 'Não foi possível reenviar o e-mail.'); } }} style={primary}>Reenviar confirmação</button>{error && <p style={{ color: error.includes('reenviado') ? '#3d9d68' : '#c94d4d' }}>{error}</p>}<Link href="/auth/verify-email" style={secondary}>Já tenho um link de confirmação</Link></Shell>;
   return <Shell><h1 style={title}>Confirmar convite</h1><p style={copy}>Entrar na equipe da <strong>{invitation.organizationName}</strong> como {ROLE_LABEL[invitation.role]}?</p>{error && <p style={{ color: '#c94d4d' }}>{error}</p>}<button onClick={accept} disabled={accepting} style={primary}>{accepting ? 'Aceitando...' : 'Aceitar convite'}</button></Shell>;
 }
 

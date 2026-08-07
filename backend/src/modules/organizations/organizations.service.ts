@@ -32,6 +32,7 @@ export class OrganizationsService {
         organizations,
       };
     }
+    if (actor.isVerified === false) return { active: null, selectionRequired: false, isSuperAdmin: false, organizations: [] };
     const memberships = await this.prisma.organizationMember.findMany({
       where: { userId: actor.id, status: 'ACTIVE', organization: { isActive: true } },
       select: {
@@ -57,6 +58,7 @@ export class OrganizationsService {
   }
 
   async getDetail(organizationId: string, actor: OrganizationActor) {
+    if (actor.platformRole === 'SUPER_ADMIN') return this.adminDetail(organizationId, actor);
     const context = await this.access.forOrganization(actor, organizationId, 'ORGANIZATION_VIEW');
     const organization = await this.prisma.organization.findFirst({
       where: { id: organizationId, isActive: true },
@@ -71,10 +73,31 @@ export class OrganizationsService {
 
   async adminList(actor: OrganizationActor) {
     this.ensureSuperAdmin(actor);
-    return this.prisma.organization.findMany({ orderBy: { name: 'asc' }, include: { _count: { select: { members: true, events: true, invitations: true } } } });
+    return this.prisma.organization.findMany({
+      orderBy: { name: 'asc' },
+      include: {
+        _count: { select: { members: true, events: true, invitations: true } },
+        members: { where: { role: 'ORG_ADMIN', status: 'ACTIVE' }, select: { id: true, user: { select: { id: true, name: true, email: true, isVerified: true } } } },
+        invitations: { where: { role: 'ORG_ADMIN', status: 'PENDING' }, select: { id: true, email: true, status: true, expiresAt: true } },
+      },
+    });
   }
 
-  async create(input: { name: string; slug?: string; logoUrl?: string; primaryColor?: string; secondaryColor?: string; website?: string; instagram?: string }, actor: OrganizationActor) {
+  async adminDetail(organizationId: string, actor: OrganizationActor) {
+    this.ensureSuperAdmin(actor);
+    const organization = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      include: {
+        _count: { select: { members: true, events: true, invitations: true } },
+        members: { where: { role: 'ORG_ADMIN' }, select: { id: true, status: true, createdAt: true, user: { select: { id: true, name: true, email: true, isVerified: true } } }, orderBy: { createdAt: 'asc' } },
+        invitations: { where: { role: 'ORG_ADMIN' }, select: { id: true, email: true, status: true, createdAt: true, expiresAt: true, lastSentAt: true, invitedBy: { select: { name: true } } }, orderBy: { createdAt: 'desc' } },
+      },
+    });
+    if (!organization) throw new NotFoundException('Organização não encontrada');
+    return { organization, access: { isSuperAdmin: true, organizationId } };
+  }
+
+  async create(input: { name: string; slug?: string; logoUrl?: string; website?: string; instagram?: string; isActive?: boolean }, actor: OrganizationActor) {
     this.ensureSuperAdmin(actor);
     const slug = input.slug || slugify(input.name);
     try {
@@ -91,13 +114,18 @@ export class OrganizationsService {
 
   async update(organizationId: string, input: any, actor: OrganizationActor) {
     this.ensureSuperAdmin(actor);
-    return this.prisma.$transaction(async tx => {
-      const current = await tx.organization.findUnique({ where: { id: organizationId } });
-      if (!current) throw new NotFoundException('Organização não encontrada');
-      const organization = await tx.organization.update({ where: { id: organizationId }, data: input });
-      await tx.auditLog.create({ data: { userId: actor.id, action: 'ORGANIZATION_UPDATED', entity: 'Organization', entityId: organizationId, metadata: { changes: input } as Prisma.InputJsonValue } });
-      return organization;
-    });
+    try {
+      return await this.prisma.$transaction(async tx => {
+        const current = await tx.organization.findUnique({ where: { id: organizationId } });
+        if (!current) throw new NotFoundException('Organização não encontrada');
+        const organization = await tx.organization.update({ where: { id: organizationId }, data: input });
+        await tx.auditLog.create({ data: { userId: actor.id, action: 'ORGANIZATION_UPDATED', entity: 'Organization', entityId: organizationId, metadata: { changes: input } as Prisma.InputJsonValue } });
+        return organization;
+      });
+    } catch (error: any) {
+      if (error?.code === 'P2002') throw new BadRequestException('Já existe uma organização com este slug');
+      throw error;
+    }
   }
 
   private ensureSuperAdmin(actor: OrganizationActor) {

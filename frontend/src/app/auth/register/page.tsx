@@ -115,7 +115,8 @@ function RegisterForm() {
       });
       await login({ email: data.email, password: data.password });
       if (organizationInvitationToken) {
-        toast.success('Conta criada! Agora confirme o convite para entrar na equipe.');
+        window.localStorage.setItem('pago-pending-organization-invite', organizationInvitationToken);
+        toast.success('Conta criada! Confirme seu e-mail antes de aceitar o convite.');
         router.push(`/organization-invitations/accept?token=${encodeURIComponent(organizationInvitationToken)}`);
         return;
       }

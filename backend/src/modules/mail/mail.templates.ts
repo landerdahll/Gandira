@@ -22,7 +22,7 @@ function layout(title: string, content: string, text: string, logoUrl: string): 
 
 export function renderMail(template: MailTemplateName, payload: Record<string, any>, logoUrl: string): RenderedMail {
   if (template === 'ORGANIZATION_INVITATION') {
-    const role = payload.role === 'PRODUCER' ? 'Produtor' : 'Staff';
+    const role = payload.role === 'ORG_ADMIN' ? 'Administrador da organização' : payload.role === 'PRODUCER' ? 'Produtor' : 'Staff';
     const inviter = String(payload.inviterName || payload.organizationName);
     const subject = `Convite para a equipe da ${payload.organizationName}`;
     const copy = `${inviter} convidou você para fazer parte da equipe da ${payload.organizationName} como ${role}.`;

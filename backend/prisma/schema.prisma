@@ -33,6 +33,7 @@ enum OrganizationMemberStatus {
 }
 
 enum OrganizationInvitationRole {
+  ORG_ADMIN
   PRODUCER
   STAFF
 }

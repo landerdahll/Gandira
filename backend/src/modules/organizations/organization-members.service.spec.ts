@@ -53,6 +53,11 @@ describe('OrganizationMembersService', () => {
     }));
   });
 
+  it('allows only SUPER_ADMIN to grant ORG_ADMIN through role changes', async () => {
+    expect(() => service.changeRole('org-a', 'producer-a', 'ORG_ADMIN', { id: 'org-admin', platformRole: 'MEMBER' })).toThrow(ForbiddenException);
+    expect(access.forOrganization).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['role change', () => service.changeRole('org-a', 'last-admin', 'PRODUCER', { id: 'admin' })],
     ['deactivation', () => service.changeStatus('org-a', 'last-admin', 'INACTIVE', { id: 'admin' })],

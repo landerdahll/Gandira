@@ -35,6 +35,11 @@ describe('OrganizationAccessService', () => {
     await expect(service.forEvent(member, 'event-b', ['PRODUCER'])).rejects.toBeInstanceOf(NotFoundException);
   });
 
+  it('rejects administrative access for an unverified organization member', async () => {
+    await expect(service.forCollection({ id: 'user-1', platformRole: 'MEMBER', isVerified: false }, ['PRODUCER'], { organizationId: 'org-a' })).rejects.toBeInstanceOf(ForbiddenException);
+    expect(prisma.organizationMember.findMany).not.toHaveBeenCalled();
+  });
+
   it('rejects inactive memberships and insufficient organization roles', async () => {
     prisma.event.findUnique.mockResolvedValue({ organizationId: 'org-a', organization: { isActive: true } });
     prisma.organizationMember.findUnique.mockResolvedValue({ id: 'membership-a', role: 'STAFF', status: 'INACTIVE' });

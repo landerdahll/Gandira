@@ -15,6 +15,7 @@ export type OrganizationPermission =
 export type OrganizationActor = {
   id: string;
   platformRole?: 'MEMBER' | 'SUPER_ADMIN' | string;
+  isVerified?: boolean;
 };
 
 /**

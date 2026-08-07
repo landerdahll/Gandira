@@ -6,7 +6,7 @@ export class CreateOrganizationInvitationDto {
   @MaxLength(320)
   email!: string;
 
-  @IsEnum(OrganizationInvitationRole, { message: 'O cargo deve ser PRODUCER ou STAFF' })
+  @IsEnum(OrganizationInvitationRole, { message: 'O cargo deve ser ORG_ADMIN, PRODUCER ou STAFF' })
   role!: OrganizationInvitationRole;
 
   @IsOptional()
@@ -16,7 +16,7 @@ export class CreateOrganizationInvitationDto {
 }
 
 export class UpdateOrganizationInvitationRoleDto {
-  @IsEnum(OrganizationInvitationRole, { message: 'O cargo deve ser PRODUCER ou STAFF' })
+  @IsEnum(OrganizationInvitationRole, { message: 'O cargo deve ser ORG_ADMIN, PRODUCER ou STAFF' })
   role!: OrganizationInvitationRole;
 }
 

@@ -43,6 +43,7 @@ export class OrganizationAccessService {
     permission: OrganizationPermission,
     database: DatabaseClient = this.prisma,
   ) {
+    this.ensureVerifiedMember(actor);
     return this.forCollection(actor, this.rolesFor(permission), { organizationId }, database);
   }
 
@@ -77,6 +78,7 @@ export class OrganizationAccessService {
     allowedRoles: readonly OrganizationRoleName[],
     database: DatabaseClient = this.prisma,
   ): Promise<OrganizationAccessContext> {
+    this.ensureVerifiedMember(actor);
     const db = database as any;
     const event = await db.event.findUnique({
       where: { id: eventId },
@@ -118,6 +120,7 @@ export class OrganizationAccessService {
     selection: OrganizationSelection = {},
     database: DatabaseClient = this.prisma,
   ): Promise<OrganizationAccessContext> {
+    this.ensureVerifiedMember(actor);
     const db = database as any;
     const selectedOrganizationId = selection.organizationId || null;
 
@@ -172,6 +175,12 @@ export class OrganizationAccessService {
       organizationRole: null,
       isSuperAdmin: true,
     };
+  }
+
+  private ensureVerifiedMember(actor: OrganizationActor) {
+    if (actor.platformRole !== 'SUPER_ADMIN' && actor.isVerified === false) {
+      throw new ForbiddenException('Confirme seu e-mail antes de acessar uma organização');
+    }
   }
 
   private membershipContext(userId: string, organizationId: string, membership: any): OrganizationAccessContext {

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { OrganizationMemberStatus, OrganizationRole, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { withSerializableRetry } from '../../common/utils/serializable-retry.util';
@@ -47,6 +47,9 @@ export class OrganizationMembersService {
   }
 
   changeRole(organizationId: string, memberId: string, role: OrganizationRole, actor: OrganizationActor) {
+    if (role === 'ORG_ADMIN' && actor.platformRole !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Somente SUPER_ADMIN pode conceder o cargo ORG_ADMIN');
+    }
     return this.mutate(organizationId, memberId, actor, 'ORGANIZATION_MEMBER_ROLE_CHANGED', async (tx, member) => {
       if (member.role === role) return member;
       await this.ensureActiveAdminRemains(tx, organizationId, member, { role });

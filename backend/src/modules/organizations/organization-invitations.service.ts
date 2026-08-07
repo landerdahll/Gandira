@@ -22,6 +22,7 @@ export class OrganizationInvitationsService {
 
   create(organizationId: string, actor: OrganizationActor, input: { email: string; role: OrganizationInvitationRole; customMessage?: string }) {
     return withSerializableRetry(() => this.prisma.$transaction(async (tx) => {
+      this.assertRoleCanBeGranted(actor, input.role);
       const context = await this.access.forOrganization(actor, organizationId, 'INVITATIONS_MANAGE', tx);
       const organization = await tx.organization.findUnique({ where: { id: organizationId }, select: { id: true, name: true, isActive: true } });
       if (!organization?.isActive) throw new NotFoundException('Organização não encontrada');
@@ -62,12 +63,13 @@ export class OrganizationInvitationsService {
       orderBy: { createdAt: 'desc' },
     });
     const emails = [...new Set(invitations.map(item => item.email))];
-    const users = emails.length ? await this.prisma.user.findMany({ where: { email: { in: emails, mode: 'insensitive' } }, select: { email: true, name: true } }) : [];
-    const names = new Map(users.map(user => [this.normalizeEmail(user.email), user.name]));
-    return invitations.map(invitation => ({ ...invitation, tokenHash: undefined, activeKey: undefined, accountName: names.get(invitation.email) || null }));
+    const users = emails.length ? await this.prisma.user.findMany({ where: { email: { in: emails, mode: 'insensitive' } }, select: { email: true, name: true, isVerified: true } }) : [];
+    const accounts = new Map(users.map(user => [this.normalizeEmail(user.email), user]));
+    return invitations.map(invitation => ({ ...invitation, tokenHash: undefined, activeKey: undefined, accountName: accounts.get(invitation.email)?.name || null, accountVerified: accounts.get(invitation.email)?.isVerified ?? null }));
   }
 
   updateRole(organizationId: string, invitationId: string, role: OrganizationInvitationRole, actor: OrganizationActor) {
+    this.assertRoleCanBeGranted(actor, role);
     return this.mutatePending(organizationId, invitationId, actor, 'ORGANIZATION_INVITATION_ROLE_CHANGED', async (tx, invitation) => {
       if (invitation.role === role) return invitation;
       const updated = await tx.organizationInvitation.update({ where: { id: invitation.id }, data: { role } });
@@ -105,7 +107,7 @@ export class OrganizationInvitationsService {
       throw new BadRequestException('Este convite expirou');
     }
     if (!invitation.organization.isActive) throw new BadRequestException('A organização não está ativa');
-    return { organizationName: invitation.organization.name, email: invitation.email, role: invitation.role, expiresAt: invitation.expiresAt, hasAccount: Boolean(invitation.user) };
+    return { organizationName: invitation.organization.name, email: invitation.email, role: invitation.role, expiresAt: invitation.expiresAt, hasAccount: Boolean(invitation.user), accountVerified: invitation.user?.isVerified ?? false };
   }
 
   async accept(token: string, actor: OrganizationActor & { email?: string }) {
@@ -116,9 +118,10 @@ export class OrganizationInvitationsService {
         await tx.organizationInvitation.update({ where: { id: invitation.id }, data: { status: 'EXPIRED', expiredAt: new Date(), activeKey: null } });
         return { expired: true };
       }
-      const user = await tx.user.findUnique({ where: { id: actor.id }, select: { id: true, email: true, isActive: true } });
+      const user = await tx.user.findUnique({ where: { id: actor.id }, select: { id: true, email: true, isActive: true, isVerified: true } });
       if (!user?.isActive) throw new ForbiddenException('Usuário inválido para aceitar o convite');
       if (this.normalizeEmail(user.email) !== invitation.email) throw new ForbiddenException('Este convite pertence a outro e-mail');
+      if (!user.isVerified) throw new ForbiddenException('Confirme seu e-mail antes de aceitar o convite');
       if (!invitation.organization.isActive) throw new BadRequestException('A organização não está ativa');
 
       const claimed = await tx.organizationInvitation.updateMany({ where: { id: invitation.id, status: 'PENDING', activeKey: { not: null } }, data: {
@@ -144,6 +147,9 @@ export class OrganizationInvitationsService {
       const context = await this.access.forOrganization(actor, organizationId, 'INVITATIONS_MANAGE', tx);
       const invitation = await tx.organizationInvitation.findFirst({ where: { id: invitationId, organizationId } });
       if (!invitation) throw new NotFoundException('Convite não encontrado');
+      if (invitation.role === 'ORG_ADMIN' && actor.platformRole !== 'SUPER_ADMIN') {
+        throw new ForbiddenException('Somente SUPER_ADMIN pode gerenciar convites de administrador');
+      }
       if (invitation.status !== 'PENDING') throw new BadRequestException(this.invalidStatusMessage(invitation.status));
       if (invitation.expiresAt <= new Date()) {
         await tx.organizationInvitation.update({ where: { id: invitation.id }, data: { status: 'EXPIRED', expiredAt: new Date(), activeKey: null } });
@@ -176,7 +182,7 @@ export class OrganizationInvitationsService {
       organization: { select: { id: true, name: true, slug: true, isActive: true } },
     } });
     if (!invitation || !this.tokens.matches(token, invitation.tokenHash)) throw new BadRequestException('Convite inválido');
-    const user = await db.user.findFirst({ where: { email: { equals: invitation.email, mode: 'insensitive' } }, select: { id: true } });
+    const user = await db.user.findFirst({ where: { email: { equals: invitation.email, mode: 'insensitive' } }, select: { id: true, isVerified: true } });
     return { ...invitation, user };
   }
 
@@ -185,6 +191,11 @@ export class OrganizationInvitationsService {
   }
   private markExpired(id: string) { return this.prisma.organizationInvitation.updateMany({ where: { id, status: 'PENDING' }, data: { status: 'EXPIRED', expiredAt: new Date(), activeKey: null } }); }
   private normalizeEmail(email: string) { return email.trim().toLowerCase(); }
+  private assertRoleCanBeGranted(actor: OrganizationActor, role: OrganizationInvitationRole) {
+    if (role === 'ORG_ADMIN' && actor.platformRole !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Somente SUPER_ADMIN pode convidar um administrador de organização');
+    }
+  }
   private activeKey(organizationId: string, email: string) { return `${organizationId}:${email}`; }
   private invalidStatusMessage(status: string) { return status === 'ACCEPTED' ? 'Este convite já foi aceito' : status === 'CANCELLED' ? 'Este convite foi cancelado' : status === 'EXPIRED' ? 'Este convite expirou' : 'Convite inválido'; }
   private mapUniqueConflict(error: any) {

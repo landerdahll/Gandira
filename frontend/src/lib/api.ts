@@ -187,9 +187,9 @@ export const organizationsApi = {
   removeMember: (organizationId: string, memberId: string) =>
     api.delete(`/organizations/${organizationId}/members/${memberId}`),
   invitations: (organizationId: string, params?: any) => api.get(`/organizations/${organizationId}/invitations`, { params }),
-  createInvitation: (organizationId: string, data: { email: string; role: 'PRODUCER' | 'STAFF'; customMessage?: string }) =>
+  createInvitation: (organizationId: string, data: { email: string; role: 'ORG_ADMIN' | 'PRODUCER' | 'STAFF'; customMessage?: string }) =>
     api.post(`/organizations/${organizationId}/invitations`, data),
-  changeInvitationRole: (organizationId: string, invitationId: string, role: 'PRODUCER' | 'STAFF') =>
+  changeInvitationRole: (organizationId: string, invitationId: string, role: 'ORG_ADMIN' | 'PRODUCER' | 'STAFF') =>
     api.patch(`/organizations/${organizationId}/invitations/${invitationId}/role`, { role }),
   resendInvitation: (organizationId: string, invitationId: string) =>
     api.post(`/organizations/${organizationId}/invitations/${invitationId}/resend`),

@@ -28,6 +28,7 @@ function VerifyEmailContent() {
   const [errorMsg, setErrorMsg] = useState('');
   const [resending, setResending] = useState(false);
   const [ticketReleased, setTicketReleased] = useState(false);
+  const [organizationInvite, setOrganizationInvite] = useState('');
 
   useEffect(() => {
     if (!token) return;
@@ -35,6 +36,7 @@ function VerifyEmailContent() {
       .verifyEmail(token)
       .then(({ data }) => {
         setTicketReleased(Number(data?.ticketTransfersCompleted ?? 0) > 0);
+        setOrganizationInvite(window.localStorage.getItem('pago-pending-organization-invite') || '');
         setState('success');
       })
       .catch((e: any) => {
@@ -95,7 +97,7 @@ function VerifyEmailContent() {
             <p style={{ margin: '0 0 28px', fontSize: 14, color: '#666', lineHeight: 1.6 }}>
               {ticketReleased ? 'Sua conta está confirmada e o ingresso recebido já está em Meus ingressos.' : 'Sua conta está confirmada. Agora você pode comprar ingressos.'}
             </p>
-            <Link href={ticketReleased ? '/my-tickets' : '/'} style={{
+            {organizationInvite ? <a href={`/organization-invitations/accept?token=${encodeURIComponent(organizationInvite)}`} style={{
               display: 'block',
               padding: '13px',
               borderRadius: 12,
@@ -104,9 +106,9 @@ function VerifyEmailContent() {
               fontWeight: 700,
               fontSize: 15,
               textDecoration: 'none',
-            }}>
-              {ticketReleased ? 'Ver meu ingresso' : 'Ver eventos'}
-            </Link>
+            }}>Voltar ao convite</a> : <Link href={ticketReleased ? '/my-tickets' : '/'} style={{
+              display: 'block', padding: '13px', borderRadius: 12, background: '#67bed9', color: '#fff', fontWeight: 700, fontSize: 15, textDecoration: 'none',
+            }}>{ticketReleased ? 'Ver meu ingresso' : 'Ver eventos'}</Link>}
           </>
         )}
 

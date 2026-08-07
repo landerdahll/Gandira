@@ -53,6 +53,14 @@ describe('mail templates', () => {
     expect(result.html).toContain('pago.outrahora.com');
   });
 
+  it('renders ORG_ADMIN invitations with a friendly role label', () => {
+    const result = renderMail('ORGANIZATION_INVITATION', {
+      organizationName: 'Teste Produções', inviterName: 'Super Admin', role: 'ORG_ADMIN', url: 'https://pago.outrahora.com/invite',
+    }, 'https://pago.outrahora.com/logo.svg');
+    expect(result.html).toContain('Administrador da organização');
+    expect(result.text).toContain('Administrador da organização');
+  });
+
   it('omits the custom message block when no invitation message was provided', () => {
     const result = renderMail('ORGANIZATION_INVITATION', {
       organizationName: 'Outra Hora', inviterName: 'Outra Hora', role: 'STAFF', url: 'https://pago.outrahora.com/invite',

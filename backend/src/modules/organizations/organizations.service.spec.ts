@@ -3,7 +3,7 @@ import { OrganizationsService } from './organizations.service';
 
 describe('OrganizationsService', () => {
   const tx = { organization: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn() }, auditLog: { create: jest.fn() } };
-  const prisma = { organizationMember: { findMany: jest.fn() }, organization: { findMany: jest.fn(), findFirst: jest.fn() }, $transaction: jest.fn((callback: any) => callback(tx)) };
+  const prisma = { organizationMember: { findMany: jest.fn() }, organization: { findMany: jest.fn(), findFirst: jest.fn(), findUnique: jest.fn() }, $transaction: jest.fn((callback: any) => callback(tx)) };
   const access = { forOrganization: jest.fn() };
   const service = new OrganizationsService(prisma as any, access as any);
 
@@ -58,5 +58,15 @@ describe('OrganizationsService', () => {
     await expect(service.create({ name: 'Produtora B' }, { id: 'root', platformRole: 'SUPER_ADMIN' })).resolves.toMatchObject({ id: 'org-b' });
     expect(tx.organization.create).toHaveBeenCalledWith({ data: { name: 'Produtora B', slug: 'produtora-b' } });
     expect(tx.auditLog.create).toHaveBeenCalledWith({ data: expect.objectContaining({ action: 'ORGANIZATION_CREATED', entityId: 'org-b' }) });
+  });
+
+  it('reports a newly created organization without an administrator', async () => {
+    prisma.organization.findUnique.mockResolvedValue({ id: 'org-b', name: 'Produtora B', isActive: true, members: [], invitations: [], _count: { members: 0, events: 0, invitations: 0 } });
+    await expect(service.adminDetail('org-b', { id: 'root', platformRole: 'SUPER_ADMIN' })).resolves.toMatchObject({ organization: { members: [], invitations: [] } });
+  });
+
+  it('returns a friendly error for a duplicate slug', async () => {
+    tx.organization.create.mockRejectedValue(Object.assign(new Error('duplicate'), { code: 'P2002' }));
+    await expect(service.create({ name: 'Produtora B', slug: 'outrahora' }, { id: 'root', platformRole: 'SUPER_ADMIN' })).rejects.toThrow('Já existe uma organização com este slug');
   });
 });
