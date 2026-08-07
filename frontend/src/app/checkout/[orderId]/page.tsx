@@ -158,6 +158,7 @@ function PixTab({ orderId, total }: { orderId: string; total: number }) {
           QR Code gerado na hora. Pague pelo app do seu banco em segundos.
         </p>
         <button
+          className={`checkout-pix-generate-button${loading ? ' is-loading' : ''}`}
           onClick={handleGenerate}
           disabled={loading}
           style={{

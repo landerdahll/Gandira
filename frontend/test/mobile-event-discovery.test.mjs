@@ -16,7 +16,8 @@ test('upcoming and past sections share the compact carousel without changing fea
 
 test('mobile rail supports touch, snap, hidden scrollbars and responsive two-card discovery', () => {
   assert.match(styles, /@media \(max-width: 768px\)[\s\S]*?\.event-carousel\s*{[\s\S]*?overflow-x: auto;[\s\S]*?scroll-snap-type: inline mandatory;/);
-  assert.match(styles, /flex: 0 0 clamp\(140px, 44vw, 190px\)/);
+  assert.match(styles, /flex: 0 0 clamp\(145px, 47vw, 195px\)/);
+  assert.match(styles, /\.event-carousel--past \.compact-event-card \{ flex-basis: clamp\(130px, 38vw, 165px\); \}/);
   assert.match(styles, /aspect-ratio: 4 \/ 5/);
   assert.match(styles, /scrollbar-width: none/);
   assert.match(styles, /prefers-reduced-motion: reduce/);
