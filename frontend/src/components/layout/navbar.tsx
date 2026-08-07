@@ -9,9 +9,9 @@ import { BrandMark } from '@/components/brand/brand-mark';
 import { useOrganization } from '@/lib/organization-context';
 
 export function Navbar() {
-  const { user, logout, isProducer, isStaff, isAdmin, loading } = useAuth();
+  const { user, logout, isAdmin, loading } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { active } = useOrganization();
+  const { active, organizations, canManageEvents, canCheckIn } = useOrganization();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -91,9 +91,9 @@ export function Navbar() {
                       padding: '6px', boxShadow: '0 12px 40px rgba(0,0,0,0.6)', zIndex: 200,
                     }}>
                       <DropItem href="/profile" icon={<UserCircle size={14} />} onClick={() => setDropdownOpen(false)}>Meu perfil</DropItem>
-                      {active && <DropItem href="/organization" icon={<Building2 size={14} />} onClick={() => setDropdownOpen(false)}>Organização</DropItem>}
-                      {isProducer && <DropItem href="/producer/dashboard" icon={<LayoutDashboard size={14} />} onClick={() => setDropdownOpen(false)}>Dashboard</DropItem>}
-                      {isStaff && <DropItem href="/checkin" icon={<QrCode size={14} />} onClick={() => setDropdownOpen(false)}>Check-in</DropItem>}
+                      {organizations.length > 0 && <DropItem href="/organization" icon={<Building2 size={14} />} onClick={() => setDropdownOpen(false)}>Organização</DropItem>}
+                      {canManageEvents && <DropItem href="/producer/dashboard" icon={<LayoutDashboard size={14} />} onClick={() => setDropdownOpen(false)}>Dashboard</DropItem>}
+                      {canCheckIn && <DropItem href="/checkin" icon={<QrCode size={14} />} onClick={() => setDropdownOpen(false)}>Check-in</DropItem>}
                       {isAdmin && <DropItem href="/admin/users" icon={<ShieldCheck size={14} />} onClick={() => setDropdownOpen(false)}>Painel Master</DropItem>}
                       <div style={{ height: '1px', background: '#222', margin: '4px 0' }} />
                       <button
@@ -218,14 +218,15 @@ export function Navbar() {
                   <UserCircle size={15} color="#555" /> Meu perfil
                 </span>
               </MobItem>
-              {isProducer && (
+              {organizations.length > 0 && <MobItem href="/organization" onClick={() => setMobileOpen(false)}><span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Building2 size={15} color="#555"/> Organização</span></MobItem>}
+              {canManageEvents && (
                 <MobItem href="/producer/dashboard" onClick={() => setMobileOpen(false)}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <LayoutDashboard size={15} color="#555" /> Dashboard
                   </span>
                 </MobItem>
               )}
-              {isStaff && (
+              {canCheckIn && (
                 <MobItem href="/checkin" onClick={() => setMobileOpen(false)}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <QrCode size={15} color="#555" /> Check-in

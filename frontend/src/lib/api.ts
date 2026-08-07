@@ -13,6 +13,10 @@ export const api = axios.create({
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = Cookies.get('access_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (typeof window !== 'undefined') {
+    const organizationId = window.localStorage.getItem('pago-active-organization-id');
+    if (organizationId) config.headers['X-Organization-Id'] = organizationId;
+  }
   return config;
 });
 
@@ -171,6 +175,9 @@ export const ticketTransfersApi = {
 
 export const organizationsApi = {
   context: () => api.get('/organizations/context'),
+  adminList: () => api.get('/organizations'),
+  create: (data: any) => api.post('/organizations', data),
+  update: (organizationId: string, data: any) => api.patch(`/organizations/${organizationId}`, data),
   get: (organizationId: string) => api.get(`/organizations/${organizationId}`),
   members: (organizationId: string, params?: any) => api.get(`/organizations/${organizationId}/members`, { params }),
   changeMemberRole: (organizationId: string, memberId: string, role: string) =>

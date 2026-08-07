@@ -44,10 +44,20 @@ describe('EventsService featured events', () => {
     expect(organizationAccess.forCollectionPermission).toHaveBeenCalledWith(
       { id: 'producer-1', platformRole: 'MEMBER' },
       'EVENTS_MANAGE',
+      { organizationId: undefined },
     );
     expect(prisma.event.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ organizationId: 'org-1', producerId: 'producer-1' }),
     }));
+  });
+
+  it('uses the explicitly selected organization for users with multiple memberships', async () => {
+    organizationAccess.forCollectionPermission.mockResolvedValue({ organizationId: 'org-b' });
+    prisma.event.findUnique.mockResolvedValue(null);
+    prisma.event.create.mockImplementation(({ data }) => Promise.resolve(data));
+    await service.create({ title: 'Evento B', startDate: '2027-01-01', endDate: '2027-01-02' } as any, { id: 'multi-user' }, 'org-b');
+    expect(organizationAccess.forCollectionPermission).toHaveBeenCalledWith({ id: 'multi-user' }, 'EVENTS_MANAGE', { organizationId: 'org-b' });
+    expect(prisma.event.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ organizationId: 'org-b' }) }));
   });
 
   it('lists administrative events using organizationId instead of producerId', async () => {
@@ -62,6 +72,16 @@ describe('EventsService featured events', () => {
       where: { organizationId: 'org-a' },
     }));
     expect(prisma.event.count).toHaveBeenCalledWith({ where: { organizationId: 'org-a' } });
+  });
+
+  it('keeps the published catalog global without an organization filter', async () => {
+    prisma.event.findMany.mockResolvedValue([{ id: 'event-a' }, { id: 'event-b' }]);
+    prisma.event.count.mockResolvedValue(2);
+    await service.findAll({ page: 1, limit: 20 });
+    const where = prisma.event.findMany.mock.calls[0][0].where;
+    expect(where.status).toBe(EventStatus.PUBLISHED);
+    expect(where).not.toHaveProperty('organizationId');
+    expect(organizationAccess.forCollectionPermission).not.toHaveBeenCalled();
   });
 
   it('clears ended flags and returns the nearest configured featured event', async () => {

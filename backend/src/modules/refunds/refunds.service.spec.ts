@@ -25,7 +25,8 @@ describe('RefundsService organization isolation', () => {
     };
     const service = new RefundsService(prisma as any, {} as any, {} as any, {} as any, undefined, access as any);
 
-    await service.adminList({ id: 'producer-a', platformRole: 'MEMBER' });
+    await service.adminList({ id: 'producer-a', platformRole: 'MEMBER' }, 1, 20, 'org-a');
+    expect(access.forCollectionPermission).toHaveBeenCalledWith({ id: 'producer-a', platformRole: 'MEMBER' }, 'SALES_VIEW', { organizationId: 'org-a' });
     const where = { order: { event: { organizationId: 'org-a' } } };
     expect(prisma.refund.findMany).toHaveBeenCalledWith(expect.objectContaining({ where }));
     expect(prisma.refund.count).toHaveBeenCalledWith({ where });

@@ -22,8 +22,8 @@ export class EventsService {
     private organizationAccess: OrganizationAccessService,
   ) {}
 
-  async create(dto: CreateEventDto, actor: OrganizationActor) {
-    const access = await this.organizationAccess.forCollectionPermission(actor, 'EVENTS_MANAGE');
+  async create(dto: CreateEventDto, actor: OrganizationActor, organizationId?: string) {
+    const access = await this.organizationAccess.forCollectionPermission(actor, 'EVENTS_MANAGE', { organizationId });
     let slug = slugify(dto.title);
     const existing = await this.prisma.event.findUnique({ where: { slug } });
     if (existing) slug = `${slug}-${randomBytes(3).toString('hex')}`;
@@ -246,8 +246,8 @@ export class EventsService {
     return event;
   }
 
-  async findProducerEvents(actor: OrganizationActor, page = 1, limit = 20) {
-    const access = await this.organizationAccess.forCollectionPermission(actor, 'EVENTS_MANAGE');
+  async findProducerEvents(actor: OrganizationActor, page = 1, limit = 20, organizationId?: string) {
+    const access = await this.organizationAccess.forCollectionPermission(actor, 'EVENTS_MANAGE', { organizationId });
     const organizationWhere = this.organizationAccess.eventOrganizationWhere(access);
     const take = Math.min(limit, 50);
     const skip = (page - 1) * take;
@@ -330,8 +330,8 @@ export class EventsService {
     });
   }
 
-  async authorizeUpload(actor: OrganizationActor) {
-    return this.organizationAccess.forCollectionPermission(actor, 'EVENTS_MANAGE');
+  async authorizeUpload(actor: OrganizationActor, organizationId?: string) {
+    return this.organizationAccess.forCollectionPermission(actor, 'EVENTS_MANAGE', { organizationId });
   }
 
   private async getOwnedEvent(eventId: string, actor: OrganizationActor) {

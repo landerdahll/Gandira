@@ -52,6 +52,9 @@ export class OrganizationAccessService {
     selection: OrganizationSelection = {},
     database: DatabaseClient = this.prisma,
   ) {
+    if (actor.platformRole === 'SUPER_ADMIN' && !selection.organizationId) {
+      throw new BadRequestException('Selecione explicitamente uma organização ativa');
+    }
     return this.forCollection(actor, this.rolesFor(permission), selection, database);
   }
 

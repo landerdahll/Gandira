@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { CSSProperties, useState } from 'react';
 
 const items = [
+  { href: '/admin/organizations', label: 'Organizações' },
   { href: '/admin/users', label: 'Usuários' },
   { href: '/admin/clube-outrahora', label: 'Clube Outrahora' },
   { href: '/admin/transfers', label: 'Transferências' },

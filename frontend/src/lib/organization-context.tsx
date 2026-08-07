@@ -17,6 +17,7 @@ export interface ActiveOrganizationContext {
 
 interface OrganizationContextValue {
   active: ActiveOrganizationContext | null;
+  organizations: ActiveOrganizationContext[];
   loading: boolean;
   selectionRequired: boolean;
   isSuperAdmin: boolean;
@@ -24,6 +25,8 @@ interface OrganizationContextValue {
   canManageMembers: boolean;
   canManageInvitations: boolean;
   canViewTransfers: boolean;
+  canManageEvents: boolean;
+  canCheckIn: boolean;
   refresh: () => Promise<void>;
   selectOrganization: (organizationId: string) => boolean;
 }
@@ -38,15 +41,21 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
-    if (!user) { setActive(null); setOptions([]); setSelectionRequired(false); setLoading(false); return; }
+    if (!user) { setActive(null); setOptions([]); setSelectionRequired(false); localStorage.removeItem('pago-active-organization-id'); setLoading(false); return; }
     setLoading(true);
     try {
       const { data } = await organizationsApi.context();
-      setActive(data.active);
-      setOptions((data.organizations || []).map((item: any) => item.organization ? item : {
+      const nextOptions = (data.organizations || []).map((item: any) => item.organization ? item : {
         organizationMemberId: null, organizationRole: null, organization: item,
-      }));
-      setSelectionRequired(data.selectionRequired);
+      });
+      const savedId = localStorage.getItem('pago-active-organization-id');
+      const saved = nextOptions.find((item: ActiveOrganizationContext) => item.organization.id === savedId);
+      const nextActive = data.active || saved || null;
+      if (savedId && !saved) localStorage.removeItem('pago-active-organization-id');
+      if (nextActive) localStorage.setItem('pago-active-organization-id', nextActive.organization.id);
+      setActive(nextActive);
+      setOptions(nextOptions);
+      setSelectionRequired(!nextActive && nextOptions.length > 0);
     } catch {
       setActive(null);
       setSelectionRequired(false);
@@ -64,14 +73,17 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     if (!selected) return false;
     setActive(selected);
     setSelectionRequired(false);
+    localStorage.setItem('pago-active-organization-id', organizationId);
     return true;
   };
   return <OrganizationContext.Provider value={{
-    active, loading: authLoading || loading, selectionRequired, isSuperAdmin,
+    active, organizations: options, loading: authLoading || loading, selectionRequired, isSuperAdmin,
     canViewMembers: isSuperAdmin || role === 'ORG_ADMIN' || role === 'PRODUCER',
     canManageMembers: isSuperAdmin || role === 'ORG_ADMIN',
     canManageInvitations: isSuperAdmin || role === 'ORG_ADMIN',
     canViewTransfers: isSuperAdmin || role === 'ORG_ADMIN' || role === 'PRODUCER',
+    canManageEvents: isSuperAdmin || role === 'ORG_ADMIN' || role === 'PRODUCER',
+    canCheckIn: isSuperAdmin || role === 'ORG_ADMIN' || role === 'PRODUCER' || role === 'STAFF',
     refresh, selectOrganization,
   }}>{children}</OrganizationContext.Provider>;
 }

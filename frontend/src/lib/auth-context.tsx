@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         isProducer: user?.role === 'PRODUCER' || user?.role === 'ADMIN',
         isStaff: user?.role === 'STAFF' || user?.role === 'PRODUCER' || user?.role === 'ADMIN',
-        isAdmin: user?.role === 'ADMIN',
+        isAdmin: user?.platformRole === 'SUPER_ADMIN',
       }}
     >
       {children}

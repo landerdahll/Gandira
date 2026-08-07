@@ -9,12 +9,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== 'ADMIN')) {
+    if (!loading && (!user || user.platformRole !== 'SUPER_ADMIN')) {
       router.replace('/auth/login');
     }
   }, [user, loading, router]);
 
-  if (loading || !user || user.role !== 'ADMIN') return null;
+  if (loading || !user || user.platformRole !== 'SUPER_ADMIN') return null;
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0a' }}>

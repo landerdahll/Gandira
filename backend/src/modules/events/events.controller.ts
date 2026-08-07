@@ -24,6 +24,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { CloudinaryService } from '../../cloudinary/cloudinary.service';
+import { SelectedOrganization } from '../../common/decorators/selected-organization.decorator';
 
 const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -94,8 +95,8 @@ export class EventsController {
   @Post()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Criar evento' })
-  create(@Body() dto: CreateEventDto, @CurrentUser() user: any) {
-    return this.events.create(dto, user);
+  create(@Body() dto: CreateEventDto, @CurrentUser() user: any, @SelectedOrganization() organizationId?: string) {
+    return this.events.create(dto, user, organizationId);
   }
 
   @Post('upload-image')
@@ -113,9 +114,9 @@ export class EventsController {
       },
     }),
   )
-  async uploadImage(@UploadedFile() file: Express.Multer.File, @CurrentUser() user: any) {
+  async uploadImage(@UploadedFile() file: Express.Multer.File, @CurrentUser() user: any, @SelectedOrganization() organizationId?: string) {
     if (!file) throw new BadRequestException('Nenhum arquivo enviado');
-    await this.events.authorizeUpload(user);
+    await this.events.authorizeUpload(user, organizationId);
     const result = await this.cloudinary.uploadBuffer(file.buffer, file.mimetype, 'outrahora/events');
     return { url: result.secure_url };
   }
@@ -141,8 +142,9 @@ export class EventsController {
     @CurrentUser() user: any,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+    @SelectedOrganization() organizationId?: string,
   ) {
-    return this.events.findProducerEvents(user, page, limit);
+    return this.events.findProducerEvents(user, page, limit, organizationId);
   }
 
   @Patch(':id/publish')

@@ -145,8 +145,8 @@ export class ReportsService {
     };
   }
 
-  async getProducerDashboard(actor: OrganizationActor) {
-    const access = await this.organizationAccess.forCollectionPermission(actor, 'REPORTS_VIEW');
+  async getProducerDashboard(actor: OrganizationActor, organizationId?: string) {
+    const access = await this.organizationAccess.forCollectionPermission(actor, 'REPORTS_VIEW', { organizationId });
     const eventWhere = this.organizationAccess.eventOrganizationWhere(access);
     const [eventCount, totalRevenue, totalTickets, recentOrders, revenueByEvent, couponStats] =
       await Promise.all([

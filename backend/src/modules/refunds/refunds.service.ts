@@ -80,9 +80,9 @@ export class RefundsService {
     });
   }
 
-  async adminList(actor: OrganizationActor, page = 1, limit = 20) {
+  async adminList(actor: OrganizationActor, page = 1, limit = 20, organizationId?: string) {
     if (!this.organizationAccess) throw new Error('OrganizationAccessService não configurado');
-    const access = await this.organizationAccess.forCollectionPermission(actor, 'SALES_VIEW');
+    const access = await this.organizationAccess.forCollectionPermission(actor, 'SALES_VIEW', { organizationId });
     const eventWhere = this.organizationAccess.eventOrganizationWhere(access);
     const take = Math.min(limit, 50), skip = (page - 1) * take;
     const db = this.prisma as any;

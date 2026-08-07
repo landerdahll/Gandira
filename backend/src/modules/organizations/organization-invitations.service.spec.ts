@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { OrganizationInvitationsService } from './organization-invitations.service';
 
 describe('OrganizationInvitationsService', () => {
@@ -50,6 +50,14 @@ describe('OrganizationInvitationsService', () => {
     expect(tx.organizationInvitation.create).not.toHaveBeenCalled();
   });
 
+  it('prevents a duplicate pending invitation for the same organization and email', async () => {
+    tx.organization.findUnique.mockResolvedValue({ id: 'org-a', name: 'Outra Hora', isActive: true });
+    tx.user.findFirst.mockResolvedValue(null);
+    tx.organizationInvitation.findUnique.mockResolvedValue({ id: 'pending-invite' });
+    await expect(service.create('org-a', { id: 'admin' }, { email: 'guest@example.com', role: 'STAFF' })).rejects.toBeInstanceOf(ConflictException);
+    expect(tx.organizationInvitation.create).not.toHaveBeenCalled();
+  });
+
   it('accepts only the exact normalized invited email and creates membership atomically', async () => {
     const invitation = { id: 'invite-1', organizationId: 'org-a', email: 'guest@example.com', role: 'STAFF', status: 'PENDING', tokenHash: 'stored-hash', activeKey: 'active', expiresAt: new Date(Date.now() + 60_000), organization: { id: 'org-a', name: 'Outra Hora', slug: 'outrahora', isActive: true } };
     tx.organizationInvitation.findUnique.mockResolvedValue(invitation);
@@ -72,5 +80,46 @@ describe('OrganizationInvitationsService', () => {
     await service.updateRole('org-a', 'invite-1', 'STAFF', { id: 'admin' });
     expect(tx.organizationInvitation.update).toHaveBeenCalledWith({ where: { id: 'invite-1' }, data: { role: 'STAFF' } });
     expect(tx.auditLog.create).toHaveBeenCalledWith({ data: expect.objectContaining({ action: 'ORGANIZATION_INVITATION_ROLE_CHANGED' }) });
+  });
+
+  it('does not resolve an invitation identifier from another organization', async () => {
+    tx.organizationInvitation.findFirst.mockResolvedValue(null);
+    await expect(service.updateRole('org-a', 'invite-from-org-b', 'STAFF', { id: 'admin-a' })).rejects.toBeInstanceOf(NotFoundException);
+    expect(tx.organizationInvitation.findFirst).toHaveBeenCalledWith({ where: { id: 'invite-from-org-b', organizationId: 'org-a' } });
+  });
+
+  it('enforces the resend cooldown without creating another outbox item', async () => {
+    tx.organizationInvitation.findFirst.mockResolvedValue({
+      id: 'invite-1', organizationId: 'org-a', role: 'STAFF', status: 'PENDING',
+      expiresAt: new Date(Date.now() + 60_000), lastSentAt: new Date(), resendCount: 0,
+    });
+    await expect(service.resend('org-a', 'invite-1', { id: 'admin' })).rejects.toMatchObject({ status: 429 });
+    expect(outbox.enqueue).not.toHaveBeenCalled();
+  });
+
+  it('reactivates an inactive membership only after a valid acceptance', async () => {
+    const invitation = { id: 'invite-1', organizationId: 'org-a', email: 'guest@example.com', role: 'PRODUCER', status: 'PENDING', tokenHash: 'hash', activeKey: 'active', expiresAt: new Date(Date.now() + 60_000), organization: { id: 'org-a', name: 'Org A', slug: 'org-a', isActive: true } };
+    tx.organizationInvitation.findUnique.mockResolvedValue(invitation);
+    tx.user.findFirst.mockResolvedValue({ id: 'guest' });
+    tx.user.findUnique.mockResolvedValue({ id: 'guest', email: 'guest@example.com', isActive: true });
+    tx.organizationInvitation.updateMany.mockResolvedValue({ count: 1 });
+    tx.organizationMember.findUnique.mockResolvedValue({ id: 'old-membership', status: 'INACTIVE', role: 'STAFF' });
+    tx.organizationMember.update.mockResolvedValue({ id: 'old-membership', status: 'ACTIVE', role: 'PRODUCER' });
+    await service.accept('invite-1.signature', { id: 'guest' });
+    expect(tx.organizationMember.update).toHaveBeenCalledWith({ where: { id: 'old-membership' }, data: { role: 'PRODUCER', status: 'ACTIVE' } });
+  });
+
+  it.each(['CANCELLED', 'ACCEPTED', 'EXPIRED'] as const)('rejects a terminal %s invitation', async status => {
+    tx.organizationInvitation.findUnique.mockResolvedValue({ id: 'invite-1', email: 'guest@example.com', tokenHash: 'hash', status, expiresAt: new Date(Date.now() + 60_000), organization: { isActive: true } });
+    tx.user.findFirst.mockResolvedValue(null);
+    await expect(service.resolve('invite-1.signature')).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('marks a pending expired invitation and refuses reuse', async () => {
+    tx.organizationInvitation.findUnique.mockResolvedValue({ id: 'invite-1', email: 'guest@example.com', tokenHash: 'hash', status: 'PENDING', expiresAt: new Date(Date.now() - 1), organization: { isActive: true } });
+    tx.user.findFirst.mockResolvedValue(null);
+    prisma.organizationInvitation.updateMany.mockResolvedValue({ count: 1 });
+    await expect(service.resolve('invite-1.signature')).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.organizationInvitation.updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'invite-1', status: 'PENDING' }, data: expect.objectContaining({ status: 'EXPIRED', activeKey: null }) }));
   });
 });

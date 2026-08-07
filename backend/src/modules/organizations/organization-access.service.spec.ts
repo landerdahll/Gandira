@@ -89,4 +89,21 @@ describe('OrganizationAccessService', () => {
     expect(service.rolesFor('INVITATIONS_MANAGE')).toEqual(['ORG_ADMIN']);
     expect(service.rolesFor('TRANSFERS_VIEW')).toEqual(['ORG_ADMIN', 'PRODUCER']);
   });
+
+  it.each([
+    ['ORG_ADMIN', 'EVENTS_MANAGE', true], ['PRODUCER', 'EVENTS_MANAGE', true], ['STAFF', 'EVENTS_MANAGE', false],
+    ['ORG_ADMIN', 'MEMBERS_MANAGE', true], ['PRODUCER', 'MEMBERS_MANAGE', false], ['STAFF', 'MEMBERS_VIEW', false],
+    ['ORG_ADMIN', 'CHECK_IN_MANAGE', true], ['PRODUCER', 'CHECK_IN_MANAGE', true], ['STAFF', 'CHECK_IN_MANAGE', true],
+    ['ORG_ADMIN', 'REPORTS_VIEW', true], ['PRODUCER', 'REPORTS_VIEW', true], ['STAFF', 'REPORTS_VIEW', false],
+  ] as const)('enforces role %s for permission %s', (role, permission, allowed) => {
+    expect(service.rolesFor(permission as any).includes(role as any)).toBe(allowed);
+  });
+
+  it('requires SUPER_ADMIN to select an organization for scoped collections', async () => {
+    expect(() => service.forCollectionPermission({ id: 'root', platformRole: 'SUPER_ADMIN' }, 'REPORTS_VIEW'))
+      .toThrow(BadRequestException);
+    prisma.organization.findUnique.mockResolvedValue({ isActive: true });
+    await expect(service.forCollectionPermission({ id: 'root', platformRole: 'SUPER_ADMIN' }, 'REPORTS_VIEW', { organizationId: 'org-b' }))
+      .resolves.toMatchObject({ organizationId: 'org-b', isSuperAdmin: true });
+  });
 });

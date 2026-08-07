@@ -6,6 +6,7 @@ import { OrganizationsService } from './organizations.service';
 import { ListOrganizationMembersDto, UpdateOrganizationMemberRoleDto, UpdateOrganizationMemberStatusDto } from './dto/organization-members.dto';
 import { CreateOrganizationInvitationDto, ListOrganizationInvitationsDto, UpdateOrganizationInvitationRoleDto } from './dto/organization-invitations.dto';
 import { OrganizationInvitationsService } from './organization-invitations.service';
+import { CreateOrganizationDto, UpdateOrganizationDto } from './dto/manage-organization.dto';
 
 @ApiTags('Organizations')
 @ApiBearerAuth()
@@ -21,10 +22,24 @@ export class OrganizationsController {
   @ApiOperation({ summary: 'Obter opções e contexto organizacional validado' })
   context(@CurrentUser() user: any) { return this.organizations.getContext(user); }
 
+  @Get()
+  @ApiOperation({ summary: 'Listar organizações para administração global' })
+  adminList(@CurrentUser() user: any) { return this.organizations.adminList(user); }
+
+  @Post()
+  @ApiOperation({ summary: 'Criar organização como SUPER_ADMIN' })
+  createOrganization(@Body() dto: CreateOrganizationDto, @CurrentUser() user: any) { return this.organizations.create(dto, user); }
+
   @Get(':organizationId')
   @ApiOperation({ summary: 'Visualizar dados e branding da organização' })
   detail(@Param('organizationId') organizationId: string, @CurrentUser() user: any) {
     return this.organizations.getDetail(organizationId, user);
+  }
+
+  @Patch(':organizationId')
+  @ApiOperation({ summary: 'Atualizar organização como SUPER_ADMIN' })
+  updateOrganization(@Param('organizationId') organizationId: string, @Body() dto: UpdateOrganizationDto, @CurrentUser() user: any) {
+    return this.organizations.update(organizationId, dto, user);
   }
 
   @Get(':organizationId/members')

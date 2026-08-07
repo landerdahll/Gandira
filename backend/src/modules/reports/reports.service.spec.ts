@@ -12,6 +12,7 @@ describe('ReportsService organization isolation', () => {
     coupon: { findMany: jest.fn().mockResolvedValue([]) },
   };
   const access = {
+    forEventPermission: jest.fn(),
     forCollectionPermission: jest.fn().mockResolvedValue({ organizationId: 'org-a', isSuperAdmin: false }),
     eventOrganizationWhere: jest.fn().mockReturnValue({ organizationId: 'org-a' }),
   };
@@ -20,7 +21,9 @@ describe('ReportsService organization isolation', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('applies the same organization ownership filter to every dashboard aggregate', async () => {
-    await service.getProducerDashboard({ id: 'producer-a', platformRole: 'MEMBER' });
+    await service.getProducerDashboard({ id: 'producer-a', platformRole: 'MEMBER' }, 'org-a');
+
+    expect(access.forCollectionPermission).toHaveBeenCalledWith({ id: 'producer-a', platformRole: 'MEMBER' }, 'REPORTS_VIEW', { organizationId: 'org-a' });
 
     expect(prisma.event.count).toHaveBeenCalledWith({ where: { organizationId: 'org-a' } });
     expect(prisma.order.aggregate).toHaveBeenCalledWith(expect.objectContaining({
@@ -38,5 +41,11 @@ describe('ReportsService organization isolation', () => {
     expect(prisma.coupon.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: { event: { organizationId: 'org-a' }, usedCount: { gt: 0 } },
     }));
+  });
+
+  it('rejects direct report access for an event from another organization before reading participants', async () => {
+    access.forEventPermission = jest.fn().mockRejectedValue(new Error('Evento não encontrado'));
+    await expect(service.getEventReport('event-b', { id: 'producer-a' })).rejects.toThrow('Evento não encontrado');
+    expect(prisma.order.findMany).not.toHaveBeenCalled();
   });
 });

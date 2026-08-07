@@ -2,7 +2,8 @@ import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 
 describe('OrganizationsService', () => {
-  const prisma = { organizationMember: { findMany: jest.fn() }, organization: { findMany: jest.fn(), findFirst: jest.fn() } };
+  const tx = { organization: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn() }, auditLog: { create: jest.fn() } };
+  const prisma = { organizationMember: { findMany: jest.fn() }, organization: { findMany: jest.fn(), findFirst: jest.fn() }, $transaction: jest.fn((callback: any) => callback(tx)) };
   const access = { forOrganization: jest.fn() };
   const service = new OrganizationsService(prisma as any, access as any);
 
@@ -49,5 +50,13 @@ describe('OrganizationsService', () => {
       { id: 'membership-2', role: 'PRODUCER', organization: { id: 'org-2' } },
     ]);
     await expect(service.getContext({ id: 'member', platformRole: 'MEMBER' })).resolves.toMatchObject({ active: null, selectionRequired: true });
+  });
+
+  it('allows only SUPER_ADMIN to create organizations and audits the action', async () => {
+    await expect(service.create({ name: 'Produtora B' }, { id: 'member', platformRole: 'MEMBER' })).rejects.toBeInstanceOf(ForbiddenException);
+    tx.organization.create.mockResolvedValue({ id: 'org-b', name: 'Produtora B', slug: 'produtora-b' });
+    await expect(service.create({ name: 'Produtora B' }, { id: 'root', platformRole: 'SUPER_ADMIN' })).resolves.toMatchObject({ id: 'org-b' });
+    expect(tx.organization.create).toHaveBeenCalledWith({ data: { name: 'Produtora B', slug: 'produtora-b' } });
+    expect(tx.auditLog.create).toHaveBeenCalledWith({ data: expect.objectContaining({ action: 'ORGANIZATION_CREATED', entityId: 'org-b' }) });
   });
 });
