@@ -9,6 +9,7 @@ const mobilePurchaseCta = await readFile(new URL('src/components/events/mobile-p
 const styles = await readFile(new URL('src/app/globals.css', root), 'utf8');
 
 test('keeps the original dark hero and scopes the premium redesign to light mode', () => {
+  assert.match(page, /const heroImage = event\.coverImage \?\? event\.bannerImage;/);
   assert.match(page, /event-cover event-hero-dark/);
   assert.match(page, /event-hero-light/);
   assert.match(styles, /\.event-hero-light \{ display: none; \}/);

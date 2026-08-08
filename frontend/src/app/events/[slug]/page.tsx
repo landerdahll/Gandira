@@ -51,7 +51,7 @@ export default async function EventPage({ params }: { params: { slug: string } }
   const lowestPrice = !isPast && activeBatches.length
     ? Math.min(...activeBatches.map((b: any) => Number(b.price)))
     : null;
-  const heroImage = event.bannerImage ?? event.coverImage;
+  const heroImage = event.coverImage ?? event.bannerImage;
   const mapQuery = event.latitude != null && event.longitude != null
     ? `${event.latitude},${event.longitude}`
     : [event.venue, event.address, event.city, event.state].filter(Boolean).join(', ');
