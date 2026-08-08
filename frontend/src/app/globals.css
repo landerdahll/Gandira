@@ -1189,11 +1189,21 @@ body {
     font-size: 24px !important;
   }
   :root[data-theme='light'] .event-hero-light {
-    min-height: min(108vw, 480px);
+    display: grid;
+    min-height: 0;
     margin: -4px -4px 34px;
     border-radius: 20px;
   }
-  :root[data-theme='light'] .event-hero-light__content { width: 100%; padding: 28px 22px; }
+  :root[data-theme='light'] .event-hero-light--fallback { min-height: min(108vw, 480px); }
+  :root[data-theme='light'] .event-hero-light__image {
+    position: relative;
+    inset: auto;
+    grid-area: 1 / 1;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+  :root[data-theme='light'] .event-hero-light__content { grid-area: 1 / 1; align-self: end; width: 100%; padding: 28px 22px; }
   :root[data-theme='light'] .event-hero-light h1 { margin-bottom: 18px; font-size: clamp(28px, 9.5vw, 42px); line-height: 1.02; }
   :root[data-theme='light'] .event-hero-light__facts { flex-direction: column; align-items: flex-start; gap: 9px; }
   :root[data-theme='light'] .event-hero-light__facts > span { font-size: 13px; }

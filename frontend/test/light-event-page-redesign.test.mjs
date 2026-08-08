@@ -41,4 +41,6 @@ test('light mobile layout is single-column, keeps the purchase target visible an
   assert.match(mobilePurchaseCta, /scrollIntoView\(\{ behavior: 'smooth'/);
   assert.match(styles, /\.event-mobile-purchase-cta \{[\s\S]*?position: fixed;[\s\S]*?env\(safe-area-inset-bottom\)/);
   assert.match(styles, /\.featured-buy-button \{[\s\S]*?width: 68%;[\s\S]*?margin-right: auto;[\s\S]*?margin-left: auto !important;/);
+  assert.match(styles, /:root\[data-theme='light'\] \.event-hero-light__image \{[\s\S]*?position: relative;[\s\S]*?height: auto;[\s\S]*?object-fit: contain;/);
+  assert.match(styles, /:root\[data-theme='light'\] \.event-hero-light--fallback \{ min-height: min\(108vw, 480px\); \}/);
 });
