@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '@/lib/auth-context';
 import { ordersApi, couponsApi } from '@/lib/api';
 import { formatCurrency } from '@/lib/utils';
+import { isBatchSellable } from '@/lib/sellable-batches';
 
 interface Batch {
   id: string;
@@ -18,6 +19,8 @@ interface Batch {
   status: string;
   ticketType: string;
   sortOrder?: number;
+  startsAt: string;
+  endsAt: string;
 }
 
 interface CouponData {
@@ -40,7 +43,7 @@ export function BatchSelector({ eventId, batches }: { eventId: string; batches: 
 
   const sorted = [...batches].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
   const activeBatches = sorted.filter((b) => b.status === 'ACTIVE');
-  const currentBatch = activeBatches.find((b) => b.quantity - b.sold > 0) ?? null;
+  const currentBatch = activeBatches.find((batch) => isBatchSellable(batch)) ?? null;
   const maxQty = currentBatch ? Math.min(10, currentBatch.quantity - currentBatch.sold) : 0;
 
   const subtotal = currentBatch ? qty * Number(currentBatch.price) : 0;

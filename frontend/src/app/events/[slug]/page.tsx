@@ -18,6 +18,7 @@ import { getInstagramProfileUrl, InstagramLink } from '@/components/events/insta
 import { EventMapLinks } from '@/components/events/event-map-links';
 import { EventCarousel } from '@/components/events/event-carousel';
 import { MobilePurchaseCta } from '@/components/events/mobile-purchase-cta';
+import { getLowestSellableBatchPrice, isBatchSellable } from '@/lib/sellable-batches';
 
 async function getEvent(slug: string) {
   try {
@@ -47,10 +48,9 @@ export default async function EventPage({ params }: { params: { slug: string } }
   const doorsOpen = event.doorsOpen ? new Date(event.doorsOpen) : null;
   const instagramProfileUrl = event.instagramUrl ? getInstagramProfileUrl(event.instagramUrl) : null;
   const isPast = endDate < new Date();
-  const activeBatches = event.batches.filter((b: any) => b.status === 'ACTIVE');
-  const lowestPrice = !isPast && activeBatches.length
-    ? Math.min(...activeBatches.map((b: any) => Number(b.price)))
-    : null;
+  const now = new Date();
+  const sellableBatches = event.batches.filter((batch: any) => isBatchSellable(batch, now));
+  const lowestPrice = isPast ? null : getLowestSellableBatchPrice(event.batches, now);
   const heroImage = event.coverImage ?? event.bannerImage;
   const mapQuery = event.latitude != null && event.longitude != null
     ? `${event.latitude},${event.longitude}`
@@ -243,7 +243,7 @@ export default async function EventPage({ params }: { params: { slug: string } }
                   <p style={{ fontSize: '14px', fontWeight: 700, color: '#555', marginBottom: '4px' }}>Evento encerrado</p>
                   <p style={{ fontSize: '12px', color: '#3a3a3a' }}>As vendas foram fechadas</p>
                 </div>
-              ) : activeBatches.length > 0 ? (
+              ) : sellableBatches.length > 0 ? (
                 <BatchSelector eventId={event.id} batches={event.batches} />
               ) : (
                 <p style={{ textAlign: 'center', color: '#555', padding: '20px 0', fontSize: '14px' }}>
