@@ -37,6 +37,12 @@ test('team and super-admin organization interfaces use friendly labels and expli
   assert.match(adminOrganizations, /Convite pendente/);
   assert.match(adminOrganizationDetail, /Enviar convite para ORG_ADMIN/);
   assert.match(adminOrganizationDetail, /Organização inativa/);
+  assert.match(adminOrganizationDetail, /Logotipo da organização/);
+  assert.match(adminOrganizationDetail, /Escolher imagem/);
+  assert.match(adminOrganizationDetail, /Website/);
+  assert.match(adminOrganizationDetail, /Instagram/);
+  assert.match(api, /uploadLogo/);
+  assert.match(api, /organizations\/\$\{organizationId\}\/logo/);
   assert.doesNotMatch(adminOrganizations + adminOrganizationDetail, /cor primária|cor secundária|primaryColor|secondaryColor/i);
 });
 

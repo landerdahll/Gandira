@@ -1177,6 +1177,7 @@ body {
     width: 100%;
     max-width: 100%;
     min-width: 0;
+    scroll-margin-top: 28px;
   }
   .event-cover {
     height: 100% !important;
@@ -1256,8 +1257,9 @@ body {
   }
   .featured-buy-button {
     align-self: stretch;
-    width: 100%;
-    margin-left: 0 !important;
+    width: 68%;
+    margin-right: auto;
+    margin-left: auto !important;
     text-align: center;
   }
 

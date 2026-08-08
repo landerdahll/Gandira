@@ -178,6 +178,11 @@ export const organizationsApi = {
   adminList: () => api.get('/organizations'),
   create: (data: any) => api.post('/organizations', data),
   update: (organizationId: string, data: any) => api.patch(`/organizations/${organizationId}`, data),
+  uploadLogo: (organizationId: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post(`/organizations/${organizationId}/logo`, form, { headers: { 'Content-Type': undefined } });
+  },
   get: (organizationId: string) => api.get(`/organizations/${organizationId}`),
   members: (organizationId: string, params?: any) => api.get(`/organizations/${organizationId}/members`, { params }),
   changeMemberRole: (organizationId: string, memberId: string, role: string) =>

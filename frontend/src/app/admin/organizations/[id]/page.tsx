@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { ArrowLeft, MailPlus } from 'lucide-react';
+import { ArrowLeft, ImagePlus, Loader2, MailPlus } from 'lucide-react';
 import { AdminNavigation } from '@/components/admin/admin-navigation';
 import { organizationsApi } from '@/lib/api';
 import { useOrganization } from '@/lib/organization-context';
@@ -15,11 +15,12 @@ const statusLabel: Record<string,string> = { PENDING: 'Pendente', ACCEPTED: 'Ace
 export default function OrganizationDetailPage() {
   const id = String(useParams().id);
   const { refresh } = useOrganization();
-  const [organization, setOrganization] = useState<any>(null), [loading, setLoading] = useState(true), [saving, setSaving] = useState(false);
+  const [organization, setOrganization] = useState<any>(null), [loading, setLoading] = useState(true), [saving, setSaving] = useState(false), [uploadingLogo, setUploadingLogo] = useState(false);
   const [form, setForm] = useState<any>({}), [email, setEmail] = useState(''), [customMessage, setCustomMessage] = useState(''), [inviting, setInviting] = useState(false);
   async function load() { setLoading(true); try { const { data } = await organizationsApi.get(id); setOrganization(data.organization); setForm(pick(data.organization)); } catch (e: any) { toast.error(message(e, 'Não foi possível carregar a organização')); } finally { setLoading(false); } }
   useEffect(() => { void load(); }, [id]);
   async function save(event: React.FormEvent) { event.preventDefault(); setSaving(true); try { const payload = { ...form, website: form.website || null, instagram: form.instagram || null, logoUrl: form.logoUrl || null }; await organizationsApi.update(id, payload); toast.success('Organização atualizada'); await Promise.all([load(), refresh()]); } catch (e: any) { toast.error(message(e, 'Não foi possível atualizar a organização')); } finally { setSaving(false); } }
+  async function uploadLogo(file?: File) { if (!file) return; setUploadingLogo(true); try { const { data } = await organizationsApi.uploadLogo(id, file); setForm((current: any) => ({ ...current, logoUrl: data.url })); toast.success('Logotipo atualizado'); await Promise.all([load(), refresh()]); } catch (e: any) { toast.error(message(e, 'Não foi possível enviar o logotipo')); } finally { setUploadingLogo(false); } }
   async function invite(event: React.FormEvent) { event.preventDefault(); setInviting(true); try { await organizationsApi.createInvitation(id, { email, role: 'ORG_ADMIN', ...(customMessage.trim() && { customMessage: customMessage.trim() }) }); toast.success('Convite para administrador enviado'); setEmail(''); setCustomMessage(''); await load(); } catch (e: any) { toast.error(message(e, 'Não foi possível enviar o convite')); } finally { setInviting(false); } }
   async function invitationAction(action: 'resend'|'cancel', invitation: any) { if (action === 'cancel' && !confirm(`Cancelar o convite para ${invitation.email}?`)) return; try { action === 'resend' ? await organizationsApi.resendInvitation(id, invitation.id) : await organizationsApi.cancelInvitation(id, invitation.id); toast.success(action === 'resend' ? 'Convite reenviado' : 'Convite cancelado'); await load(); } catch (e: any) { toast.error(message(e, 'Não foi possível atualizar o convite')); } }
   if (loading) return <main style={main}><AdminNavigation/><p style={muted}>Carregando...</p></main>;
@@ -34,7 +35,7 @@ export default function OrganizationDetailPage() {
       <Field label="Slug"><input required value={form.slug || ''} onChange={e => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} style={input}/></Field>
       <Field label="Website"><input type="url" value={form.website || ''} onChange={e => setForm({ ...form, website: e.target.value })} style={input}/></Field>
       <Field label="Instagram"><input value={form.instagram || ''} onChange={e => setForm({ ...form, instagram: e.target.value })} style={input}/></Field>
-      <Field label="Logo (URL)"><input type="url" value={form.logoUrl || ''} onChange={e => setForm({ ...form, logoUrl: e.target.value })} style={input}/></Field>
+      <Field label="Logotipo da organização"><div style={logoField}>{form.logoUrl ? <img src={form.logoUrl} alt={`Logo ${form.name || organization.name}`} style={logoPreview}/> : <span style={logoFallback}>{(form.name || organization.name).slice(0, 1)}</span>}<label style={uploadButton}>{uploadingLogo ? <Loader2 size={16} className="animate-spin"/> : <ImagePlus size={16}/>} {uploadingLogo ? 'Enviando...' : 'Escolher imagem'}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingLogo} onChange={event => { void uploadLogo(event.target.files?.[0]); event.target.value = ''; }} style={{ display: 'none' }}/></label></div><small style={small}>JPG, PNG ou WebP · máximo 5 MB</small></Field>
       <label style={{ ...label, alignSelf: 'end' }}><input type="checkbox" checked={Boolean(form.isActive)} onChange={e => setForm({ ...form, isActive: e.target.checked })}/> Organização ativa</label>
       <button disabled={saving} style={button}>{saving ? 'Salvando...' : 'Salvar alterações'}</button>
     </form>
@@ -62,3 +63,7 @@ const full: React.CSSProperties = { gridColumn: '1/-1', display: 'flex', alignIt
 const list: React.CSSProperties = { display: 'grid', gap: 10 };
 const listItem: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', padding: 14, border: '1px solid var(--theme-border)', borderRadius: 12, background: 'var(--theme-surface)' };
 const small: React.CSSProperties = { display: 'block', color: 'var(--theme-muted)', marginTop: 4 };
+const logoField: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 };
+const logoPreview: React.CSSProperties = { width: 58, height: 58, flexShrink: 0, objectFit: 'contain', padding: 4, border: '1px solid var(--theme-border)', borderRadius: 12, background: '#fff' };
+const logoFallback: React.CSSProperties = { ...logoPreview, display: 'grid', placeItems: 'center', color: '#247d99', fontSize: 22, fontWeight: 800 };
+const uploadButton: React.CSSProperties = { ...button, minHeight: 42 };

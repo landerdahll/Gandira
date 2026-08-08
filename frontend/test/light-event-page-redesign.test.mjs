@@ -30,13 +30,14 @@ test('renders venue routes, organization identity and same-organization related 
   assert.match(mapLinks, /target="_blank" rel="noopener noreferrer"/);
 });
 
-test('light mobile layout is single-column, exposes Waze and prevents oversized content grids', () => {
+test('light mobile layout is single-column, keeps the purchase target visible and prevents oversized content grids', () => {
   assert.match(styles, /@media \(max-width: 768px\)[\s\S]*?:root\[data-theme='light'\] \.event-detail-grid \{ grid-template-columns: minmax\(0, 1fr\) !important; gap: 30px !important; \}/);
   assert.match(styles, /\.purchase-widget-sticky \{[\s\S]*?position: static !important;[\s\S]*?width: 100%;[\s\S]*?max-width: 100%;/);
+  assert.match(styles, /\.purchase-widget-sticky \{[\s\S]*?scroll-margin-top: 28px;/);
   assert.match(styles, /\.event-detail-grid > \* \{ min-width: 0; \}/);
   assert.match(styles, /:root\[data-theme='light'\] \.event-important-grid \{ grid-template-columns: 1fr; \}/);
   assert.match(mobilePurchaseCta, /IntersectionObserver/);
   assert.match(mobilePurchaseCta, /scrollIntoView\(\{ behavior: 'smooth'/);
   assert.match(styles, /\.event-mobile-purchase-cta \{[\s\S]*?position: fixed;[\s\S]*?env\(safe-area-inset-bottom\)/);
-  assert.match(styles, /\.featured-buy-button \{[\s\S]*?width: 100%;[\s\S]*?margin-left: 0 !important;/);
+  assert.match(styles, /\.featured-buy-button \{[\s\S]*?width: 68%;[\s\S]*?margin-right: auto;[\s\S]*?margin-left: auto !important;/);
 });
