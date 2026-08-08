@@ -41,7 +41,8 @@ test('light mobile layout is single-column, keeps the purchase target visible an
   assert.match(mobilePurchaseCta, /scrollIntoView\(\{ behavior: 'smooth'/);
   assert.match(styles, /\.event-mobile-purchase-cta \{[\s\S]*?position: fixed;[\s\S]*?env\(safe-area-inset-bottom\)/);
   assert.match(styles, /\.featured-buy-button \{[\s\S]*?width: 68%;[\s\S]*?margin-right: auto;[\s\S]*?margin-left: auto !important;/);
-  assert.match(styles, /:root\[data-theme='light'\] \.event-hero-light \{[\s\S]*?height: auto;[\s\S]*?max-height: none;[\s\S]*?aspect-ratio: auto;[\s\S]*?overflow: visible;/);
+  assert.match(styles, /:root\[data-theme='light'\] \.event-hero-light \{[\s\S]*?display: block;[\s\S]*?height: auto;[\s\S]*?max-height: none;[\s\S]*?aspect-ratio: auto;[\s\S]*?overflow: visible;/);
   assert.match(styles, /:root\[data-theme='light'\] \.event-hero-light__image \{[\s\S]*?position: relative;[\s\S]*?min-width: 0;[\s\S]*?width: 100%;[\s\S]*?max-width: 100%;[\s\S]*?height: auto;[\s\S]*?max-height: none;[\s\S]*?aspect-ratio: auto;[\s\S]*?object-fit: contain;/);
+  assert.match(styles, /:root\[data-theme='light'\] \.event-hero-light__content \{ position: absolute; right: 0; bottom: 0; left: 0;/);
   assert.match(styles, /:root\[data-theme='light'\] \.event-hero-light--fallback \{ min-height: min\(108vw, 480px\); \}/);
 });
