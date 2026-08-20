@@ -1,6 +1,8 @@
 import { FeaturedEventCard } from '@/components/events/featured-event-card';
 import { EventCarousel } from '@/components/events/event-carousel';
+import { EventStateSelector } from '@/components/events/event-state-selector';
 import { eventsApi } from '@/lib/api';
+import { normalizeEventStateFilter } from '@/lib/event-states';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,12 +11,14 @@ interface SearchParams {
   category?: string;
   search?: string;
   page?: string;
+  state?: string;
 }
 
 async function getUpcoming(params: SearchParams) {
   try {
     const res = await eventsApi.list({
       city: params.city,
+      state: normalizeEventStateFilter(params.state) === 'ALL' ? undefined : normalizeEventStateFilter(params.state),
       category: params.category,
       search: params.search,
       limit: 21,
@@ -26,18 +30,18 @@ async function getUpcoming(params: SearchParams) {
   }
 }
 
-async function getPast() {
+async function getPast(state?: string) {
   try {
-    const res = await eventsApi.list({ past: 'true', limit: 10 });
+    const res = await eventsApi.list({ past: 'true', limit: 10, state });
     return res.data.data as any[];
   } catch {
     return [];
   }
 }
 
-async function getFeatured() {
+async function getFeatured(state?: string) {
   try {
-    const res = await eventsApi.featured();
+    const res = await eventsApi.featured({ state });
     return res.data;
   } catch {
     return null;
@@ -46,11 +50,13 @@ async function getFeatured() {
 
 export default async function HomePage({ searchParams }: { searchParams: SearchParams }) {
   const hasFilters = !!(searchParams.city || searchParams.category || searchParams.search);
+  const selectedState = normalizeEventStateFilter(searchParams.state);
+  const apiState = selectedState === 'ALL' ? undefined : selectedState;
 
   const [upcoming, pastEvents, featuredEvent] = await Promise.all([
     getUpcoming(searchParams),
-    hasFilters ? Promise.resolve([]) : getPast(),
-    hasFilters ? Promise.resolve(null) : getFeatured(),
+    hasFilters ? Promise.resolve([]) : getPast(apiState),
+    hasFilters ? Promise.resolve(null) : getFeatured(apiState),
   ]);
 
   const upcomingEvents: any[] = upcoming.data;
@@ -68,13 +74,18 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
 
   return (
     <div className="page-container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px 80px' }}>
+      <div className="event-state-filter-row">
+        <EventStateSelector selected={selectedState} />
+      </div>
 
       {!featured && upcomingEvents.length === 0 && visiblePastEvents.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '112px 0' }}>
           <p style={{ fontSize: '3rem', marginBottom: '16px' }}>🎵</p>
-          <p style={{ fontSize: '18px', fontWeight: 600, color: '#fff' }}>Nenhum evento encontrado</p>
+          <p style={{ fontSize: '18px', fontWeight: 600, color: 'var(--theme-text)' }}>
+            {selectedState === 'ALL' ? 'Nenhum evento encontrado' : `Ainda não temos eventos programados em ${selectedState}.`}
+          </p>
           <p style={{ fontSize: '14px', marginTop: '4px', color: '#444' }}>
-            Tente outros filtros ou volte em breve
+            {selectedState === 'ALL' ? 'Tente outros filtros ou volte em breve' : 'Escolha outro estado ou volte em breve'}
           </p>
         </div>
       ) : (
@@ -93,7 +104,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
               <EventCarousel title="Próximos eventos" events={rest} />
 
               {upcoming.meta.lastPage > 1 && (
-                <Pagination currentPage={upcoming.meta.page} totalPages={upcoming.meta.lastPage} />
+                <Pagination currentPage={upcoming.meta.page} totalPages={upcoming.meta.lastPage} searchParams={searchParams} />
               )}
             </div>
           )}
@@ -116,13 +127,16 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Pagination({ currentPage, totalPages }: { currentPage: number; totalPages: number }) {
+function Pagination({ currentPage, totalPages, searchParams }: { currentPage: number; totalPages: number; searchParams: SearchParams }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '48px' }}>
       {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
         <a
           key={page}
-          href={`?page=${page}`}
+          href={`?${new URLSearchParams({
+            ...Object.fromEntries(Object.entries(searchParams).filter(([, value]) => value !== undefined)) as Record<string, string>,
+            page: String(page),
+          }).toString()}`}
           style={
             page === currentPage
               ? { padding: '8px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: 600, background: '#67bed9', color: '#fff', textDecoration: 'none' }

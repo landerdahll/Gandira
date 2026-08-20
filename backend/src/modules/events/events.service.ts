@@ -14,6 +14,12 @@ import { randomBytes } from 'crypto';
 import { OrganizationAccessService } from '../organizations/organization-access.service';
 import { OrganizationActor } from '../organizations/organization-access.types';
 
+const SUPPORTED_EVENT_STATES = new Set(['RS', 'SC', 'PR', 'SP', 'RJ']);
+
+function supportedState(state?: string) {
+  const normalized = state?.toUpperCase();
+  return normalized && SUPPORTED_EVENT_STATES.has(normalized) ? normalized : undefined;
+}
 
 @Injectable()
 export class EventsService {
@@ -43,21 +49,24 @@ export class EventsService {
 
   async findAll(query: {
     city?: string;
+    state?: string;
     category?: string;
     page?: number;
     limit?: number;
     search?: string;
     past?: boolean;
   }) {
-    const { city, category, page = 1, limit = 20, search, past = false } = query;
+    const { city, state, category, page = 1, limit = 20, search, past = false } = query;
     const take = Math.min(limit, 50);
     const skip = (page - 1) * take;
+    const filteredState = supportedState(state);
 
     const now = new Date();
     const where = {
       status: EventStatus.PUBLISHED,
       startDate: past ? { lt: now } : { gte: now },
       ...(city && { city: { contains: city, mode: 'insensitive' as const } }),
+      ...(filteredState && { state: filteredState }),
       ...(category && { category }),
       ...(search && {
         OR: [
@@ -111,8 +120,9 @@ export class EventsService {
     });
   }
 
-  async findFeatured() {
+  async findFeatured(state?: string) {
     const now = new Date();
+    const filteredState = supportedState(state);
     await this.clearExpiredFeaturedEvents(now);
 
     const select = {
@@ -141,6 +151,7 @@ export class EventsService {
         status: EventStatus.PUBLISHED,
         featured: true,
         endDate: { gt: now },
+        ...(filteredState && { state: filteredState }),
       },
       orderBy: { startDate: 'asc' },
       select,
@@ -152,6 +163,7 @@ export class EventsService {
       where: {
         status: EventStatus.PUBLISHED,
         startDate: { gte: now },
+        ...(filteredState && { state: filteredState }),
       },
       orderBy: { startDate: 'asc' },
       select,

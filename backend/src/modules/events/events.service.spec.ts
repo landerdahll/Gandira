@@ -84,6 +84,16 @@ describe('EventsService featured events', () => {
     expect(organizationAccess.forCollectionPermission).not.toHaveBeenCalled();
   });
 
+  it('filters the public catalog by state without restricting organizations', async () => {
+    prisma.event.findMany.mockResolvedValue([]);
+    prisma.event.count.mockResolvedValue(0);
+    await service.findAll({ state: 'sp', past: true });
+    const where = prisma.event.findMany.mock.calls[0][0].where;
+    expect(where).toMatchObject({ status: EventStatus.PUBLISHED, state: 'SP' });
+    expect(where).not.toHaveProperty('organizationId');
+    expect(where.startDate).toHaveProperty('lt');
+  });
+
   it('returns organization presentation data and only future related events from the same organization', async () => {
     prisma.event.findUnique.mockResolvedValue({
       id: 'event-a',

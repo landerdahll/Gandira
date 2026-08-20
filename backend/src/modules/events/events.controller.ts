@@ -40,6 +40,7 @@ export class EventsController {
   @Get()
   @ApiOperation({ summary: 'Listar eventos publicados' })
   @ApiQuery({ name: 'city', required: false })
+  @ApiQuery({ name: 'state', required: false, enum: ['RS', 'SC', 'PR', 'SP', 'RJ'] })
   @ApiQuery({ name: 'category', required: false })
   @ApiQuery({ name: 'search', required: false })
   @ApiQuery({ name: 'page', required: false, type: Number })
@@ -47,20 +48,21 @@ export class EventsController {
   @ApiQuery({ name: 'past', required: false, type: Boolean })
   findAll(
     @Query('city') city?: string,
+    @Query('state') state?: string,
     @Query('category') category?: string,
     @Query('search') search?: string,
     @Query('past') past?: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
   ) {
-    return this.events.findAll({ city, category, search, page, limit, past: past === 'true' });
+    return this.events.findAll({ city, state, category, search, page, limit, past: past === 'true' });
   }
 
   @Public()
   @Get('featured')
   @ApiOperation({ summary: 'Evento em destaque da Home' })
-  featured() {
-    return this.events.findFeatured();
+  featured(@Query('state') state?: string) {
+    return this.events.findFeatured(state);
   }
 
   @Get('admin/all')

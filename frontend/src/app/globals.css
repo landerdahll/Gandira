@@ -560,6 +560,37 @@ body {
   box-shadow: 0 0 0 3px rgba(98, 182, 232, 0.14);
 }
 
+.event-state-filter-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 24px;
+}
+
+.event-state-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--theme-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.event-state-selector select {
+  min-width: 76px;
+  padding: 7px 28px 7px 10px;
+  border: 1px solid var(--theme-border);
+  border-radius: 9px;
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  cursor: pointer;
+  font: inherit;
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] .event-state-selector select {
+  color-scheme: light;
+}
+
 :root[data-theme='light'] :is(input, textarea)::placeholder { color: #81909f; }
 
 :root[data-theme='light'] [style*="background: rgb(103, 190, 217)"],

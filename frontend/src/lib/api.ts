@@ -72,7 +72,7 @@ api.interceptors.response.use(
 
 export const eventsApi = {
   list: (params?: Record<string, any>) => api.get('/events', { params }),
-  featured: () => api.get('/events/featured'),
+  featured: (params?: { state?: string }) => api.get('/events/featured', { params }),
   get: (slug: string) => api.get(`/events/${slug}`),
   getById: (id: string) => api.get(`/events/${id}/manage`),
   create: (data: any) => api.post('/events', data),

@@ -10,6 +10,7 @@ import {
   IsBoolean,
   Matches,
   ValidateIf,
+  IsIn,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -41,7 +42,7 @@ export class CreateEventDto {
 
   @ApiProperty()
   @IsString()
-  @MaxLength(2)
+  @IsIn(['RS', 'SC', 'PR', 'SP', 'RJ'])
   state: string;
 
   @ApiPropertyOptional()

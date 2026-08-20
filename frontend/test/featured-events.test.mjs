@@ -11,8 +11,8 @@ const newEvent = await readFile(new URL('src/app/producer/events/new/page.tsx', 
 const editEvent = await readFile(new URL('src/app/producer/events/[id]/edit/page.tsx', root), 'utf8');
 
 test('home obtains its feature from the dedicated priority endpoint', () => {
-  assert.match(api, /featured: \(\) => api\.get\('\/events\/featured'\)/);
-  assert.match(home, /eventsApi\.featured\(\)/);
+  assert.match(api, /featured: \(params\?: \{ state\?: string \}\) => api\.get\('\/events\/featured', \{ params \}\)/);
+  assert.match(home, /eventsApi\.featured\(\{ state \}\)/);
   assert.match(home, /upcomingEvents\.filter\(\(event: any\) => event\.id !== featured\.id\)/);
   assert.match(home, /pastEvents\.filter\(\(event: any\) => event\.id !== featured\.id\)/);
 });

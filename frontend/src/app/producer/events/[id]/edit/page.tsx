@@ -444,9 +444,11 @@ export default function EditEventPage() {
                   onFocus={focus} onBlur={blur} />
               </Field>
               <Field label="UF *">
-                <input style={{ ...inp, textTransform: 'uppercase' }} maxLength={2} value={form.state}
-                  onChange={e => setField('state', e.target.value.toUpperCase())} placeholder="RS"
-                  onFocus={focus} onBlur={blur} />
+                <select aria-label="UF" style={{ ...inp, cursor: 'pointer' }} required value={form.state}
+                  onChange={e => setField('state', e.target.value)} onFocus={focus} onBlur={blur}>
+                  <option value="" disabled>UF</option>
+                  {['RS', 'SC', 'PR', 'SP', 'RJ'].map(state => <option key={state} value={state}>{state}</option>)}
+                </select>
               </Field>
             </div>
           </div>
