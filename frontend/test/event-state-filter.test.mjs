@@ -1,12 +1,11 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const root = new URL('../', import.meta.url);
 const home = await readFile(new URL('src/app/page.tsx', root), 'utf8');
 const selector = await readFile(new URL('src/components/events/event-state-selector.tsx', root), 'utf8');
 const states = await readFile(new URL('src/lib/event-states.ts', root), 'utf8');
-const locationRoute = await readFile(new URL('src/app/api/location/state/route.ts', root), 'utf8');
 const newEvent = await readFile(new URL('src/app/producer/events/new/page.tsx', root), 'utf8');
 const editEvent = await readFile(new URL('src/app/producer/events/[id]/edit/page.tsx', root), 'utf8');
 
@@ -17,13 +16,20 @@ test('home state filter supports the required regions and filters every event gr
   assert.match(home, /Ainda não temos eventos programados em/);
 });
 
-test('manual preference wins and approximate detection never requests GPS', () => {
-  assert.match(selector, /localStorage\.getItem\(EVENT_STATE_PREFERENCE_KEY\)/);
+test('manual cookie wins over Vercel region and is mirrored to local storage', () => {
+  assert.match(home, /savedState \?\? detectedState/);
+  assert.match(home, /x-vercel-ip-country/);
+  assert.match(home, /x-vercel-ip-country-region/);
+  assert.match(home, /country === 'BR'/);
+  assert.match(selector, /document\.cookie =/);
   assert.match(selector, /localStorage\.setItem\(EVENT_STATE_PREFERENCE_KEY, state\)/);
-  assert.match(selector, /fetch\('\/api\/location\/state'/);
+  assert.match(states, /ALL_EVENT_STATES_COOKIE_VALUE = 'TODOS'/);
   assert.doesNotMatch(selector, /navigator\.geolocation/);
-  assert.match(locationRoute, /x-vercel-ip-country-region/);
-  assert.match(locationRoute, /ipapi\.co/);
+  assert.doesNotMatch(`${home}\n${selector}`, /ipapi\.co|\/api\/location\/state/);
+});
+
+test('external IP geolocation route was removed', async () => {
+  await assert.rejects(access(new URL('src/app/api/location/state/route.ts', root)));
 });
 
 test('event creation and editing expose state selects instead of free text', () => {

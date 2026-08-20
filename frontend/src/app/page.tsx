@@ -2,7 +2,13 @@ import { FeaturedEventCard } from '@/components/events/featured-event-card';
 import { EventCarousel } from '@/components/events/event-carousel';
 import { EventStateSelector } from '@/components/events/event-state-selector';
 import { eventsApi } from '@/lib/api';
-import { normalizeEventStateFilter } from '@/lib/event-states';
+import { cookies, headers } from 'next/headers';
+import {
+  EVENT_STATE_PREFERENCE_COOKIE,
+  EventStateFilter,
+  eventStateFilterFromCookie,
+  isSupportedEventState,
+} from '@/lib/event-states';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,11 +20,11 @@ interface SearchParams {
   state?: string;
 }
 
-async function getUpcoming(params: SearchParams) {
+async function getUpcoming(params: SearchParams, state?: string) {
   try {
     const res = await eventsApi.list({
       city: params.city,
-      state: normalizeEventStateFilter(params.state) === 'ALL' ? undefined : normalizeEventStateFilter(params.state),
+      state,
       category: params.category,
       search: params.search,
       limit: 21,
@@ -50,11 +56,17 @@ async function getFeatured(state?: string) {
 
 export default async function HomePage({ searchParams }: { searchParams: SearchParams }) {
   const hasFilters = !!(searchParams.city || searchParams.category || searchParams.search);
-  const selectedState = normalizeEventStateFilter(searchParams.state);
+  const savedState = eventStateFilterFromCookie(cookies().get(EVENT_STATE_PREFERENCE_COOKIE)?.value);
+  const country = headers().get('x-vercel-ip-country')?.toUpperCase();
+  const detectedRegion = headers().get('x-vercel-ip-country-region')?.toUpperCase();
+  const detectedState: EventStateFilter = country === 'BR' && isSupportedEventState(detectedRegion)
+    ? detectedRegion
+    : 'ALL';
+  const selectedState = savedState ?? detectedState;
   const apiState = selectedState === 'ALL' ? undefined : selectedState;
 
   const [upcoming, pastEvents, featuredEvent] = await Promise.all([
-    getUpcoming(searchParams),
+    getUpcoming(searchParams, apiState),
     hasFilters ? Promise.resolve([]) : getPast(apiState),
     hasFilters ? Promise.resolve(null) : getFeatured(apiState),
   ]);
