@@ -185,9 +185,10 @@ function PixTab({ orderId, total }: { orderId: string; total: number }) {
   const mins = Math.floor(secondsLeft / 60);
   const secs = secondsLeft % 60;
   const expired = secondsLeft <= 0;
+  const pixCodePreview = `${pixData.qrCode.slice(0, 36)}…`;
 
   return (
-    <div>
+    <div className="checkout-pix-content">
       <div style={{ textAlign: 'center', marginBottom: '20px' }}>
         <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>PIX gerado!</p>
         <p style={{ fontSize: '13px', color: '#555' }}>Escaneie o QR Code ou use o Copia e Cola no app do banco</p>
@@ -202,7 +203,7 @@ function PixTab({ orderId, total }: { orderId: string; total: number }) {
       <div className="checkout-pix-copy" aria-label="PIX Copia e Cola">
         <span className="checkout-pix-copy__label">PIX Copia e Cola</span>
         <div className="checkout-pix-copy__row">
-          <code title={pixData.qrCode}>{pixData.qrCode}</code>
+          <code title={pixData.qrCode}>{pixCodePreview}</code>
           <button type="button" onClick={handleCopy} disabled={expired}>
             {copied ? <Check size={14} /> : <Copy size={14} />}
             {copied ? 'Copiado!' : 'Copiar'}
@@ -288,10 +289,10 @@ function CheckoutContent() {
       padding: '32px 16px 80px',
       boxSizing: 'border-box',
     }}>
-      <div className="checkout-layout" style={{ width: '100%', maxWidth: '860px', margin: '0 auto', display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+      <div className="checkout-layout" style={{ width: '100%', maxWidth: '860px', margin: '0 auto', display: 'flex', gap: '24px', flexWrap: 'nowrap' }}>
 
         {/* Left — Order summary */}
-        <div style={{ flex: '1 1 320px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="checkout-summary-column" style={{ flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
           <div className="checkout-light-logo" style={{ marginBottom: '8px' }}>
             <BrandMark style={{ height: '65.52px', objectFit: 'contain' }} />
@@ -393,11 +394,11 @@ function CheckoutContent() {
         </div>
 
         {/* Right — Payment form */}
-        <div style={{ flex: '1 1 340px' }}>
+        <div className="checkout-payment-column" style={{ flex: '1 1 0', minWidth: 0 }}>
           <div className="checkout-payment-panel" style={{
             background: '#111', border: '1px solid #1e1e1e',
             borderRadius: '18px', padding: '28px',
-            position: 'sticky', top: '40px',
+            position: 'sticky', top: '40px', width: '100%', minWidth: 0, boxSizing: 'border-box',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
               <div className="checkout-payment-icon" style={{

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { LogOut, UserCircle, LayoutDashboard, QrCode, Menu, X, ChevronDown, ShieldCheck, Ticket, Moon, Sun, Building2, Search } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
-import { useTheme } from '@/components/providers/theme-provider';
+import { PUBLIC_THEME_SWITCHING_ENABLED, useTheme } from '@/components/providers/theme-provider';
 import { BrandMark } from '@/components/brand/brand-mark';
 import { useOrganization } from '@/lib/organization-context';
 import { eventsApi } from '@/lib/api';
@@ -65,8 +65,7 @@ export function Navbar() {
           <div className="nav-desktop" style={{ alignItems: 'center', gap: '4px' }}>
             <NavItem href={isHome ? '/#home-events' : '/'}>{isHome ? 'Explorar' : 'Ver eventos'}</NavItem>
             <div className="nav-divider" style={{ width: '1px', height: '20px', background: '#2a2a2a', margin: '0 8px' }} />
-            <ThemeToggle theme={theme} onToggle={toggleTheme} />
-
+            {PUBLIC_THEME_SWITCHING_ENABLED && <ThemeToggle theme={theme} onToggle={toggleTheme} />}
             {user ? (
               <>
                 <div style={{ position: 'relative' }} ref={dropdownRef}>
@@ -155,8 +154,7 @@ export function Navbar() {
         {!loading && (
           <div className="nav-mobile" style={{ alignItems: 'center', gap: '10px' }}>
 
-            <ThemeToggle theme={theme} onToggle={toggleTheme} />
-
+            {PUBLIC_THEME_SWITCHING_ENABLED && <ThemeToggle theme={theme} onToggle={toggleTheme} />}
             {user ? (
               /* Avatar compacto — abre menu mobile */
               <Link href="/profile" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>

@@ -5,22 +5,25 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 type Theme = 'dark' | 'light';
 
 const STORAGE_KEY = 'pago-theme';
+export const PUBLIC_THEME_SWITCHING_ENABLED = false;
 
 const ThemeContext = createContext<{
   theme: Theme;
   toggleTheme: () => void;
-}>({ theme: 'light', toggleTheme: () => undefined });
+}>({ theme: 'dark', toggleTheme: () => undefined });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
-    const savedTheme = window.localStorage.getItem(STORAGE_KEY);
-    const initialTheme = savedTheme === 'dark' ? 'dark' : 'light';
-    setTheme(initialTheme);
+    document.documentElement.dataset.theme = 'dark';
+    document.documentElement.style.colorScheme = 'dark';
+    window.localStorage.setItem(STORAGE_KEY, 'dark');
   }, []);
 
   const toggleTheme = useCallback(() => {
+    if (!PUBLIC_THEME_SWITCHING_ENABLED) return;
+
     setTheme(currentTheme => {
       const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
       document.documentElement.dataset.theme = nextTheme;
