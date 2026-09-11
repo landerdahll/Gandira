@@ -79,6 +79,24 @@ export default async function EventPage({ params }: { params: { slug: string } }
         </div>
       </section>
 
+      <section className="event-mobile-hero-meta" aria-label="Informações do evento">
+        <div className="event-mobile-hero-meta__item">
+          <Calendar size={16} />
+          <span style={{ textTransform: 'capitalize' }}>{fmtDate(startDate)}</span>
+        </div>
+        <div className="event-mobile-hero-meta__item">
+          <Clock size={16} />
+          <span>{fmtTime(startDate)} – {fmtTime(endDate)}{doorsOpen ? ` · Portões: ${fmtTime(doorsOpen)}` : ''}</span>
+        </div>
+        <div className="event-mobile-hero-meta__item event-mobile-hero-meta__item--location">
+          <MapPin size={16} />
+          <span>{event.venue} · {event.address}, {event.city}/{event.state}</span>
+        </div>
+        <div className="event-mobile-hero-meta__item event-mobile-hero-meta__item--rating">
+          <span>{event.ageRating > 0 ? `${event.ageRating}+` : 'Livre'}</span>
+        </div>
+      </section>
+
       {/* Legacy light hero kept alongside the premium dark variant so theme
           switching restores the pre-redesign light presentation. */}
       <section className={`event-hero-light${heroImage ? '' : ' event-hero-light--fallback'}`}>

@@ -565,11 +565,35 @@ body {
 :root[data-theme='dark'] body:has(.event-detail-page) .ticket-batch-quantity-button { border-color: #2d414c !important; border-radius: 50% !important; background: transparent !important; color: #b9c7cc !important; }
 :root[data-theme='dark'] body:has(.event-detail-page) .ticket-batch-quantity-button:not(:disabled):hover { border-color: #67bed9 !important; color: #67bed9 !important; }
 :root[data-theme='dark'] body:has(.event-detail-page) .event-related-section { max-width: 1200px; margin-inline: auto; }
+.event-mobile-hero-meta { display: none; }
 @media (max-width: 768px) {
-  :root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero { min-height: 500px; }
-  :root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero__content { min-height: 500px; padding: 20px 20px 32px; }
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero { min-height: 380px; }
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero__content { min-height: 380px; padding: 20px 20px 28px; }
   :root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero h1 { font-size: clamp(34px, 10vw, 50px); }
-  :root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero__facts { flex-direction: column; align-items: flex-start; gap: 9px; }
+  :root[data-theme='dark'] body:has(.event-detail-page) :is(.event-premium-hero__date, .event-premium-hero__venue, .event-premium-hero__facts) { display: none; }
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero h1 { margin: 0; }
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-mobile-hero-meta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    margin: 14px 20px 0;
+  }
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-mobile-hero-meta__item {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    gap: 7px;
+    padding: 10px;
+    border: 1px solid #213139;
+    border-radius: 9px;
+    color: #b7c5ca;
+    background: #06171f;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-mobile-hero-meta__item svg { flex: 0 0 auto; margin-top: 1px; color: #67bed9; }
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-mobile-hero-meta__item--location { grid-column: 1 / -1; }
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-mobile-hero-meta__item--rating { align-items: center; justify-content: center; color: #edf5f8; font-weight: 700; }
   :root[data-theme='dark'] body:has(.event-detail-page) .event-detail-grid { padding: 36px 20px 0; grid-template-columns: minmax(0, 1fr) !important; gap: 32px !important; }
   :root[data-theme='dark'] body:has(.event-detail-page) .purchase-widget-sticky { position: static !important; }
 }

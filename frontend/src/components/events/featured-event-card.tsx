@@ -99,7 +99,7 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
             </h2>
           </Link>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 24px', marginBottom: '16px' }}>
+          <div className="featured-card-meta featured-card-meta--desktop" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 24px', marginBottom: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--theme-primary)', fontWeight: 500, textTransform: 'capitalize' }}>
               <Calendar size={14} />
               <span>{dateLabel} · {timeLabel}</span>
@@ -115,6 +115,16 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
       </div>
 
       <div className="featured-card-bottom">
+        <div className="featured-card-meta featured-card-meta--mobile" aria-label="Data e local do evento">
+          <div>
+            <Calendar size={14} />
+            <span>{dateLabel} · {timeLabel}</span>
+          </div>
+          <div>
+            <MapPin size={14} />
+            <span>{event.venue} · {event.city}, {event.state}</span>
+          </div>
+        </div>
         {shortDesc && (
           <p className="featured-card-description" style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--theme-text-secondary)' }}>
             {shortDesc}

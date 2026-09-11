@@ -189,10 +189,6 @@
   :root[data-theme='dark'] .pago-home .pago-home__events { padding: 56px 20px 64px !important; scroll-margin-top: 96px; }
   :root[data-theme='dark'] .pago-home .event-state-filter-row { margin-bottom: 36px; }
   :root[data-theme='dark'] .pago-home :is(.event-section-title, .pago-home__section-title) { font-size: 24px !important; margin-bottom: 20px; }
-  :root[data-theme='dark'] .pago-home .event-carousel { gap: 16px; margin-inline: -20px; padding-inline: 20px; scroll-padding-inline: 20px; }
-  :root[data-theme='dark'] .pago-home .compact-event-card { flex: 0 0 clamp(200px, 62vw, 290px); }
-  :root[data-theme='dark'] .pago-home .event-carousel--past .compact-event-card { flex-basis: clamp(180px, 52vw, 250px); }
-  :root[data-theme='dark'] .pago-home .compact-event-card__title { font-size: 18px; }
   :root[data-theme='dark'] .pago-home .featured-card { grid-template-columns: minmax(0, 1fr); }
   :root[data-theme='dark'] .pago-home .featured-card-img { aspect-ratio: 16 / 10 !important; min-height: 0 !important; }
   :root[data-theme='dark'] .pago-home .featured-card-body { padding: 24px !important; }
@@ -468,6 +464,28 @@
 :root[data-theme='dark'] .pago-home__featured .featured-card-bottom { position: relative; z-index: 2; }
 @media (max-width: 768px) {
   :root[data-theme='dark'] .pago-home__featured .featured-card-media { aspect-ratio: 16 / 10; }
+  :root[data-theme='dark'] .pago-home__featured .featured-card-meta--desktop { display: none !important; }
+  :root[data-theme='dark'] .pago-home__featured .featured-card-meta--mobile {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    margin: 0;
+  }
+  :root[data-theme='dark'] .pago-home__featured .featured-card-meta--mobile > div {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 10px;
+    border: 1px solid #2d414c;
+    border-radius: 8px;
+    color: #b7c5ca;
+    background: #081b24;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+  :root[data-theme='dark'] .pago-home__featured .featured-card-meta--mobile svg { flex: 0 0 auto; color: #67bed9; }
+  :root[data-theme='dark'] .pago-home__featured .featured-card-meta--mobile span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
 /* Micro polish: CTA contrast and slightly larger metadata chips only. */
@@ -516,6 +534,7 @@
 }
 :root[data-theme='dark'] .pago-home__featured .featured-card-media .featured-card-body { pointer-events: none; }
 :root[data-theme='dark'] .pago-home__featured .featured-card-media .featured-card-body a { pointer-events: auto; }
+:root[data-theme='dark'] .pago-home__featured .featured-card-meta--mobile { display: none; }
 :root[data-theme='dark'] .pago-home__featured .featured-card-media .featured-card-img { cursor: pointer; }
 :root[data-theme='dark'] .pago-home__featured .featured-card-media .featured-card-img img { transition: filter 180ms ease; }
 :root[data-theme='dark'] .pago-home__featured .featured-card-media .featured-card-img:hover img { filter: brightness(1.04); }
@@ -565,9 +584,31 @@
 @media (max-width: 768px) {
   :root[data-theme='dark'] .pago-home__featured .featured-card-bottom { gap: 14px; padding: 18px 20px 20px; }
   :root[data-theme='dark'] .pago-home__featured .featured-card-bottom .featured-card-description { max-width: 100%; font-size: 14px !important; }
-  :root[data-theme='dark'] .pago-home__featured .featured-card-bottom .featured-card-footer { justify-content: space-between; gap: 12px !important; }
+  :root[data-theme='dark'] .pago-home__featured .featured-card-bottom .featured-card-footer { align-items: flex-start !important; flex-direction: column; justify-content: flex-start; gap: 12px !important; }
   :root[data-theme='dark'] .pago-home__featured .featured-card-bottom .featured-card-footer p { min-width: 0; }
-  :root[data-theme='dark'] .pago-home__featured .featured-card-bottom .featured-buy-button { min-width: 0; flex: 0 1 auto; padding-inline: 16px !important; }
+  :root[data-theme='dark'] .pago-home__featured .featured-card-bottom .featured-buy-button { min-width: 0; flex: 0 1 auto; align-self: flex-start; padding-inline: 16px !important; }
+}
+
+/* Final mobile discovery layout: all returned events are visible without a
+   horizontal-only rail, while past events remain less prominent. */
+@media (max-width: 768px) {
+  :root[data-theme='dark'] .pago-home__featured .featured-card-meta--mobile { display: grid; }
+  :root[data-theme='dark'] .pago-home .event-carousel {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 16px;
+    margin-inline: 0;
+    padding: 0;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+  :root[data-theme='dark'] .pago-home .compact-event-card { min-width: 0; }
+  :root[data-theme='dark'] .pago-home .event-carousel--past {
+    grid-template-columns: repeat(2, minmax(0, calc((100% - 50px) / 2)));
+    justify-content: start;
+  }
+  :root[data-theme='dark'] .pago-home .event-carousel--past .compact-event-card { min-width: 0; }
+  :root[data-theme='dark'] .pago-home .compact-event-card__title { font-size: 16px; }
 }
 
 /* Final CTA contrast and metadata chip sizing. */
