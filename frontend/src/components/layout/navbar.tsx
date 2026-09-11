@@ -1,14 +1,17 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { LogOut, UserCircle, LayoutDashboard, QrCode, Menu, X, ChevronDown, ShieldCheck, Ticket, Moon, Sun, Building2 } from 'lucide-react';
+import { LogOut, UserCircle, LayoutDashboard, QrCode, Menu, X, ChevronDown, ShieldCheck, Ticket, Moon, Sun, Building2, Search } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useTheme } from '@/components/providers/theme-provider';
 import { BrandMark } from '@/components/brand/brand-mark';
 import { useOrganization } from '@/lib/organization-context';
+import { eventsApi } from '@/lib/api';
 
 export function Navbar() {
+  const isHome = usePathname() === '/';
   const { user, logout, isAdmin, loading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { active, organizations, canManageEvents, canCheckIn } = useOrganization();
@@ -30,7 +33,7 @@ export function Navbar() {
   useEffect(() => { setMobileOpen(false); }, []);
 
   return (
-    <header className="theme-navbar" style={{
+    <header className="theme-navbar" data-public-home={isHome ? 'true' : undefined} style={{
       position: 'sticky',
       top: 0,
       zIndex: 50,
@@ -53,10 +56,14 @@ export function Navbar() {
           <BrandMark lightBackground="brand" style={{ height: '63.4725px', objectFit: 'contain', display: 'block' }} />
         </Link>
 
+        {isHome && (
+          <EventSearch />
+        )}
+
         {/* ── Desktop right side ─────────────────────────────────────── */}
         {!loading && (
           <div className="nav-desktop" style={{ alignItems: 'center', gap: '4px' }}>
-            <NavItem href="/">Ver eventos</NavItem>
+            <NavItem href={isHome ? '/#home-events' : '/'}>{isHome ? 'Explorar' : 'Ver eventos'}</NavItem>
             <div className="nav-divider" style={{ width: '1px', height: '20px', background: '#2a2a2a', margin: '0 8px' }} />
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
 
@@ -75,7 +82,7 @@ export function Navbar() {
                     }}
                   >
                     <Avatar user={user} size={28} />
-                    {user.name.split(' ')[0]}
+                    <span className="nav-user-name">{user.name.split(' ')[0]}</span>
                     <ChevronDown size={13} style={{
                       opacity: 0.5,
                       transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -128,14 +135,7 @@ export function Navbar() {
                   padding: '9px 16px', borderRadius: '8px', color: '#aaa',
                   fontSize: '14px', fontWeight: 500, textDecoration: 'none', whiteSpace: 'nowrap',
                 }}>
-                  Login
-                </Link>
-                <Link className="nav-primary-action" href="/auth/register" style={{
-                  marginLeft: '4px', padding: '9px 20px', borderRadius: '999px',
-                  background: '#67bed9', color: '#fff', fontSize: '14px',
-                  fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0,
-                }}>
-                  Criar conta
+                  {isHome ? 'Entrar' : 'Login'}
                 </Link>
               </>
             )}
@@ -168,6 +168,9 @@ export function Navbar() {
             {/* Hamburger */}
             <button
               className="nav-menu-toggle"
+              aria-label={mobileOpen ? 'Fechar menu' : 'Abrir menu'}
+              aria-expanded={mobileOpen}
+              aria-controls="navbar-mobile-menu"
               onClick={() => setMobileOpen(v => !v)}
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
@@ -184,6 +187,7 @@ export function Navbar() {
       {/* ── Mobile drawer ──────────────────────────────────────────────── */}
       {mobileOpen && (
         <div
+          id="navbar-mobile-menu"
           className="nav-drawer"
           style={{ borderTop: '1px solid #1a1a1a', background: '#0d0d0d', padding: '8px 16px 20px' }}
         >
@@ -257,23 +261,107 @@ export function Navbar() {
             <>
               <div style={{ height: '1px', background: '#1e1e1e', margin: '8px 0' }} />
               <MobItem href="/auth/login" onClick={() => setMobileOpen(false)}>Login</MobItem>
-              <Link
-                href="/auth/register"
-                onClick={() => setMobileOpen(false)}
-                style={{
-                  display: 'block', marginTop: '8px', padding: '14px',
-                  borderRadius: '14px', background: '#67bed9',
-                  color: '#fff', fontWeight: 700, fontSize: '15px',
-                  textAlign: 'center', textDecoration: 'none',
-                }}
-              >
-                Criar conta
-              </Link>
             </>
           )}
         </div>
       )}
     </header>
+  );
+}
+
+type SearchEvent = {
+  id: string;
+  title: string;
+  slug: string;
+  coverImage?: string | null;
+  venue?: string | null;
+  city?: string | null;
+  startDate: string;
+  batches?: Array<{ price: number | string }>;
+};
+
+function normalizeSearch(value: string) {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').trim();
+}
+
+function EventSearch() {
+  const [query, setQuery] = useState('');
+  const [events, setEvents] = useState<SearchEvent[]>([]);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const loadedRef = useRef(false);
+
+  useEffect(() => {
+    function closeOnOutside(event: MouseEvent) {
+      if (!searchRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', closeOnOutside);
+    return () => document.removeEventListener('mousedown', closeOnOutside);
+  }, []);
+
+  useEffect(() => {
+    const normalized = normalizeSearch(query);
+    if (normalized.length < 2) {
+      setOpen(false);
+      return;
+    }
+    const timer = window.setTimeout(async () => {
+      setOpen(true);
+      if (!loadedRef.current) {
+        setLoading(true);
+        try {
+          const response = await eventsApi.list({ limit: 100 });
+          const rows = (response.data?.data ?? response.data ?? []) as SearchEvent[];
+          setEvents(rows);
+          loadedRef.current = true;
+        } catch {
+          setEvents([]);
+        } finally {
+          setLoading(false);
+        }
+      }
+    }, 260);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+
+  const normalized = normalizeSearch(query);
+  const results = events.filter(event => normalizeSearch(`${event.title} ${event.venue ?? ''} ${event.city ?? ''}`).includes(normalized)).slice(0, 6);
+
+  return (
+    <div ref={searchRef} className="pago-nav-search-wrap">
+      <form className="pago-nav-search" action="/" method="get" role="search" onSubmit={() => setOpen(false)}>
+        <input
+          type="search"
+          name="search"
+          aria-label="Buscar eventos"
+          placeholder="Buscar evento, artista ou cidade"
+          value={query}
+          onChange={event => setQuery(event.target.value)}
+          onFocus={() => { if (normalized.length >= 2) setOpen(true); }}
+        />
+        <button type="submit" aria-label="Buscar eventos"><Search size={18} aria-hidden="true" /></button>
+      </form>
+      {open && (
+        <div className="pago-nav-search-results" role="listbox" aria-label="Resultados de eventos">
+          {loading ? <p className="pago-nav-search-empty">Buscando eventos...</p> : results.length > 0 ? results.map(event => {
+            const price = event.batches?.length ? Math.min(...event.batches.map(batch => Number(batch.price)).filter(Number.isFinite)) : null;
+            return (
+              <Link key={event.id} href={`/events/${event.slug}`} className="pago-nav-search-result" onClick={() => setOpen(false)} role="option">
+                <span className="pago-nav-search-result__thumb">
+                  {event.coverImage ? <img src={event.coverImage} alt="" /> : <span>P</span>}
+                </span>
+                <span className="pago-nav-search-result__copy">
+                  <strong>{event.title}</strong>
+                  <small>{new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }).format(new Date(event.startDate))} · {event.venue || event.city}</small>
+                  {price !== null && <small className="pago-nav-search-result__price">A partir de {price === 0 ? 'Grátis' : `R$ ${price.toFixed(2).replace('.', ',')}`}</small>}
+                </span>
+              </Link>
+            );
+          }) : <p className="pago-nav-search-empty">Nenhum evento encontrado.</p>}
+        </div>
+      )}
+    </div>
   );
 }
 

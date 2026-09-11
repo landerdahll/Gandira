@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MapPin, Calendar } from 'lucide-react';
+import { MapPin, Calendar, ArrowRight } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
 interface FeaturedEventCardProps {
@@ -45,8 +45,9 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
         boxShadow: 'var(--theme-shadow)',
       }}
     >
-      {/* Image */}
-      <Link
+      <div className="featured-card-media">
+        {/* Image */}
+        <Link
         href={`/events/${event.slug}`}
         className="featured-card-img"
         style={{ display: 'block', width: '100%', aspectRatio: '7 / 3', overflow: 'hidden', borderRadius: '17px 17px 0 0', background: 'var(--theme-surface)' }}
@@ -78,10 +79,10 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
             🎵
           </div>
         )}
-      </Link>
+        </Link>
 
-      {/* Details */}
-      <div className="featured-card-body" style={{ padding: '8px 24px 12px 24px', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        {/* Details over the image */}
+        <div className="featured-card-body" style={{ padding: '8px 24px 12px 24px', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <div>
           <Link href={`/events/${event.slug}`} style={{ textDecoration: 'none' }}>
             <h2
@@ -109,17 +110,20 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
             </div>
           </div>
 
-          {shortDesc && (
-            <p className="featured-card-description" style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--theme-text-secondary)' }}>
-              {shortDesc}
-            </p>
-          )}
         </div>
+        </div>
+      </div>
 
+      <div className="featured-card-bottom">
+        {shortDesc && (
+          <p className="featured-card-description" style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--theme-text-secondary)' }}>
+            {shortDesc}
+          </p>
+        )}
         <div className="featured-card-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginTop: '28px' }}>
           {lowestPrice !== null && (
-            <p style={{ fontSize: '16px', fontWeight: 600, color: 'var(--theme-text)' }}>
-              {lowestPrice === 0 ? 'Gratuito' : `A partir de ${formatCurrency(lowestPrice)} + taxas`}
+            <p className="featured-card-price" style={{ fontSize: '16px', fontWeight: 600, color: 'var(--theme-text)' }}>
+              {lowestPrice === 0 ? 'Gratuito' : <><span>A partir de </span><strong>{formatCurrency(lowestPrice)}</strong><small> + taxas</small></>}
             </p>
           )}
           <Link
@@ -137,7 +141,7 @@ export function FeaturedEventCard({ event }: FeaturedEventCardProps) {
               textDecoration: 'none',
             }}
           >
-            COMPRAR AGORA
+            COMPRAR AGORA <ArrowRight size={16} aria-hidden="true" />
           </Link>
         </div>
       </div>

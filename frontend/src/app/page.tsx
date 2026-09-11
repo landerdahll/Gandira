@@ -1,6 +1,7 @@
 import { FeaturedEventCard } from '@/components/events/featured-event-card';
 import { EventCarousel } from '@/components/events/event-carousel';
 import { EventStateSelector } from '@/components/events/event-state-selector';
+import Image from 'next/image';
 import { eventsApi } from '@/lib/api';
 import { cookies, headers } from 'next/headers';
 import {
@@ -85,55 +86,68 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
   });
 
   return (
-    <div className="page-container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px 80px' }}>
-      <div className="event-state-filter-row">
-        <EventStateSelector selected={selectedState} />
-      </div>
-
-      {!featured && upcomingEvents.length === 0 && visiblePastEvents.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '112px 0' }}>
-          <p style={{ fontSize: '3rem', marginBottom: '16px' }}>🎵</p>
-          <p style={{ fontSize: '18px', fontWeight: 600, color: 'var(--theme-text)' }}>
-            {selectedState === 'ALL' ? 'Nenhum evento encontrado' : `Ainda não temos eventos programados em ${selectedState}.`}
-          </p>
-          <p style={{ fontSize: '14px', marginTop: '4px', color: '#444' }}>
-            {selectedState === 'ALL' ? 'Tente outros filtros ou volte em breve' : 'Escolha outro estado ou volte em breve'}
-          </p>
+    <div className="pago-home">
+      <section className="pago-hero" aria-labelledby="home-headline">
+        <Image className="pago-hero__image" src="/images/home/hero-outrahora.jpg" alt="" fill priority sizes="100vw" />
+        <div className="pago-hero__shade" />
+        <div className="pago-hero__content">
+          <h1 id="home-headline">Ingresso na mão,<br />rolê garantido.</h1>
+          <a className="pago-hero__action" href="#home-events">Ver eventos</a>
         </div>
-      ) : (
-        <>
-          {/* Em Destaque */}
-          {featured && (
-            <section style={{ marginBottom: '48px' }}>
-              <SectionTitle>Em Destaque</SectionTitle>
-              <FeaturedEventCard event={featured} />
-            </section>
-          )}
+      </section>
+      <div className="pago-home__ribbon" aria-hidden="true">
+        <div>{Array.from({ length: 4 }, (_, index) => <span key={index}><b>SHOWS</b><i>✳</i> FESTIVAIS <i>✳</i> EVENTOS <i>✳</i></span>)}</div>
+      </div>
+      <div id="home-events" className="page-container pago-home__events" style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px 80px' }}>
+        <div className="event-state-filter-row">
+          <EventStateSelector selected={selectedState} />
+        </div>
 
-          {/* Próximos Eventos */}
-          {rest.length > 0 && (
-            <div style={{ marginBottom: '56px' }} className="home-event-section">
-              <EventCarousel title="Próximos eventos" events={rest} />
+        {!featured && upcomingEvents.length === 0 && visiblePastEvents.length === 0 ? (
+          <div className="pago-home__empty" style={{ textAlign: 'center', padding: '112px 0' }}>
+            <p style={{ fontSize: '3rem', marginBottom: '16px' }}>🎵</p>
+            <p style={{ fontSize: '18px', fontWeight: 600, color: 'var(--theme-text)' }}>
+              {selectedState === 'ALL' ? 'Nenhum evento encontrado' : `Ainda não temos eventos programados em ${selectedState}.`}
+            </p>
+            <p style={{ fontSize: '14px', marginTop: '4px', color: '#444' }}>
+              {selectedState === 'ALL' ? 'Tente outros filtros ou volte em breve' : 'Escolha outro estado ou volte em breve'}
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Em Destaque */}
+            {featured && (
+              <section className="pago-home__featured" style={{ marginBottom: '48px' }}>
+                <SectionTitle>Em Destaque</SectionTitle>
+                <FeaturedEventCard event={featured} />
+              </section>
+            )}
 
-              {upcoming.meta.lastPage > 1 && (
-                <Pagination currentPage={upcoming.meta.page} totalPages={upcoming.meta.lastPage} searchParams={searchParams} />
-              )}
-            </div>
-          )}
+            {/* Próximos Eventos */}
+            {rest.length > 0 && (
+              <div style={{ marginBottom: '56px' }} className="home-event-section">
+                <EventCarousel title="Próximos eventos" events={rest} />
 
-          {/* Eventos Passados */}
-          {visiblePastEvents.length > 0 && (
-            <EventCarousel title="Eventos passados" events={visiblePastEvents} kind="past" />
-          )}
-        </>
-      )}
+                {upcoming.meta.lastPage > 1 && (
+                  <Pagination currentPage={upcoming.meta.page} totalPages={upcoming.meta.lastPage} searchParams={searchParams} />
+                )}
+              </div>
+            )}
+
+            {/* Eventos Passados */}
+            {visiblePastEvents.length > 0 && (
+              <EventCarousel title="Eventos passados" events={visiblePastEvents} kind="past" />
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#fff', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+    <h2 className="pago-home__section-title" style={{ fontSize: '16px', fontWeight: 700, color: '#fff', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
       {children}
     </h2>
   );
@@ -141,10 +155,11 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 function Pagination({ currentPage, totalPages, searchParams }: { currentPage: number; totalPages: number; searchParams: SearchParams }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '48px' }}>
+    <div className="pago-home__pagination" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '48px' }}>
       {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
         <a
           key={page}
+          aria-current={page === currentPage ? 'page' : undefined}
           href={`?${new URLSearchParams({
             ...Object.fromEntries(Object.entries(searchParams).filter(([, value]) => value !== undefined)) as Record<string, string>,
             page: String(page),

@@ -5,7 +5,6 @@ import {
   EVENT_STATE_PREFERENCE_KEY,
   EVENT_STATE_PREFERENCE_COOKIE,
   EventStateFilter,
-  SUPPORTED_EVENT_STATES,
   eventStateFilterToCookie,
 } from '@/lib/event-states';
 
@@ -13,29 +12,32 @@ export function EventStateSelector({ selected }: { selected: EventStateFilter })
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const navigate = (state: EventStateFilter) => {
+  const navigate = (state: EventStateFilter, city?: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete('page');
+    if (city) params.set('city', city);
+    else params.delete('city');
     if (state === 'ALL') params.delete('state');
     else params.set('state', state);
     router.replace(`${pathname}${params.size ? `?${params}` : ''}`, { scroll: false });
   };
 
-  const changeState = (state: EventStateFilter) => {
+  const changeState = (state: EventStateFilter, city?: string) => {
     window.localStorage.setItem(EVENT_STATE_PREFERENCE_KEY, state);
     const secure = window.location.protocol === 'https:' ? '; Secure' : '';
     document.cookie = `${EVENT_STATE_PREFERENCE_COOKIE}=${eventStateFilterToCookie(state)}; Path=/; Max-Age=31536000; SameSite=Lax${secure}`;
-    navigate(state);
+    navigate(state, city);
   };
 
+  const isPortoAlegre = searchParams.get('city')?.toLowerCase() === 'porto alegre';
+
   return (
-    <label className="event-state-selector">
-      <span>Eventos em:</span>
-      <select aria-label="Filtrar eventos por estado" value={selected}
-        onChange={event => changeState(event.target.value as EventStateFilter)}>
-        <option value="ALL">Todos</option>
-        {SUPPORTED_EVENT_STATES.map(state => <option key={state} value={state}>{state}</option>)}
-      </select>
-    </label>
+    <div className="event-state-selector" aria-label="Filtrar eventos por cidade">
+      <button type="button" className={!isPortoAlegre ? 'is-selected' : ''} aria-pressed={!isPortoAlegre}
+        onClick={() => changeState('ALL')}>Todas</button>
+      <button type="button" className={isPortoAlegre ? 'is-selected' : ''} aria-pressed={isPortoAlegre}
+        onClick={() => changeState('RS', 'Porto Alegre')}>Porto Alegre</button>
+      <span className="event-state-selector__legacy-state" aria-hidden="true">{selected}</span>
+    </div>
   );
 }

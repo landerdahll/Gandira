@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { MapPin, Calendar, Clock, DoorOpen, ShieldCheck, TicketCheck, Building2, Globe2, Instagram } from 'lucide-react';
+import { MapPin, Calendar, Clock, ShieldCheck, TicketCheck, Globe2, Instagram } from 'lucide-react';
 
 const TZ = 'America/Sao_Paulo';
 
@@ -60,40 +60,20 @@ export default async function EventPage({ params }: { params: { slug: string } }
 
   return (
     <div className="page-container event-detail-page" style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px 80px' }}>
-
-      {/* Current dark hero: intentionally preserved for visual comparison. */}
-      {event.coverImage && (
-        <div className="event-cover event-hero-dark" style={{ width: '100%', height: '100%', borderRadius: '20px', overflow: 'hidden', marginBottom: '36px', position: 'relative', aspectRatio: '7 / 3' }}>
-          <img
-            src={event.coverImage}
-            alt={event.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          />
-          {/* Age rating */}
-          {event.ageRating > 0 && (
-            <div style={{
-              position: 'absolute', bottom: '20px', left: '24px',
-              padding: '4px 10px', borderRadius: '6px',
-              background: 'rgba(220,38,38,0.85)', backdropFilter: 'blur(4px)',
-              color: '#fff !important', fontSize: '12px', fontWeight: 700,
-            }}>
-              {event.ageRating}+
+      <section className={`event-premium-hero${heroImage ? '' : ' event-premium-hero--fallback'}`} aria-labelledby="event-page-title">
+        {heroImage && <img src={heroImage} alt="" className="event-premium-hero__image" />}
+        <div className="event-premium-hero__scrim" />
+        <div className="event-premium-hero__content">
+          <a className="event-premium-hero__back" href="/">Voltar</a>
+          <div className="event-premium-hero__copy">
+            <p className="event-premium-hero__date">{fmtDate(startDate)}</p>
+            <h1 id="event-page-title">{event.title}</h1>
+            <p className="event-premium-hero__venue">{event.venue}, {event.city}</p>
+            <div className="event-premium-hero__facts">
+              <span><Clock size={16} /> {fmtTime(startDate)} – {fmtTime(endDate)}</span>
+              <span><MapPin size={16} /> {event.address}</span>
+              <span className="event-premium-hero__rating">{event.ageRating > 0 ? `${event.ageRating}+` : 'Livre'}</span>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Premium light hero. Hidden completely in dark mode. */}
-      <section className={`event-hero-light${heroImage ? '' : ' event-hero-light--fallback'}`}>
-        {heroImage && <img src={heroImage} alt={event.title} className="event-hero-light__image" />}
-        <div className="event-hero-light__scrim" />
-        <div className="event-hero-light__content">
-          <h1>{event.title}</h1>
-          <div className="event-hero-light__facts">
-            <span><Calendar size={18} /> <span style={{ textTransform: 'capitalize' }}>{fmtDate(startDate)}</span></span>
-            <span><Clock size={18} /> {fmtTime(startDate)} – {fmtTime(endDate)}</span>
-            <span><MapPin size={18} /> {event.venue} · {event.city}/{event.state}</span>
-            <span className="event-hero-light__rating">{event.ageRating > 0 ? `${event.ageRating}+` : 'Livre'}</span>
           </div>
         </div>
       </section>
@@ -141,25 +121,22 @@ export default async function EventPage({ params }: { params: { slug: string } }
           {/* Description */}
           <EventDescription description={event.description} />
 
-          <section className="event-premium-section event-venue-section">
-            <div className="event-section-icon"><Building2 size={19} /></div>
-            <div className="event-section-copy">
-              <p className="event-section-kicker">Local</p>
-              <h2>{event.venue}</h2>
-              <p>{event.address}</p>
-              <p>{event.city}/{event.state}{event.zipCode ? ` · CEP ${event.zipCode}` : ''}</p>
-              <EventMapLinks query={mapQuery} />
+          <section className="event-reference-info" aria-label="Informações do evento">
+            <div className="event-reference-info__grid">
+              <EventInfoBlock label="Abertura dos portões" value={doorsOpen ? fmtTime(doorsOpen) : 'No horário do evento'} />
+              <EventInfoBlock label="Classificação" value={event.ageRating > 0 ? `${event.ageRating} anos` : 'Livre'} />
+              <div className="event-reference-info__block event-reference-info__block--address">
+                <p className="event-reference-info__label">Endereço</p>
+                <p className="event-reference-info__value">{event.venue}</p>
+                <p className="event-reference-info__detail">{event.address}, {event.city}/{event.state}{event.zipCode ? ` · CEP ${event.zipCode}` : ''}</p>
+                <EventMapLinks query={mapQuery} />
+              </div>
             </div>
           </section>
 
-          <section className="event-premium-section event-important-section">
-            <p className="event-section-kicker">Informações importantes</p>
-            <div className="event-important-grid">
-              <ImportantItem icon={<ShieldCheck size={18} />} label="Classificação" value={event.ageRating > 0 ? `${event.ageRating} anos` : 'Livre'} />
-              <ImportantItem icon={<DoorOpen size={18} />} label="Abertura de portas" value={doorsOpen ? fmtTime(doorsOpen) : 'No horário do evento'} />
-              <ImportantItem icon={<TicketCheck size={18} />} label="Ingresso" value="Apresente o QR Code na entrada." />
-              <ImportantItem icon={<Calendar size={18} />} label="Cancelamento" value="Gratuito em até 7 dias após a compra e até 48h antes do evento." />
-            </div>
+          <section className="event-reference-secondary" aria-label="Informações sobre o ingresso">
+            <ImportantItem icon={<TicketCheck size={18} />} label="Ingresso" value="Apresente o QR Code na entrada." />
+            <ImportantItem icon={<ShieldCheck size={18} />} label="Cancelamento" value="Gratuito em até 7 dias após a compra e até 48h antes do evento." />
           </section>
 
           {event.organization && (
@@ -274,6 +251,10 @@ export default async function EventPage({ params }: { params: { slug: string } }
 
 function ImportantItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return <div className="event-important-item"><span>{icon}</span><div><strong>{label}</strong><p>{value}</p></div></div>;
+}
+
+function EventInfoBlock({ label, value }: { label: string; value: string }) {
+  return <div className="event-reference-info__block"><p className="event-reference-info__label">{label}</p><p className="event-reference-info__value">{value}</p></div>;
 }
 
 function getSafeWebsiteUrl(value?: string | null) {

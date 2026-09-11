@@ -6,6 +6,7 @@ import { Navbar } from '@/components/layout/navbar';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { OrganizationProvider } from '@/lib/organization-context';
 import './globals.css';
+import './public-home.css';
 
 const themeInitScript = `
   try {
