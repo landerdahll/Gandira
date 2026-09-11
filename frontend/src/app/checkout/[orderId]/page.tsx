@@ -135,11 +135,15 @@ function PixTab({ orderId, total }: { orderId: string; total: number }) {
     }
   };
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!pixData) return;
-    navigator.clipboard.writeText(pixData.qrCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+    try {
+      await navigator.clipboard.writeText(pixData.qrCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Não foi possível copiar o código PIX');
+    }
   };
 
   if (!pixData) {
@@ -195,22 +199,16 @@ function PixTab({ orderId, total }: { orderId: string; total: number }) {
         </div>
       </div>
 
-      <button
-        onClick={handleCopy}
-        disabled={expired}
-        style={{
-          width: '100%', padding: '12px', marginBottom: '16px',
-          borderRadius: '12px', border: `1px solid ${copied ? '#67bed944' : '#252525'}`,
-          background: copied ? '#0d1e28' : '#1a1a1a',
-          color: copied ? '#67bed9' : '#888',
-          fontSize: '13px', fontWeight: 600, cursor: expired ? 'not-allowed' : 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-          transition: 'all 0.2s',
-        }}
-      >
-        {copied ? <Check size={14} /> : <Copy size={14} />}
-        {copied ? 'Código copiado!' : 'Copiar código Copia e Cola'}
-      </button>
+      <div className="checkout-pix-copy" aria-label="PIX Copia e Cola">
+        <span className="checkout-pix-copy__label">PIX Copia e Cola</span>
+        <div className="checkout-pix-copy__row">
+          <code title={pixData.qrCode}>{pixData.qrCode}</code>
+          <button type="button" onClick={handleCopy} disabled={expired}>
+            {copied ? <Check size={14} /> : <Copy size={14} />}
+            {copied ? 'Copiado!' : 'Copiar'}
+          </button>
+        </div>
+      </div>
 
       <div style={{ textAlign: 'center' }}>
         {expired ? (

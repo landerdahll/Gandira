@@ -393,11 +393,15 @@ function ThemeToggle({ theme, onToggle }: { theme: 'dark' | 'light'; onToggle: (
 }
 
 function Avatar({ user, size }: { user: { name: string; avatarUrl?: string | null }; size: number }) {
-  if (user.avatarUrl) {
+  const [imageFailed, setImageFailed] = useState(false);
+  useEffect(() => setImageFailed(false), [user.avatarUrl]);
+
+  if (user.avatarUrl && !imageFailed) {
     return (
       <img
         src={user.avatarUrl}
         alt={user.name}
+        onError={() => setImageFailed(true)}
         style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1.5px solid #67bed955' }}
       />
     );
