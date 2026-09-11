@@ -5,6 +5,7 @@ import {
   EVENT_STATE_PREFERENCE_KEY,
   EVENT_STATE_PREFERENCE_COOKIE,
   EventStateFilter,
+  SUPPORTED_EVENT_STATES,
   eventStateFilterToCookie,
 } from '@/lib/event-states';
 
@@ -33,6 +34,14 @@ export function EventStateSelector({ selected }: { selected: EventStateFilter })
 
   return (
     <div className="event-state-selector" aria-label="Filtrar eventos por cidade">
+      <label className="event-state-selector__legacy-label">
+        <span>Eventos em:</span>
+        <select aria-label="Filtrar eventos por estado" value={selected}
+          onChange={event => changeState(event.target.value as EventStateFilter)}>
+          <option value="ALL">Todos</option>
+          {SUPPORTED_EVENT_STATES.map(state => <option key={state} value={state}>{state}</option>)}
+        </select>
+      </label>
       <button type="button" className={!isPortoAlegre ? 'is-selected' : ''} aria-pressed={!isPortoAlegre}
         onClick={() => changeState('ALL')}>Todas</button>
       <button type="button" className={isPortoAlegre ? 'is-selected' : ''} aria-pressed={isPortoAlegre}

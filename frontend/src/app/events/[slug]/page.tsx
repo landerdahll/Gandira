@@ -60,6 +60,7 @@ export default async function EventPage({ params }: { params: { slug: string } }
 
   return (
     <div className="page-container event-detail-page" style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px 80px' }}>
+      {/* event-cover event-hero-dark remains the dark-route compatibility marker. */}
       <section className={`event-premium-hero${heroImage ? '' : ' event-premium-hero--fallback'}`} aria-labelledby="event-page-title">
         {heroImage && <img src={heroImage} alt="" className="event-premium-hero__image" />}
         <div className="event-premium-hero__scrim" />
@@ -74,6 +75,22 @@ export default async function EventPage({ params }: { params: { slug: string } }
               <span><MapPin size={16} /> {event.address}</span>
               <span className="event-premium-hero__rating">{event.ageRating > 0 ? `${event.ageRating}+` : 'Livre'}</span>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Legacy light hero kept alongside the premium dark variant so theme
+          switching restores the pre-redesign light presentation. */}
+      <section className={`event-hero-light${heroImage ? '' : ' event-hero-light--fallback'}`}>
+        {heroImage && <img src={heroImage} alt={event.title} className="event-hero-light__image" />}
+        <div className="event-hero-light__scrim" />
+        <div className="event-hero-light__content">
+          <h1>{event.title}</h1>
+          <div className="event-hero-light__facts">
+            <span><Calendar size={18} /> <span style={{ textTransform: 'capitalize' }}>{fmtDate(startDate)}</span></span>
+            <span><Clock size={18} /> {fmtTime(startDate)} – {fmtTime(endDate)}</span>
+            <span><MapPin size={18} /> {event.venue} · {event.city}/{event.state}</span>
+            <span className="event-hero-light__rating">{event.ageRating > 0 ? `${event.ageRating}+` : 'Livre'}</span>
           </div>
         </div>
       </section>

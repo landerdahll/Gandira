@@ -137,6 +137,15 @@ export function Navbar() {
                 }}>
                   {isHome ? 'Entrar' : 'Login'}
                 </Link>
+                {theme === 'light' && (
+                  <Link className="nav-primary-action nav-register-link" href="/auth/register" style={{
+                    marginLeft: '4px', padding: '9px 20px', borderRadius: '999px',
+                    background: '#67bed9', color: '#fff', fontSize: '14px',
+                    fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0,
+                  }}>
+                    Criar conta
+                  </Link>
+                )}
               </>
             )}
           </div>
@@ -261,6 +270,7 @@ export function Navbar() {
             <>
               <div style={{ height: '1px', background: '#1e1e1e', margin: '8px 0' }} />
               <MobItem href="/auth/login" onClick={() => setMobileOpen(false)}>Login</MobItem>
+              {theme === 'light' && <MobItem href="/auth/register" onClick={() => setMobileOpen(false)}>Criar conta</MobItem>}
             </>
           )}
         </div>

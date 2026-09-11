@@ -86,7 +86,8 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
   });
 
   return (
-    <div className="pago-home">
+    <>
+    <div className="pago-home pago-home-dark">
       <section className="pago-hero" aria-labelledby="home-headline">
         <Image className="pago-hero__image" src="/images/home/hero-outrahora.jpg" alt="" fill priority sizes="100vw" />
         <div className="pago-hero__shade" />
@@ -142,6 +143,45 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
         )}
       </div>
     </div>
+    <div className="pago-home pago-home-light">
+      <div className="page-container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px 80px' }}>
+        <div className="event-state-filter-row">
+          <EventStateSelector selected={selectedState} />
+        </div>
+        {!featured && upcomingEvents.length === 0 && visiblePastEvents.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '112px 0' }}>
+            <p style={{ fontSize: '3rem', marginBottom: '16px' }}>🎵</p>
+            <p style={{ fontSize: '18px', fontWeight: 600, color: 'var(--theme-text)' }}>
+              {selectedState === 'ALL' ? 'Nenhum evento encontrado' : `Ainda não temos eventos programados em ${selectedState}.`}
+            </p>
+            <p style={{ fontSize: '14px', marginTop: '4px', color: '#444' }}>
+              {selectedState === 'ALL' ? 'Tente outros filtros ou volte em breve' : 'Escolha outro estado ou volte em breve'}
+            </p>
+          </div>
+        ) : (
+          <>
+            {featured && (
+              <section style={{ marginBottom: '48px' }}>
+                <SectionTitle>Em Destaque</SectionTitle>
+                <FeaturedEventCard event={featured} />
+              </section>
+            )}
+            {rest.length > 0 && (
+              <div style={{ marginBottom: '56px' }} className="home-event-section">
+                <EventCarousel title="Próximos eventos" events={rest} />
+                {upcoming.meta.lastPage > 1 && (
+                  <Pagination currentPage={upcoming.meta.page} totalPages={upcoming.meta.lastPage} searchParams={searchParams} />
+                )}
+              </div>
+            )}
+            {visiblePastEvents.length > 0 && (
+              <EventCarousel title="Eventos passados" events={visiblePastEvents} kind="past" />
+            )}
+          </>
+        )}
+      </div>
+    </div>
+    </>
   );
 }
 

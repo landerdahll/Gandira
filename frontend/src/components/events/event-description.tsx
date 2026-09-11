@@ -29,6 +29,9 @@ export function EventDescription({ description }: EventDescriptionProps) {
 
   return (
     <div ref={sectionRef} className="event-description" style={{ padding: '24px 0' }}>
+      <h2 className="event-description-heading" style={{ fontSize: '16px', fontWeight: 700, color: 'var(--theme-text)', marginBottom: '12px' }}>
+        Sobre o evento
+      </h2>
       <p id={contentId} className="event-description__content" style={{ color: 'var(--theme-text-secondary)', lineHeight: 1.75, fontSize: '14px', whiteSpace: 'pre-wrap' }}>
         <span className="event-description__desktop-text">{description}</span>
         <span className="event-description__mobile-text">{expanded ? description : preview.text}</span>

@@ -402,39 +402,39 @@ body {
 :root[data-theme='light'] body:has(.event-detail-page) .purchase-widget-sticky > div > div:first-child p:nth-child(2) span { color: #82939a !important; }
 :root[data-theme='light'] body:has(.event-detail-page) .purchase-widget-sticky > div > div:last-child { color: #82939a !important; }
 :root[data-theme='light'] body:has(.event-detail-page) .event-description,
-body:has(.event-detail-page) .event-description {
+:root[data-theme='dark'] body:has(.event-detail-page) .event-description {
   max-width: 760px;
   margin: 0 0 26px;
   padding: 42px 0 34px !important;
   border-bottom: 1px solid #213139;
 }
 :root[data-theme='light'] body:has(.event-detail-page) .event-description__content,
-body:has(.event-detail-page) .event-description__content {
+:root[data-theme='dark'] body:has(.event-detail-page) .event-description__content {
   display: block;
   margin: 0;
   color: #a1afb7 !important;
   font-size: 16px !important;
   line-height: 1.8 !important;
 }
-body:has(.event-detail-page) .event-reference-info {
+:root[data-theme='dark'] body:has(.event-detail-page) .event-reference-info {
   margin: 0 0 24px;
   padding: 0 0 8px;
   border-bottom: 1px solid #213139;
 }
-body:has(.event-detail-page) .event-reference-info__grid {
+:root[data-theme='dark'] body:has(.event-detail-page) .event-reference-info__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
-body:has(.event-detail-page) .event-reference-info__block {
+:root[data-theme='dark'] body:has(.event-detail-page) .event-reference-info__block {
   min-width: 0;
   padding: 17px 18px;
   border: 1px solid #213139;
   border-radius: 4px;
   background: #06151b;
 }
-body:has(.event-detail-page) .event-reference-info__block--address { grid-column: 1 / -1; }
-body:has(.event-detail-page) .event-reference-info__label {
+:root[data-theme='dark'] body:has(.event-detail-page) .event-reference-info__block--address { grid-column: 1 / -1; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-reference-info__label {
   margin: 0 0 8px;
   color: #82939a !important;
   font-size: 11px !important;
@@ -443,21 +443,21 @@ body:has(.event-detail-page) .event-reference-info__label {
   line-height: 1.2;
   text-transform: uppercase;
 }
-body:has(.event-detail-page) .event-reference-info__value {
+:root[data-theme='dark'] body:has(.event-detail-page) .event-reference-info__value {
   margin: 0;
   color: #edf5f8 !important;
   font-size: 16px !important;
   font-weight: 700;
   line-height: 1.3;
 }
-body:has(.event-detail-page) .event-reference-info__detail {
+:root[data-theme='dark'] body:has(.event-detail-page) .event-reference-info__detail {
   margin: 5px 0 0;
   color: #a1afb7 !important;
   font-size: 14px !important;
   line-height: 1.45;
 }
-body:has(.event-detail-page) .event-reference-info .event-map-actions { margin-top: 12px; }
-body:has(.event-detail-page) .event-reference-info .event-map-button {
+:root[data-theme='dark'] body:has(.event-detail-page) .event-reference-info .event-map-actions { margin-top: 12px; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-reference-info .event-map-button {
   min-height: 32px;
   padding: 6px 10px;
   border-radius: 3px;
@@ -465,7 +465,7 @@ body:has(.event-detail-page) .event-reference-info .event-map-button {
   color: #67bed9 !important;
   font-size: 12px;
 }
-body:has(.event-detail-page) .event-reference-secondary {
+:root[data-theme='dark'] body:has(.event-detail-page) .event-reference-secondary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
@@ -473,14 +473,14 @@ body:has(.event-detail-page) .event-reference-secondary {
   padding: 0 0 24px;
   border-bottom: 1px solid #213139;
 }
-body:has(.event-detail-page) .event-reference-secondary .event-important-item {
+:root[data-theme='dark'] body:has(.event-detail-page) .event-reference-secondary .event-important-item {
   display: block;
   padding: 0;
   border: 0;
   background: transparent !important;
 }
-body:has(.event-detail-page) .event-reference-secondary .event-important-item > span { display: none; }
-body:has(.event-detail-page) .event-reference-secondary .event-important-item strong {
+:root[data-theme='dark'] body:has(.event-detail-page) .event-reference-secondary .event-important-item > span { display: none; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-reference-secondary .event-important-item strong {
   display: block;
   margin-bottom: 5px;
   color: #82939a !important;
@@ -489,7 +489,7 @@ body:has(.event-detail-page) .event-reference-secondary .event-important-item st
   letter-spacing: .08em;
   text-transform: uppercase;
 }
-body:has(.event-detail-page) .event-reference-secondary .event-important-item p {
+:root[data-theme='dark'] body:has(.event-detail-page) .event-reference-secondary .event-important-item p {
   margin: 0;
   color: #a1afb7 !important;
   font-size: 13px;
@@ -499,10 +499,10 @@ body:has(.event-detail-page) .event-reference-secondary .event-important-item p 
   :root[data-theme='light'] body:has(.event-detail-page) .theme-navbar .navbar-inner { min-height: 72px !important; padding: 10px 20px !important; }
   :root[data-theme='light'] body:has(.event-detail-page) .event-premium-hero,
   :root[data-theme='light'] body:has(.event-detail-page) .event-premium-hero__content { min-height: 500px !important; }
-  body:has(.event-detail-page) .event-description { padding-top: 30px !important; }
-  body:has(.event-detail-page) .event-reference-info__grid,
-  body:has(.event-detail-page) .event-reference-secondary { grid-template-columns: 1fr; }
-  body:has(.event-detail-page) .event-reference-info__block--address { grid-column: auto; }
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-description { padding-top: 30px !important; }
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-reference-info__grid,
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-reference-secondary { grid-template-columns: 1fr; }
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-reference-info__block--address { grid-column: auto; }
 }
 
 @media (min-width: 600px) and (max-width: 768px) {
@@ -519,59 +519,59 @@ body:has(.event-detail-page) .event-reference-secondary .event-important-item p 
 
 /* Event detail premium surface. Kept route-scoped so the approved Home and
    internal areas retain their existing visual systems. */
-body:has(.event-detail-page) { background: #020d12; color: #edf5f8; }
-body:has(.event-detail-page) .theme-navbar { background: #020e14f5 !important; border-bottom-color: #ffffff0a !important; }
-body:has(.event-detail-page) .theme-navbar .brand-mark { content: url('/logo-full-white.svg'); }
-body:has(.event-detail-page) .theme-navbar :is(.nav-events-link, .nav-login-link, .nav-menu-toggle, .nav-user-button, .nav-mobile-login, .theme-toggle) { background: transparent !important; color: #b0bcc3 !important; border-color: #ffffff26 !important; box-shadow: none !important; }
-body:has(.event-detail-page) .theme-navbar .nav-primary-action { background: #67bed9 !important; color: #07131a !important; }
-body:has(.event-detail-page) .event-detail-page { max-width: none !important; padding: 0 0 80px !important; background: #020d12; }
-body:has(.event-detail-page) .event-premium-hero { position: relative; isolation: isolate; min-height: 540px; overflow: hidden; background: #06171f; }
-body:has(.event-detail-page) .event-premium-hero__image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; z-index: -2; }
-body:has(.event-detail-page) .event-premium-hero__scrim { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, #020d1260 0%, #020d121c 35%, #020d12d9 78%, #020d12 100%); }
-body:has(.event-detail-page) .event-premium-hero--fallback { background: radial-gradient(ellipse at 70% 25%, #234450, #06171f 65%); }
-body:has(.event-detail-page) .event-premium-hero__content { position: relative; display: flex; height: 100%; min-height: 540px; max-width: 1200px; margin: 0 auto; padding: 28px 24px 48px; flex-direction: column; justify-content: space-between; }
-body:has(.event-detail-page) .event-premium-hero__back { display: inline-flex; width: fit-content; padding: 10px 18px; border: 1px solid #ffffff30; border-radius: 999px; color: #edf5f8; background: #020d1255; font-size: 13px; font-weight: 700; text-decoration: none; backdrop-filter: blur(8px); }
-body:has(.event-detail-page) .event-premium-hero__back:hover { border-color: #67bed9; color: #67bed9; }
-body:has(.event-detail-page) .event-premium-hero__copy { max-width: 980px; }
-body:has(.event-detail-page) .event-premium-hero__date { margin: 0 0 12px; color: #8bd7f2; font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-body:has(.event-detail-page) .event-premium-hero h1 { margin: 0 0 10px; color: #fff; font-size: clamp(38px, 5vw, 72px); font-weight: 800; line-height: .98; letter-spacing: -.045em; text-wrap: balance; }
-body:has(.event-detail-page) .event-premium-hero__venue { margin: 0; color: #d2dde1; font-size: 17px; }
-body:has(.event-detail-page) .event-premium-hero__facts { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin-top: 20px; color: #b5c2c7; font-size: 14px; }
-body:has(.event-detail-page) .event-premium-hero__facts span { display: inline-flex; align-items: center; gap: 7px; }
-body:has(.event-detail-page) .event-premium-hero__facts svg { color: #67bed9; }
-body:has(.event-detail-page) .event-premium-hero__rating { padding: 5px 10px; border: 1px solid #ffffff45; border-radius: 7px; color: #fff !important; background: #ffffff14; font-weight: 700; }
-body:has(.event-detail-page) .event-detail-grid { max-width: 1200px; margin: 0 auto; padding: 52px 24px 0; grid-template-columns: minmax(0, 1fr) 360px !important; gap: 56px !important; }
-body:has(.event-detail-page) .event-dark-intro,
-body:has(.event-detail-page) .event-dark-facts { display: none !important; }
-body:has(.event-detail-page) .event-description { padding: 0 0 34px !important; border-bottom: 1px solid #213139; }
-body:has(.event-detail-page) .event-description h2 { color: #edf5f8 !important; font-size: 26px !important; }
-body:has(.event-detail-page) .event-description__content { color: #a1afb7 !important; font-size: 16px !important; line-height: 1.8 !important; }
-body:has(.event-detail-page) .event-premium-section { border-color: #213139; background: #091920; box-shadow: none; }
-body:has(.event-detail-page) .event-premium-section h2 { color: #edf5f8; }
-body:has(.event-detail-page) .event-premium-section p { color: #a1afb7; }
-body:has(.event-detail-page) .event-section-kicker { color: #67bed9 !important; }
-body:has(.event-detail-page) .event-map-button { border-color: #2d414c; background: transparent; color: #67bed9 !important; }
-body:has(.event-detail-page) .purchase-widget-sticky { top: 92px !important; }
-body:has(.event-detail-page) .purchase-widget-sticky > div { border-color: #213139 !important; border-radius: 2px !important; background: #06171f !important; }
-body:has(.event-detail-page) .purchase-widget-sticky > div > div { border-color: #213139 !important; background: transparent !important; }
-body:has(.event-detail-page) .ticket-batch-card { border-color: #213139 !important; border-radius: 2px !important; background: #020d12 !important; opacity: 1 !important; }
-body:has(.event-detail-page) .ticket-batch-card--current { border-color: #67bed955 !important; background: #061b25 !important; }
-body:has(.event-detail-page) .ticket-batch-title,
-body:has(.event-detail-page) .ticket-batch-price,
-body:has(.event-detail-page) .ticket-batch-quantity-count { color: #edf5f8 !important; }
-body:has(.event-detail-page) .ticket-batch-description,
-body:has(.event-detail-page) .ticket-batch-fees,
-body:has(.event-detail-page) .ticket-batch-quantity-label { color: #82939a !important; }
-body:has(.event-detail-page) .ticket-batch-quantity-button { border-color: #2d414c !important; border-radius: 50% !important; background: transparent !important; color: #b9c7cc !important; }
-body:has(.event-detail-page) .ticket-batch-quantity-button:not(:disabled):hover { border-color: #67bed9 !important; color: #67bed9 !important; }
-body:has(.event-detail-page) .event-related-section { max-width: 1200px; margin-inline: auto; }
+:root[data-theme='dark'] body:has(.event-detail-page) { background: #020d12; color: #edf5f8; }
+:root[data-theme='dark'] body:has(.event-detail-page) .theme-navbar { background: #020e14f5 !important; border-bottom-color: #ffffff0a !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .theme-navbar .brand-mark { content: url('/logo-full-white.svg'); }
+:root[data-theme='dark'] body:has(.event-detail-page) .theme-navbar :is(.nav-events-link, .nav-login-link, .nav-menu-toggle, .nav-user-button, .nav-mobile-login, .theme-toggle) { background: transparent !important; color: #b0bcc3 !important; border-color: #ffffff26 !important; box-shadow: none !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .theme-navbar .nav-primary-action { background: #67bed9 !important; color: #07131a !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-detail-page { max-width: none !important; padding: 0 0 80px !important; background: #020d12; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero { position: relative; isolation: isolate; min-height: 540px; overflow: hidden; background: #06171f; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero__image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; z-index: -2; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero__scrim { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, #020d1260 0%, #020d121c 35%, #020d12d9 78%, #020d12 100%); }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero--fallback { background: radial-gradient(ellipse at 70% 25%, #234450, #06171f 65%); }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero__content { position: relative; display: flex; height: 100%; min-height: 540px; max-width: 1200px; margin: 0 auto; padding: 28px 24px 48px; flex-direction: column; justify-content: space-between; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero__back { display: inline-flex; width: fit-content; padding: 10px 18px; border: 1px solid #ffffff30; border-radius: 999px; color: #edf5f8; background: #020d1255; font-size: 13px; font-weight: 700; text-decoration: none; backdrop-filter: blur(8px); }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero__back:hover { border-color: #67bed9; color: #67bed9; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero__copy { max-width: 980px; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero__date { margin: 0 0 12px; color: #8bd7f2; font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero h1 { margin: 0 0 10px; color: #fff; font-size: clamp(38px, 5vw, 72px); font-weight: 800; line-height: .98; letter-spacing: -.045em; text-wrap: balance; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero__venue { margin: 0; color: #d2dde1; font-size: 17px; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero__facts { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin-top: 20px; color: #b5c2c7; font-size: 14px; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero__facts span { display: inline-flex; align-items: center; gap: 7px; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero__facts svg { color: #67bed9; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero__rating { padding: 5px 10px; border: 1px solid #ffffff45; border-radius: 7px; color: #fff !important; background: #ffffff14; font-weight: 700; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-detail-grid { max-width: 1200px; margin: 0 auto; padding: 52px 24px 0; grid-template-columns: minmax(0, 1fr) 360px !important; gap: 56px !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-dark-intro,
+:root[data-theme='dark'] body:has(.event-detail-page) .event-dark-facts { display: none !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-description { padding: 0 0 34px !important; border-bottom: 1px solid #213139; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-description h2 { color: #edf5f8 !important; font-size: 26px !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-description__content { color: #a1afb7 !important; font-size: 16px !important; line-height: 1.8 !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-section { border-color: #213139; background: #091920; box-shadow: none; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-section h2 { color: #edf5f8; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-premium-section p { color: #a1afb7; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-section-kicker { color: #67bed9 !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-map-button { border-color: #2d414c; background: transparent; color: #67bed9 !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .purchase-widget-sticky { top: 92px !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .purchase-widget-sticky > div { border-color: #213139 !important; border-radius: 2px !important; background: #06171f !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .purchase-widget-sticky > div > div { border-color: #213139 !important; background: transparent !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .ticket-batch-card { border-color: #213139 !important; border-radius: 2px !important; background: #020d12 !important; opacity: 1 !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .ticket-batch-card--current { border-color: #67bed955 !important; background: #061b25 !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .ticket-batch-title,
+:root[data-theme='dark'] body:has(.event-detail-page) .ticket-batch-price,
+:root[data-theme='dark'] body:has(.event-detail-page) .ticket-batch-quantity-count { color: #edf5f8 !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .ticket-batch-description,
+:root[data-theme='dark'] body:has(.event-detail-page) .ticket-batch-fees,
+:root[data-theme='dark'] body:has(.event-detail-page) .ticket-batch-quantity-label { color: #82939a !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .ticket-batch-quantity-button { border-color: #2d414c !important; border-radius: 50% !important; background: transparent !important; color: #b9c7cc !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .ticket-batch-quantity-button:not(:disabled):hover { border-color: #67bed9 !important; color: #67bed9 !important; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-related-section { max-width: 1200px; margin-inline: auto; }
 @media (max-width: 768px) {
-  body:has(.event-detail-page) .event-premium-hero { min-height: 500px; }
-  body:has(.event-detail-page) .event-premium-hero__content { min-height: 500px; padding: 20px 20px 32px; }
-  body:has(.event-detail-page) .event-premium-hero h1 { font-size: clamp(34px, 10vw, 50px); }
-  body:has(.event-detail-page) .event-premium-hero__facts { flex-direction: column; align-items: flex-start; gap: 9px; }
-  body:has(.event-detail-page) .event-detail-grid { padding: 36px 20px 0; grid-template-columns: minmax(0, 1fr) !important; gap: 32px !important; }
-  body:has(.event-detail-page) .purchase-widget-sticky { position: static !important; }
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero { min-height: 500px; }
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero__content { min-height: 500px; padding: 20px 20px 32px; }
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero h1 { font-size: clamp(34px, 10vw, 50px); }
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-premium-hero__facts { flex-direction: column; align-items: flex-start; gap: 9px; }
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-detail-grid { padding: 36px 20px 0; grid-template-columns: minmax(0, 1fr) !important; gap: 32px !important; }
+  :root[data-theme='dark'] body:has(.event-detail-page) .purchase-widget-sticky { position: static !important; }
 }
 
 .theme-navbar {
@@ -591,8 +591,11 @@ body:has(.event-detail-page) .event-related-section { max-width: 1200px; margin-
 }
 
 @media (min-width: 769px) {
-  .checkout-event-banner { height: 180px !important; }
+  :root[data-theme='dark'] .checkout-event-banner { height: 180px !important; }
 }
+
+.checkout-light-logo { display: none; }
+:root[data-theme='light'] .checkout-light-logo { display: block; }
 
 .theme-toggle {
   width: 36px;
@@ -1584,13 +1587,13 @@ body:has(.event-detail-page) .event-related-section { max-width: 1200px; margin-
   height: 63.4725px !important;
   width: auto !important;
 }
-body:has(.event-detail-page) .event-organization-section {
+:root[data-theme='dark'] body:has(.event-detail-page) .event-organization-section {
   padding: 28px !important;
   border: 1px solid #213139 !important;
   border-radius: 20px !important;
 }
-body:has(.event-detail-page) .event-organization-card > img,
-body:has(.event-detail-page) .event-organization-fallback {
+:root[data-theme='dark'] body:has(.event-detail-page) .event-organization-card > img,
+:root[data-theme='dark'] body:has(.event-detail-page) .event-organization-fallback {
   width: 52px !important;
   height: 52px !important;
   border: 1px solid #dce8ec !important;
@@ -1598,14 +1601,14 @@ body:has(.event-detail-page) .event-organization-fallback {
   background: #fff !important;
   color: #67bed9 !important;
 }
-body:has(.event-detail-page) .event-organization-card > img { padding: 5px !important; object-fit: contain; }
-body:has(.event-detail-page) .event-organization-fallback { display: grid; place-items: center; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-organization-card > img { padding: 5px !important; object-fit: contain; }
+:root[data-theme='dark'] body:has(.event-detail-page) .event-organization-fallback { display: grid; place-items: center; }
 @media (max-width: 768px) {
   :root[data-theme='light'] body:has(.event-detail-page) .theme-navbar .navbar-inner {
     min-height: 0 !important;
     padding: 20px 16px !important;
   }
-  body:has(.event-detail-page) .event-organization-section {
+  :root[data-theme='dark'] body:has(.event-detail-page) .event-organization-section {
     padding: 22px 18px !important;
     border-radius: 17px !important;
   }
@@ -1623,3 +1626,37 @@ body:has(.event-detail-page) .event-organization-fallback { display: grid; place
 @media (max-width: 640px) {
   .theme-navbar .navbar-inner { padding: 20px 16px !important; }
 }
+
+/* Theme boundary: the premium event surface is dark-only. Light restores the
+   legacy hero, navbar, checkout surface, and event information treatment. */
+:root[data-theme='dark'] body:has(.event-detail-page) .event-hero-light,
+:root[data-theme='dark'] body:has(.event-detail-page) .event-description-heading { display: none !important; }
+:root[data-theme='light'] body:has(.event-detail-page) .event-premium-hero { display: none !important; }
+:root[data-theme='light'] body:has(.event-detail-page) .event-hero-light {
+  position: relative;
+  display: flex !important;
+  min-height: clamp(355px, 44vw, 500px);
+  align-items: flex-end;
+  margin-bottom: 52px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 18%, var(--theme-border));
+  border-radius: 28px;
+  background: linear-gradient(145deg, #dceff8, #aacfe5);
+}
+:root[data-theme='light'] body:has(.event-detail-page) .event-detail-page { background: var(--theme-background) !important; }
+:root[data-theme='light'] body:has(.event-detail-page) .theme-navbar { background: var(--theme-header) !important; border-bottom-color: rgba(79, 122, 166, 0.22) !important; }
+:root[data-theme='light'] body:has(.event-detail-page) .theme-navbar .brand-mark { content: initial !important; width: auto !important; height: 63.4725px !important; }
+:root[data-theme='light'] body:has(.event-detail-page) .theme-navbar :is(.nav-events-link, .nav-login-link, .nav-menu-toggle, .nav-user-button, .nav-mobile-login, .theme-toggle) { color: #fff !important; border-color: rgba(255,255,255,.45) !important; background: transparent !important; }
+:root[data-theme='light'] body:has(.event-detail-page) .theme-navbar .nav-primary-action { background: var(--theme-primary) !important; color: #fff !important; }
+:root[data-theme='light'] body:has(.event-detail-page) .event-description-heading { display: block !important; color: var(--theme-text) !important; }
+:root[data-theme='light'] body:has(.event-detail-page) .event-premium-section,
+:root[data-theme='light'] body:has(.event-detail-page) .event-reference-info__block { background: var(--theme-surface) !important; border-color: var(--theme-border) !important; color: var(--theme-text); }
+:root[data-theme='light'] body:has(.event-detail-page) .event-reference-info__label { color: var(--theme-text-secondary) !important; }
+:root[data-theme='light'] body:has(.event-detail-page) .event-reference-info__value { color: var(--theme-text) !important; }
+:root[data-theme='light'] body:has(.event-detail-page) .event-reference-info__detail,
+:root[data-theme='light'] body:has(.event-detail-page) .event-reference-secondary .event-important-item p { color: var(--theme-text-secondary) !important; }
+:root[data-theme='light'] body:has(.event-detail-page) .purchase-widget-sticky > div { background: var(--theme-surface) !important; border-color: var(--theme-border) !important; }
+:root[data-theme='light'] body:has(.event-detail-page) .ticket-batch-card { background: var(--theme-surface-raised) !important; border-color: var(--theme-border) !important; }
+:root[data-theme='light'] body:has(.event-detail-page) .ticket-batch-title,
+:root[data-theme='light'] body:has(.event-detail-page) .ticket-batch-price,
+:root[data-theme='light'] body:has(.event-detail-page) .ticket-batch-quantity-count { color: var(--theme-text) !important; }
