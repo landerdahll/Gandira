@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   EVENT_STATE_PREFERENCE_KEY,
@@ -13,20 +14,31 @@ export function EventStateSelector({ selected }: { selected: EventStateFilter })
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const explicitState = searchParams.get('state');
+
+  const persistState = (state: EventStateFilter) => {
+    window.localStorage.setItem(EVENT_STATE_PREFERENCE_KEY, state);
+    const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = `${EVENT_STATE_PREFERENCE_COOKIE}=${eventStateFilterToCookie(state)}; Path=/; Max-Age=31536000; SameSite=Lax${secure}`;
+  };
+
+  useEffect(() => {
+    if (explicitState === 'ALL' || SUPPORTED_EVENT_STATES.includes(explicitState as typeof SUPPORTED_EVENT_STATES[number])) {
+      persistState(explicitState as EventStateFilter);
+    }
+  }, [explicitState]);
+
   const navigate = (state: EventStateFilter, city?: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete('page');
     if (city) params.set('city', city);
     else params.delete('city');
-    if (state === 'ALL') params.delete('state');
-    else params.set('state', state);
+    params.set('state', state);
     router.replace(`${pathname}${params.size ? `?${params}` : ''}`, { scroll: false });
   };
 
   const changeState = (state: EventStateFilter, city?: string) => {
-    window.localStorage.setItem(EVENT_STATE_PREFERENCE_KEY, state);
-    const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-    document.cookie = `${EVENT_STATE_PREFERENCE_COOKIE}=${eventStateFilterToCookie(state)}; Path=/; Max-Age=31536000; SameSite=Lax${secure}`;
+    persistState(state);
     navigate(state, city);
   };
 

@@ -16,11 +16,15 @@ test('home state filter supports the required regions and filters every event gr
   assert.match(home, /Ainda não temos eventos programados em/);
 });
 
-test('manual cookie wins over Vercel region and is mirrored to local storage', () => {
-  assert.match(home, /savedState \?\? detectedState/);
+test('explicit URL state wins over cookie and Vercel region, then persists as the preference', () => {
+  assert.match(home, /searchParams\.state === 'ALL' \|\| isSupportedEventState\(searchParams\.state\)/);
+  assert.match(home, /explicitState \?\? savedState \?\? detectedState/);
   assert.match(home, /x-vercel-ip-country/);
   assert.match(home, /x-vercel-ip-country-region/);
   assert.match(home, /country === 'BR'/);
+  assert.match(selector, /params\.set\('state', state\)/);
+  assert.doesNotMatch(selector, /params\.delete\('state'\)/);
+  assert.match(selector, /explicitState === 'ALL'/);
   assert.match(selector, /document\.cookie =/);
   assert.match(selector, /localStorage\.setItem\(EVENT_STATE_PREFERENCE_KEY, state\)/);
   assert.match(states, /ALL_EVENT_STATES_COOKIE_VALUE = 'TODOS'/);

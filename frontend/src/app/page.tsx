@@ -57,13 +57,16 @@ async function getFeatured(state?: string) {
 
 export default async function HomePage({ searchParams }: { searchParams: SearchParams }) {
   const hasFilters = !!(searchParams.city || searchParams.category || searchParams.search);
+  const explicitState = searchParams.state === 'ALL' || isSupportedEventState(searchParams.state)
+    ? searchParams.state as EventStateFilter
+    : null;
   const savedState = eventStateFilterFromCookie(cookies().get(EVENT_STATE_PREFERENCE_COOKIE)?.value);
   const country = headers().get('x-vercel-ip-country')?.toUpperCase();
   const detectedRegion = headers().get('x-vercel-ip-country-region')?.toUpperCase();
   const detectedState: EventStateFilter = country === 'BR' && isSupportedEventState(detectedRegion)
     ? detectedRegion
     : 'ALL';
-  const selectedState = savedState ?? detectedState;
+  const selectedState = explicitState ?? savedState ?? detectedState;
   const apiState = selectedState === 'ALL' ? undefined : selectedState;
 
   const [upcoming, pastEvents, featuredEvent] = await Promise.all([
