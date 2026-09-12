@@ -33,6 +33,7 @@ export function Navbar() {
   useEffect(() => { setMobileOpen(false); }, []);
 
   return (
+    <>
     <header className="theme-navbar" data-public-home={isHome ? 'true' : undefined} style={{
       position: 'sticky',
       top: 0,
@@ -57,7 +58,7 @@ export function Navbar() {
         </Link>
 
         {isHome && (
-          <EventSearch />
+          <EventSearch className="pago-nav-search-wrap--desktop" />
         )}
 
         {/* ── Desktop right side ─────────────────────────────────────── */}
@@ -274,6 +275,12 @@ export function Navbar() {
         </div>
       )}
     </header>
+    {isHome && (
+      <div className="pago-mobile-search">
+        <EventSearch className="pago-nav-search-wrap--mobile" />
+      </div>
+    )}
+    </>
   );
 }
 
@@ -292,7 +299,7 @@ function normalizeSearch(value: string) {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').trim();
 }
 
-function EventSearch() {
+function EventSearch({ className = '' }: { className?: string }) {
   const [query, setQuery] = useState('');
   const [events, setEvents] = useState<SearchEvent[]>([]);
   const [open, setOpen] = useState(false);
@@ -337,7 +344,7 @@ function EventSearch() {
   const results = events.filter(event => normalizeSearch(`${event.title} ${event.venue ?? ''} ${event.city ?? ''}`).includes(normalized)).slice(0, 6);
 
   return (
-    <div ref={searchRef} className="pago-nav-search-wrap">
+    <div ref={searchRef} className={`pago-nav-search-wrap ${className}`.trim()}>
       <form className="pago-nav-search" action="/" method="get" role="search" onSubmit={() => setOpen(false)}>
         <input
           type="search"

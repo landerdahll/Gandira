@@ -15,10 +15,11 @@ test('upcoming and past sections share the compact carousel without changing fea
   assert.match(home, /<EventCarousel title="Eventos passados" events={visiblePastEvents} kind="past"/);
 });
 
-test('mobile discovery keeps every event visible in compact two-column grids', () => {
+test('mobile discovery keeps upcoming events in a compact grid and past events in a single horizontal rail', () => {
   assert.match(styles, /@media \(max-width: 768px\)[\s\S]*?\.event-carousel\s*{[\s\S]*?overflow-x: auto;[\s\S]*?scroll-snap-type: inline mandatory;/);
   assert.match(homeStyles, /pago-home \.event-carousel[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
-  assert.match(homeStyles, /event-carousel--past[\s\S]*?calc\(\(100% - 50px\) \/ 2\)/);
+  assert.match(homeStyles, /event-carousel--past[\s\S]*?display: flex !important;[\s\S]*?flex-wrap: nowrap !important;[\s\S]*?overflow-x: auto !important;/);
+  assert.match(homeStyles, /event-carousel--past \.compact-event-card \{[\s\S]*?flex: 0 0 clamp\(124px, 38vw, 142px\) !important;/);
   assert.match(styles, /aspect-ratio: 4 \/ 5/);
   assert.match(styles, /scrollbar-width: none/);
   assert.match(styles, /prefers-reduced-motion: reduce/);

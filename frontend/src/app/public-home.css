@@ -528,6 +528,64 @@
   :root[data-theme='dark'] .pago-home__featured .featured-card-media { aspect-ratio: 16 / 10; }
 }
 
+/* Mobile-only Home refinements: keep the navigation bar compact while the
+   search scrolls with the document, and preserve the discovery hierarchy. */
+:root[data-theme='dark'] .pago-mobile-search { display: none; }
+@media (max-width: 768px) {
+  :root[data-theme='dark'] .theme-navbar[data-public-home='true'] .pago-nav-search-wrap--desktop { display: none; }
+  :root[data-theme='dark'] .theme-navbar[data-public-home='true'] .navbar-inner { flex-wrap: nowrap; }
+  :root[data-theme='dark'] .pago-home { --pago-header-height: 104px; }
+
+  :root[data-theme='dark'] .pago-mobile-search {
+    display: block;
+    padding: 10px 16px 14px;
+    background: #020d12;
+  }
+  :root[data-theme='dark'] .pago-mobile-search .pago-nav-search-wrap { position: relative; display: flex; width: 100%; min-width: 0; }
+  :root[data-theme='dark'] .pago-mobile-search .pago-nav-search {
+    display: flex;
+    width: 100%;
+    height: 44px;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px 0 11px;
+    border: 1px solid #ffffff20;
+    border-radius: 999px;
+    background: #ffffff04;
+    color: #a1afb7;
+  }
+  :root[data-theme='dark'] .pago-mobile-search .pago-nav-search input { width: 100%; min-width: 0; border: 0; outline: none; background: transparent; color: #edf5f8; font: inherit; font-size: 14px; }
+  :root[data-theme='dark'] .pago-mobile-search .pago-nav-search input::placeholder { color: #8c9ba4; opacity: 1; }
+  :root[data-theme='dark'] .pago-mobile-search .pago-nav-search:focus-within { outline: 2px solid #67bed9; outline-offset: 3px; }
+  :root[data-theme='dark'] .pago-mobile-search .pago-nav-search button { order: -1; display: grid; width: 28px; height: 34px; flex: 0 0 28px; place-items: center; border: 0; border-radius: 50%; background: transparent; color: #a1afb7; cursor: pointer; }
+  :root[data-theme='dark'] .pago-mobile-search .pago-nav-search-results { position: absolute; z-index: 80; top: calc(100% + 10px); right: 0; left: 0; overflow: hidden; border: 1px solid #213139; border-radius: 14px; background: #091920; box-shadow: 0 18px 45px #0009; }
+  :root[data-theme='dark'] .pago-mobile-search .pago-nav-search-result { display: flex; min-width: 0; align-items: center; gap: 12px; padding: 10px 12px; color: #edf5f8; text-decoration: none; }
+  :root[data-theme='dark'] .pago-mobile-search .pago-nav-search-result:hover { background: #142c37; }
+  :root[data-theme='dark'] .pago-mobile-search .pago-nav-search-result__thumb { display: grid; width: 44px; height: 44px; flex: 0 0 44px; place-items: center; overflow: hidden; border-radius: 7px; background: #142c37; color: #67bed9; font-weight: 800; }
+  :root[data-theme='dark'] .pago-mobile-search .pago-nav-search-result__thumb img { width: 100%; height: 100%; object-fit: cover; }
+  :root[data-theme='dark'] .pago-mobile-search .pago-nav-search-result__copy { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+  :root[data-theme='dark'] .pago-mobile-search .pago-nav-search-result__copy strong { overflow: hidden; color: #edf5f8; font-size: 14px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+  :root[data-theme='dark'] .pago-mobile-search .pago-nav-search-result__copy small { overflow: hidden; color: #91a3aa; font-size: 12px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+  :root[data-theme='dark'] .pago-mobile-search .pago-nav-search-result__copy .pago-nav-search-result__price { color: #67bed9; }
+  :root[data-theme='dark'] .pago-mobile-search .pago-nav-search-empty { margin: 0; padding: 18px; color: #a1afb7; font-size: 13px; text-align: center; }
+
+  :root[data-theme='dark'] .pago-home__featured .featured-card-media .featured-card-body { justify-content: flex-end; padding: 12px 16px !important; }
+  :root[data-theme='dark'] .pago-home__featured .featured-card-media .featured-card-body > div:first-child > a { display: block; width: fit-content; max-width: 100%; }
+  :root[data-theme='dark'] .pago-home__featured .featured-card-media .featured-card-body h2 {
+    display: inline-block;
+    margin: 0 !important;
+    padding: 8px 10px;
+    border: 1px solid #ffffff1f;
+    border-radius: 9px;
+    background: #020d12b8;
+    box-decoration-break: clone;
+    color: #fff;
+    font-size: clamp(19px, 5.6vw, 27px) !important;
+    line-height: 1.12;
+  }
+
+}
+
 /* Final Featured polish: left aligned section label and a stronger compact CTA strip. */
 :root[data-theme='dark'] .pago-home__featured > .pago-home__section-title {
   text-align: left;
@@ -625,4 +683,36 @@
 :root[data-theme='dark'] .pago-home__featured .featured-card-media { aspect-ratio: 3 / 1; }
 @media (max-width: 768px) {
   :root[data-theme='dark'] .pago-home__featured .featured-card-media { aspect-ratio: 16 / 10; }
+}
+
+/* Final mobile precedence for the compact Featured CTA and past-event rail. */
+@media (max-width: 768px) {
+  :root[data-theme='dark'] .pago-home__featured .featured-card-bottom .featured-card-footer { align-items: center !important; }
+  :root[data-theme='dark'] .pago-home__featured .featured-card-bottom .featured-buy-button {
+    min-width: 0 !important;
+    align-self: center;
+    margin-right: auto;
+    margin-left: auto !important;
+    padding-inline: 12px !important;
+    font-size: 12px !important;
+  }
+  :root[data-theme='dark'] .pago-home .event-carousel--past {
+    display: flex !important;
+    grid-template-columns: none !important;
+    flex-wrap: nowrap !important;
+    gap: 12px;
+    padding: 0 0 8px;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  :root[data-theme='dark'] .pago-home .event-carousel--past::-webkit-scrollbar { display: none; }
+  :root[data-theme='dark'] .pago-home .event-carousel--past .compact-event-card {
+    flex: 0 0 clamp(124px, 38vw, 142px) !important;
+    min-width: 0;
+    scroll-snap-align: start;
+  }
 }
